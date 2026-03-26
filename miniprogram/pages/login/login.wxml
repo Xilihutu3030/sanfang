@@ -1,0 +1,63 @@
+<view class="login-page">
+  <view class="login-header">
+    <view class="logo-icon">🛡️</view>
+    <view class="logo-title">三防智能研判系统</view>
+    <view class="logo-sub">三防形势智能研判与指挥辅助平台</view>
+  </view>
+
+  <view class="login-card">
+    <!-- 错误提示 -->
+    <view class="error-bar" wx:if="{{errorMsg}}">
+      <text>{{errorMsg}}</text>
+    </view>
+
+    <!-- 租户选择 -->
+    <view class="form-group">
+      <text class="form-label">选择租户</text>
+      <picker mode="selector" range="{{tenants}}" range-key="name" value="{{tenantIndex}}" bindchange="onTenantChange">
+        <view class="form-picker">
+          <text>{{tenants[tenantIndex].name || '请选择'}}</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 用户名 -->
+    <view class="form-group">
+      <text class="form-label">用户名</text>
+      <input class="form-input" placeholder="请输入用户名" value="{{username}}" bindinput="onUsernameInput" />
+    </view>
+
+    <!-- 密码 -->
+    <view class="form-group">
+      <text class="form-label">密码</text>
+      <input class="form-input" placeholder="请输入密码" password="{{true}}" value="{{password}}" bindinput="onPasswordInput" />
+    </view>
+
+    <!-- 登录按钮 -->
+    <button class="login-btn" bindtap="doLogin" disabled="{{loading}}">
+      {{loading ? '登录中...' : '登 录'}}
+    </button>
+
+    <!-- 演示账号 -->
+    <view class="demo-section">
+      <text class="demo-title">演示账号（点击快速填入）</text>
+      <view class="demo-list">
+        <view class="demo-item" bindtap="fillDemo" data-role="admin">
+          <text class="demo-role">管理员</text>
+          <text class="demo-acc">admin / admin123</text>
+        </view>
+        <view class="demo-item" bindtap="fillDemo" data-role="operator">
+          <text class="demo-role">指挥员</text>
+          <text class="demo-acc">operator / 123456</text>
+        </view>
+        <view class="demo-item" bindtap="fillDemo" data-role="viewer">
+          <text class="demo-role">查看者</text>
+          <text class="demo-acc">viewer / 123456</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="login-footer">v2.0</view>
+</view>

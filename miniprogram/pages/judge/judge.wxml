@@ -1,0 +1,165 @@
+<view class="container">
+  <!-- 气象摘要 -->
+  <view class="card" wx:if="{{weather}}">
+    <view class="card-title">
+      <text class="card-title-icon">🌤️</text>
+      <text>当前气象</text>
+    </view>
+    <view class="weather-row">
+      <text class="text-red">{{weather.warning}}</text>
+      <text> | 1h: {{weather.rain1h}}mm</text>
+      <text> | 24h: {{weather.rain24h}}mm</text>
+      <text> | 预报: {{weather.forecast6h}}</text>
+    </view>
+  </view>
+
+  <!-- 潮汐与海洋数据 -->
+  <view class="card" wx:if="{{tideData}}">
+    <view class="card-title">
+      <text class="card-title-icon">🌊</text>
+      <text>潮汐/海洋</text>
+      <view class="tide-refresh" bindtap="refreshTide">刷新</view>
+    </view>
+    <view class="tide-grid">
+      <view class="tide-item">
+        <text class="tide-label">潮汐状态</text>
+        <text class="tide-value">{{tideData.status}}</text>
+      </view>
+      <view class="tide-item">
+        <text class="tide-label">当前潮位</text>
+        <text class="tide-value">{{tideData.level}}</text>
+      </view>
+      <view class="tide-item">
+        <text class="tide-label">浪高</text>
+        <text class="tide-value">{{tideData.waveHeight}}</text>
+      </view>
+      <view class="tide-item">
+        <text class="tide-label">涌浪</text>
+        <text class="tide-value">{{tideData.swellHeight}}</text>
+      </view>
+      <view class="tide-item">
+        <text class="tide-label">下次高潮</text>
+        <text class="tide-value tide-value-sm">{{tideData.nextHigh}}</text>
+      </view>
+      <view class="tide-item">
+        <text class="tide-label">海洋风险</text>
+        <text class="tide-value {{tideData.marineRisk === '高' ? 'text-red' : (tideData.marineRisk === '中' ? 'text-orange' : '')}}">{{tideData.marineRisk}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 地图圈选区域 -->
+  <view class="card" style="padding: 0; overflow: hidden;">
+    <!-- 操作工具栏 -->
+    <view class="draw-toolbar">
+      <view class="draw-left">
+        <!-- 形状切换 -->
+        <view class="shape-switch" wx:if="{{!polyPoints.length}}">
+          <view class="shape-btn {{drawShape === 'rect' ? 'shape-active' : ''}}" bindtap="switchShape" data-shape="rect">▭ 矩形</view>
+          <view class="shape-btn {{drawShape === 'circle' ? 'shape-active' : ''}}" bindtap="switchShape" data-shape="circle">○ 圆形</view>
+        </view>
+        <!-- 状态提示 -->
+        <view class="draw-status">
+          <text wx:if="{{!drawing && polyPoints.length === 0}}">选好形状后点击「开始圈选」</text>
+          <text wx:if="{{drawing && tapPoints.length === 0}}">在地图上点击第一个点</text>
+          <text wx:if="{{drawing && tapPoints.length === 1 && drawShape === 'rect'}}">再点一下确定矩形对角</text>
+          <text wx:if="{{drawing && tapPoints.length === 1 && drawShape === 'circle'}}">再点一下确定圆的半径</text>
+          <text wx:if="{{!drawing && polyPoints.length > 0}}" class="text-green">区域已选定 ✓</text>
+        </view>
+      </view>
+      <view class="draw-actions">
+        <view class="draw-btn draw-btn-reset" wx:if="{{polyPoints.length > 0}}" bindtap="resetPolygon">重置</view>
+        <view class="draw-btn draw-btn-primary" wx:if="{{!drawing && polyPoints.length === 0}}" bindtap="startDraw">开始圈选</view>
+        <view class="draw-btn draw-btn-cancel" wx:if="{{drawing}}" bindtap="cancelDraw">取消</view>
+      </view>
+    </view>
+
+    <!-- 图层控制 -->
+    <view class="layer-bar">
+      <view class="layer-toggle {{showTerrain ? 'layer-on' : ''}}" bindtap="toggleTerrain">地形</view>
+      <view class="layer-toggle {{showLowland ? 'layer-on' : ''}}" bindtap="toggleLowland">低洼</view>
+      <view class="layer-toggle {{showRiver ? 'layer-on' : ''}}" bindtap="toggleRiver">水系</view>
+    </view>
+
+    <map
+      class="judge-map"
+      latitude="{{mapCenter.latitude}}"
+      longitude="{{mapCenter.longitude}}"
+      scale="13"
+      markers="{{allMarkers}}"
+      polygons="{{polygons}}"
+      polyline="{{polylines}}"
+      show-location
+      bindtap="onMapTap"
+    ></map>
+
+    <!-- 高程图例 -->
+    <view class="elev-legend" wx:if="{{showTerrain}}">
+      <text class="elev-legend-title">高程(m)</text>
+      <view class="elev-legend-items">
+        <view class="elev-legend-item">
+          <view class="elev-color-box" style="background:#08306b;"></view>
+          <text>&lt;10</text>
+        </view>
+        <view class="elev-legend-item">
+          <view class="elev-color-box" style="background:#1565c0;"></view>
+          <text>10-20</text>
+        </view>
+        <view class="elev-legend-item">
+          <view class="elev-color-box" style="background:#2196f3;"></view>
+          <text>20-30</text>
+        </view>
+        <view class="elev-legend-item">
+          <view class="elev-color-box" style="background:#43a047;"></view>
+          <text>30-50</text>
+        </view>
+        <view class="elev-legend-item">
+          <view class="elev-color-box" style="background:#8bc34a;"></view>
+          <text>50-80</text>
+        </view>
+        <view class="elev-legend-item">
+          <view class="elev-color-box" style="background:#f9a825;"></view>
+          <text>80-120</text>
+        </view>
+        <view class="elev-legend-item">
+          <view class="elev-color-box" style="background:#ef6c00;"></view>
+          <text>120-200</text>
+        </view>
+        <view class="elev-legend-item">
+          <view class="elev-color-box" style="background:#6d4c41;"></view>
+          <text>&gt;200</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="map-legend">
+      <text>{{hazards.length}} 个隐患点</text>
+      <text wx:if="{{polyPoints.length > 0}}"> | 已圈选约 {{selectedHazardCount}} 个点位</text>
+      <text wx:if="{{showLowland}}"> | 红=极低洼(&lt;30m) 橙=低洼(&lt;50m)</text>
+    </view>
+  </view>
+
+  <!-- 隐患点列表 -->
+  <view class="card">
+    <view class="card-title">
+      <text class="card-title-icon">⚠️</text>
+      <text>隐患点概览</text>
+    </view>
+    <view class="hazard-list">
+      <view class="hazard-item" wx:for="{{hazards}}" wx:key="name">
+        <view class="hazard-name">{{item.name}}</view>
+        <view class="hazard-info">
+          <text class="tag {{item.level === '高风险' ? 'tag-red' : 'tag-orange'}}">{{item.level}}</text>
+          <text class="hazard-type">{{item.type}}</text>
+          <text class="hazard-elev">{{item.elevation}}m</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 开始研判按钮 -->
+  <button class="btn btn-primary btn-large" bindtap="startJudge" disabled="{{judging}}">
+    {{judging ? '研判中...' : '开始智能研判'}}
+  </button>
+  <text class="judge-hint" wx:if="{{polyPoints.length < 3}}">提示：圈选区域后研判结果更精准</text>
+</view>

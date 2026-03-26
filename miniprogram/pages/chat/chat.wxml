@@ -1,0 +1,55 @@
+<view class="chat-container">
+  <!-- 消息列表 -->
+  <scroll-view class="msg-list" scroll-y scroll-into-view="{{scrollInto}}" scroll-with-animation>
+    <view class="msg-item msg-{{item.role}}" wx:for="{{messages}}" wx:key="id" id="msg-{{item.id}}">
+      <!-- AI 消息 -->
+      <block wx:if="{{item.role === 'assistant'}}">
+        <view class="avatar avatar-ai">AI</view>
+        <view class="bubble bubble-ai" bindlongpress="copyMessage" data-content="{{item.content}}">
+          <text>{{item.content}}</text>
+          <text class="msg-time">{{item.time}}</text>
+        </view>
+      </block>
+      <!-- 用户消息 -->
+      <block wx:else>
+        <view class="bubble bubble-user" bindlongpress="copyMessage" data-content="{{item.content}}">
+          <text>{{item.content}}</text>
+          <text class="msg-time">{{item.time}}</text>
+        </view>
+        <view class="avatar avatar-user">我</view>
+      </block>
+    </view>
+
+    <!-- 加载中 -->
+    <view class="msg-item msg-assistant" wx:if="{{loading}}">
+      <view class="avatar avatar-ai">AI</view>
+      <view class="bubble bubble-ai bubble-loading">
+        <text class="loading-dots">思考中...</text>
+      </view>
+    </view>
+
+    <!-- 底部占位 -->
+    <view style="height: 20rpx;"></view>
+  </scroll-view>
+
+  <!-- 快捷问题（仅首次显示） -->
+  <view class="quick-panel" wx:if="{{messages.length <= 1 && !loading}}">
+    <text class="quick-title">猜你想问：</text>
+    <view class="quick-list">
+      <view class="quick-item" wx:for="{{quickQuestions}}" wx:key="*this"
+            bindtap="tapQuick" data-q="{{item}}">
+        {{item}}
+      </view>
+    </view>
+  </view>
+
+  <!-- 输入区域 -->
+  <view class="input-bar">
+    <input class="input-field" value="{{inputText}}" bindinput="onInput"
+           bindconfirm="sendMessage" confirm-type="send"
+           placeholder="输入问题..." disabled="{{loading}}" />
+    <view class="send-btn {{inputText && !loading ? 'send-active' : ''}}" bindtap="sendMessage">
+      <text>发送</text>
+    </view>
+  </view>
+</view>

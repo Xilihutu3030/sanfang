@@ -1,0 +1,18 @@
+{
+  "facilities": [
+    {
+      "id": "FD5C3E7C1",
+      "create_time": "2026-03-02 19:47:22",
+      "last_update": "2026-03-02 19:47:22",
+      "name": "XX避难所",
+      "type": "避难所",
+      "capacity": 500,
+      "address": "XX区XX街道",
+      "lat": 0,
+      "lng": 0,
+      "contact": "王五",
+      "phone": "13700001111",
+      "status": "可用"
+    }
+  ]
+}

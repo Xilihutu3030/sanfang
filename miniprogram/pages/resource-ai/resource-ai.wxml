@@ -1,0 +1,135 @@
+<view class="container">
+  <!-- 步骤指示 -->
+  <view class="steps-bar">
+    <view class="step-dot {{step === 'select' ? 'step-active' : 'step-done'}}">1</view>
+    <view class="step-line {{step !== 'select' ? 'line-active' : ''}}"></view>
+    <view class="step-dot {{step === 'preview' ? 'step-active' : (step === 'recognizing' || step === 'result' ? 'step-done' : '')}}">2</view>
+    <view class="step-line {{step === 'result' || step === 'recognizing' ? 'line-active' : ''}}"></view>
+    <view class="step-dot {{step === 'result' ? 'step-active' : ''}}">3</view>
+  </view>
+  <view class="steps-labels">
+    <text>选择文件</text>
+    <text>预览识别</text>
+    <text>填入表单</text>
+  </view>
+
+  <!-- ==================== 步骤1: 选择来源 ==================== -->
+  <block wx:if="{{step === 'select'}}">
+    <view class="card">
+      <view class="card-title">
+        <text class="card-title-icon">📋</text>
+        <text>识别{{typeLabel}}</text>
+      </view>
+      <view class="ai-desc">拍照或选择文档，自动识别并提取资源信息</view>
+    </view>
+
+    <view class="source-grid">
+      <view class="source-item" bindtap="chooseCamera">
+        <view class="source-icon">📷</view>
+        <view class="source-label">拍照识别</view>
+        <view class="source-hint">拍摄纸质文档</view>
+      </view>
+      <view class="source-item" bindtap="chooseAlbum">
+        <view class="source-icon">🖼️</view>
+        <view class="source-label">相册图片</view>
+        <view class="source-hint">选择截图/扫描件</view>
+      </view>
+      <view class="source-item" bindtap="chooseDocument">
+        <view class="source-icon">📄</view>
+        <view class="source-label">微信文件</view>
+        <view class="source-hint">PDF/Word/图片</view>
+      </view>
+    </view>
+
+    <view class="tips-card">
+      <view class="tips-title">使用提示</view>
+      <view class="tips-item">· 拍照时请保持文档平整、光线充足</view>
+      <view class="tips-item">· 支持表格、名单、清单等常见格式</view>
+      <view class="tips-item">· 选择微信文件需先将文件发到聊天中</view>
+    </view>
+  </block>
+
+  <!-- ==================== 步骤2: 预览 ==================== -->
+  <block wx:if="{{step === 'preview'}}">
+    <view class="card">
+      <view class="card-title">
+        <text class="card-title-icon">👁️</text>
+        <text>文件预览</text>
+      </view>
+
+      <!-- 图片预览 -->
+      <block wx:if="{{fileType === 'image'}}">
+        <image class="preview-image" src="{{filePath}}" mode="widthFix" bindtap="previewImage"></image>
+      </block>
+
+      <!-- 文档预览 -->
+      <block wx:else>
+        <view class="preview-doc">
+          <view class="preview-doc-icon">📄</view>
+          <view class="preview-doc-name">{{fileName}}</view>
+        </view>
+      </block>
+    </view>
+
+    <view class="action-row">
+      <button class="btn btn-outline" style="flex:1;" bindtap="reselect">重新选择</button>
+      <button class="btn btn-primary" style="flex:1;" bindtap="startRecognize">开始识别</button>
+    </view>
+  </block>
+
+  <!-- ==================== 步骤3: 识别中 ==================== -->
+  <block wx:if="{{step === 'recognizing'}}">
+    <view class="card recognizing-card">
+      <view class="recognizing-icon">📋</view>
+      <view class="recognizing-text">正在分析文档...</view>
+      <view class="recognizing-hint">正在识别{{typeLabel}}信息，请稍候</view>
+      <view class="recognizing-dots">
+        <view class="dot dot1"></view>
+        <view class="dot dot2"></view>
+        <view class="dot dot3"></view>
+      </view>
+    </view>
+  </block>
+
+  <!-- ==================== 步骤4: 识别结果 ==================== -->
+  <block wx:if="{{step === 'result'}}">
+    <view class="card">
+      <view class="card-title">
+        <text class="card-title-icon">✅</text>
+        <text>识别结果</text>
+        <text class="result-count">共 {{fieldList.length}} 个字段</text>
+      </view>
+
+      <view class="field-list">
+        <view class="field-item" wx:for="{{fieldList}}" wx:key="key">
+          <view class="field-label">{{item.label}}</view>
+          <view class="field-value">{{item.value}}</view>
+          <view class="field-confidence" wx:if="{{item.confidence !== null}}">
+            <text class="confidence-tag {{item.confidence >= 0.8 ? 'conf-high' : (item.confidence >= 0.6 ? 'conf-mid' : 'conf-low')}}">
+              {{item.confidence >= 0.8 ? '高' : (item.confidence >= 0.6 ? '中' : '低')}}
+            </text>
+          </view>
+        </view>
+      </view>
+
+      <view class="result-hint" wx:if="{{fieldList.length === 0}}">未能识别出有效字段，请重试</view>
+    </view>
+
+    <view class="action-row">
+      <button class="btn btn-outline" style="flex:1;" bindtap="reselect">重新识别</button>
+      <button class="btn btn-primary" style="flex:1;" bindtap="goFillForm" disabled="{{fieldList.length === 0}}">填入表单编辑</button>
+    </view>
+  </block>
+
+  <!-- ==================== 错误状态 ==================== -->
+  <block wx:if="{{step === 'error'}}">
+    <view class="card error-card">
+      <view class="error-icon">❌</view>
+      <view class="error-text">{{errorMsg}}</view>
+    </view>
+    <view class="action-row">
+      <button class="btn btn-outline" style="flex:1;" bindtap="reselect">重新选择</button>
+      <button class="btn btn-primary" style="flex:1;" bindtap="retry">重试</button>
+    </view>
+  </block>
+</view>

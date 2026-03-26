@@ -1,0 +1,16 @@
+{
+  "vehicles": [
+    {
+      "id": "V84B6436F",
+      "create_time": "2026-03-02 19:47:24",
+      "last_update": "2026-03-02 19:47:24",
+      "plate_number": "粤A12345",
+      "type": "抢险车",
+      "model": "东风应急车",
+      "driver": "赵六",
+      "driver_phone": "13600001111",
+      "status": "可用",
+      "location": ""
+    }
+  ]
+}

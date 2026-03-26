@@ -1,0 +1,17 @@
+<view class="container">
+  <view class="card history-item" wx:for="{{list}}" wx:key="index" data-idx="{{index}}" bindtap="viewDetail">
+    <view class="history-top">
+      <view class="risk-tag {{item._riskClass}}">{{item._riskLevel}}</view>
+      <text class="history-time">{{item._time}}</text>
+    </view>
+    <view class="history-score">得分: {{item._riskScore}}</view>
+    <view class="history-risks" wx:if="{{item['2_主要风险类型']}}">
+      <text class="tag tag-orange" wx:for="{{item['2_主要风险类型']}}" wx:for-item="risk" wx:key="*this" style="margin-right:8rpx;">{{risk}}</text>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:if="{{!loading && list.length === 0}}">
+    <text class="empty-icon">📋</text>
+    <text class="empty-text">暂无研判记录</text>
+  </view>
+</view>

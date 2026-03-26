@@ -1,0 +1,60 @@
+<view class="container">
+  <!-- 用户信息 -->
+  <view class="profile-header">
+    <view class="profile-avatar">{{userInfo.display_name ? userInfo.display_name[0] : '?'}}</view>
+    <view class="profile-title">{{userInfo.display_name || '未登录'}}</view>
+    <view class="profile-sub">{{roleNames[userInfo.role] || ''}} | {{userInfo.tenant_name || ''}} | {{version}}</view>
+  </view>
+
+  <!-- 资源统计 -->
+  <view class="card" wx:if="{{resourceStats}}">
+    <view class="card-title">
+      <text class="card-title-icon">📊</text>
+      <text>资源总览</text>
+    </view>
+    <view class="stat-grid">
+      <view class="stat-item" wx:if="{{resourceStats.resources.personnel}}">
+        <text class="stat-value text-primary">{{resourceStats.resources.personnel.count}}</text>
+        <text class="stat-label">人员</text>
+      </view>
+      <view class="stat-item" wx:if="{{resourceStats.resources.materials}}">
+        <text class="stat-value text-orange">{{resourceStats.resources.materials.count}}</text>
+        <text class="stat-label">物资</text>
+      </view>
+      <view class="stat-item" wx:if="{{resourceStats.resources.facilities}}">
+        <text class="stat-value text-green">{{resourceStats.resources.facilities.count}}</text>
+        <text class="stat-label">设施</text>
+      </view>
+      <view class="stat-item" wx:if="{{resourceStats.resources.vehicles}}">
+        <text class="stat-value text-blue">{{resourceStats.resources.vehicles.count}}</text>
+        <text class="stat-label">车辆</text>
+      </view>
+    </view>
+    <button class="btn btn-outline" bindtap="goResources" style="margin-top:16rpx;">管理应急资源</button>
+  </view>
+
+  <!-- 设置 -->
+  <view class="card">
+    <view class="list-item" bindtap="changePassword">
+      <view class="list-item-content">
+        <text class="list-item-title">修改密码</text>
+      </view>
+      <text class="list-item-arrow">></text>
+    </view>
+    <view class="list-item" bindtap="about">
+      <view class="list-item-content">
+        <text class="list-item-title">关于系统</text>
+      </view>
+      <text class="list-item-arrow">></text>
+    </view>
+    <view class="list-item" bindtap="clearCache">
+      <view class="list-item-content">
+        <text class="list-item-title">清除缓存</text>
+      </view>
+      <text class="list-item-arrow">></text>
+    </view>
+  </view>
+
+  <!-- 退出登录 -->
+  <button class="btn btn-danger" bindtap="doLogout" style="margin-top:24rpx;">退出登录</button>
+</view>

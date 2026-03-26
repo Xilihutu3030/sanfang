@@ -1,0 +1,97 @@
+
+    ╔═══════════════════════════════════════════════╗
+    ║  三防形势智能研判与指挥辅助系统               ║
+    ║  统一后端服务 v2.0 (小程序版)                 ║
+    ╚═══════════════════════════════════════════════╝
+    
+  API 接口列表:
+  ─────────────────────────────────────────
+  GET  /                      前端页面
+  GET  /api/weather           获取气象数据
+  POST /api/weather/refresh   刷新气象数据
+  GET  /api/terrain/elevation 单点高程查询
+  POST /api/terrain/risk      单点风险分析
+  POST /api/terrain/area      区域高程统计
+  POST /api/ai/judge          AI综合研判
+  POST /api/ai/report         生成研判简报
+  POST /api/ai/chat           AI智能对话
+  GET  /api/hazards           隐患点列表
+  GET  /api/history           研判历史
+  POST /api/history           保存研判记录
+
+  [应急资源管理]
+  GET  /api/resources/statistics        资源总览
+  GET  /api/resources/<type>            资源列表
+  POST /api/resources/<type>            添加资源
+  PUT  /api/resources/<type>/<id>       更新资源
+  DEL  /api/resources/<type>/<id>       删除资源
+  POST /api/resources/import/<type>     批量导入
+  GET  /api/resources/template/<type>   下载模板
+  ─────────────────────────────────────────
+
+  正在获取初始气象数据...
+
+============================================================
+开始抓取 [广州市] 气象数据...
+时间：2026-03-03 06:15:47
+============================================================
+
+📡 抓取中央气象台...
+   状态：success
+📡 抓取省气象局...
+   状态：success
+📡 抓取市气象局...
+   状态：success
+📡 抓取和风天气...
+   状态：success
+📡 抓取彩云天气...
+   状态：success
+
+✅ 数据已保存到：weather_data.json
+
+============================================================
+
+  气象数据就绪
+
+  服务启动: http://localhost:5000
+  浏览器访问上述地址即可使用系统
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://26.26.26.1:5000
+Press CTRL+C to quit
+127.0.0.1 - - [03/Mar/2026 06:16:28] "GET /api/weather HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:28:11] "GET /api/weather HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:28:11] "GET /api/resources/statistics HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:28:30] "GET /api/weather HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:28:30] "GET /api/hazards HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:28:48] "GET /api/weather HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:28:48] "GET /api/resources/statistics HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:28:54] "GET /api/resources/personnel HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:29:00] "GET /api/weather HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:29:00] "GET /api/resources/statistics HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:30:33] "GET /api/resources/personnel HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:30:36] "GET /api/history HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:30:40] "GET /api/weather HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:30:40] "GET /api/resources/statistics HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:30:47] "GET /api/resources/statistics HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:30:51] "GET /api/resources/personnel HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:31:06] "GET /api/resources/personnel HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:31:08] "GET /api/resources/materials HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:31:09] "GET /api/resources/facilities HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:31:10] "GET /api/resources/vehicles HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:31:17] "GET /api/weather HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:31:17] "GET /api/resources/statistics HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:31:25] "POST /api/weather/refresh HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:31:28] "GET /api/resources/vehicles HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:31:32] "GET /api/weather HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:31:32] "GET /api/resources/statistics HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:33:27] "GET /api/weather HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 06:33:27] "GET /api/resources/statistics HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 07:26:18] "GET /api/weather HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 07:26:18] "GET /api/resources/statistics HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 07:26:50] "GET /api/weather HTTP/1.1" 200 -
+127.0.0.1 - - [03/Mar/2026 07:26:50] "GET /api/resources/statistics HTTP/1.1" 200 -

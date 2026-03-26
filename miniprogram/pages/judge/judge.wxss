@@ -1,0 +1,252 @@
+.weather-row {
+  font-size: 24rpx;
+  color: #475569;
+  line-height: 1.8;
+}
+
+.judge-map {
+  width: 100%;
+  height: 520rpx;
+}
+
+/* 圈选工具栏 */
+.draw-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 24rpx;
+  background: #f8fafc;
+  border-bottom: 1rpx solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.draw-left {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+/* 形状切换 */
+.shape-switch {
+  display: flex;
+  gap: 12rpx;
+}
+
+.shape-btn {
+  padding: 8rpx 24rpx;
+  border-radius: 32rpx;
+  font-size: 24rpx;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 2rpx solid #e2e8f0;
+}
+
+.shape-active {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #2563eb;
+  font-weight: 500;
+}
+
+.draw-status {
+  font-size: 24rpx;
+  color: #64748b;
+}
+
+.text-green {
+  color: #059669;
+  font-weight: 500;
+}
+
+.draw-actions {
+  display: flex;
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+
+.draw-btn {
+  padding: 10rpx 24rpx;
+  border-radius: 32rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.draw-btn-primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.draw-btn-cancel {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1rpx solid #e2e8f0;
+}
+
+.draw-btn-reset {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1rpx solid #fecaca;
+}
+
+.map-legend {
+  padding: 14rpx 28rpx;
+  font-size: 22rpx;
+  color: #94a3b8;
+  background: #f8fafc;
+}
+
+/* ==================== 图层控制栏 ==================== */
+.layer-bar {
+  display: flex;
+  gap: 12rpx;
+  padding: 12rpx 24rpx;
+  background: #f1f5f9;
+  border-bottom: 1rpx solid #e2e8f0;
+}
+
+.layer-toggle {
+  padding: 6rpx 20rpx;
+  border-radius: 24rpx;
+  font-size: 22rpx;
+  background: #ffffff;
+  color: #94a3b8;
+  border: 2rpx solid #e2e8f0;
+}
+
+.layer-on {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #93c5fd;
+  font-weight: 500;
+}
+
+/* ==================== 高程图例 ==================== */
+.elev-legend {
+  display: flex;
+  align-items: center;
+  padding: 10rpx 24rpx;
+  background: #f8fafc;
+  border-bottom: 1rpx solid #e2e8f0;
+  gap: 12rpx;
+  overflow-x: auto;
+}
+
+.elev-legend-title {
+  font-size: 20rpx;
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.elev-legend-items {
+  display: flex;
+  gap: 8rpx;
+  flex-wrap: nowrap;
+}
+
+.elev-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  font-size: 18rpx;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.elev-color-box {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 4rpx;
+  flex-shrink: 0;
+}
+
+/* ==================== 潮汐面板 ==================== */
+.tide-grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.tide-item {
+  width: 50%;
+  padding: 12rpx 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.tide-label {
+  font-size: 22rpx;
+  color: #94a3b8;
+}
+
+.tide-value {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1e293b;
+  margin-top: 4rpx;
+}
+
+.tide-value-sm {
+  font-size: 24rpx;
+}
+
+.tide-refresh {
+  margin-left: auto;
+  font-size: 22rpx;
+  color: #2563eb;
+  padding: 4rpx 16rpx;
+  background: #eff6ff;
+  border-radius: 16rpx;
+}
+
+/* ==================== 隐患点列表 ==================== */
+.hazard-list {
+  max-height: 400rpx;
+  overflow-y: auto;
+}
+
+.hazard-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #f1f5f9;
+}
+
+.hazard-item:last-child {
+  border-bottom: none;
+}
+
+.hazard-name {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.hazard-info {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.hazard-type {
+  font-size: 22rpx;
+  color: #94a3b8;
+}
+
+.hazard-elev {
+  font-size: 22rpx;
+  color: #64748b;
+}
+
+.judge-hint {
+  display: block;
+  text-align: center;
+  font-size: 22rpx;
+  color: #94a3b8;
+  margin-top: 12rpx;
+  margin-bottom: 24rpx;
+}

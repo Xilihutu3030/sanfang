@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>登录 - 三防智能研判系统</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'Microsoft YaHei',system-ui;background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%)}
+.login-wrapper{width:100%;max-width:420px;padding:20px}
+.login-card{background:rgba(30,41,59,0.95);border:1px solid #334155;border-radius:16px;padding:40px 32px;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.logo{text-align:center;margin-bottom:32px}
+.logo-icon{font-size:48px;margin-bottom:12px}
+.logo h1{font-size:22px;color:#e2e8f0;font-weight:700;letter-spacing:1px}
+.logo p{font-size:13px;color:#94a3b8;margin-top:6px}
+
+.form-group{margin-bottom:20px}
+.form-group label{display:block;font-size:13px;color:#94a3b8;margin-bottom:6px;font-weight:500}
+.form-group select,
+.form-group input{width:100%;padding:12px 14px;background:#1e293b;border:1px solid #475569;border-radius:8px;color:#e2e8f0;font-size:14px;outline:none;transition:border-color 0.2s}
+.form-group select:focus,
+.form-group input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,0.15)}
+.form-group select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.form-group select option{background:#1e293b;color:#e2e8f0}
+
+.login-btn{width:100%;padding:13px;background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.3s;margin-top:8px}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(37,99,235,0.35)}
+.login-btn:active{transform:translateY(0)}
+.login-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+
+.error-msg{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none}
+.error-msg.show{display:block}
+
+.demo-info{margin-top:24px;padding:16px;background:rgba(37,99,235,0.1);border:1px solid rgba(37,99,235,0.2);border-radius:8px}
+.demo-info h4{font-size:13px;color:#60a5fa;margin-bottom:8px}
+.demo-info p{font-size:12px;color:#94a3b8;line-height:1.8}
+.demo-info code{background:rgba(37,99,235,0.2);padding:1px 6px;border-radius:3px;font-size:12px;color:#93c5fd}
+
+.footer{text-align:center;margin-top:24px;font-size:12px;color:#64748b}
+</style>
+</head>
+<body>
+
+<div class="login-wrapper">
+  <div class="login-card">
+    <div class="logo">
+      <div class="logo-icon">🛡️</div>
+      <h1>三防智能研判系统</h1>
+      <p>三防形势智能研判与指挥辅助平台</p>
+    </div>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <form id="login-form" onsubmit="return doLogin(event)">
+      <div class="form-group">
+        <label>用户名</label>
+        <input type="text" id="username" placeholder="请输入用户名" autocomplete="username" required>
+      </div>
+
+      <div class="form-group">
+        <label>密码</label>
+        <input type="password" id="password" placeholder="请输入密码" autocomplete="current-password" required>
+      </div>
+
+      <button type="submit" class="login-btn" id="login-btn">登 录</button>
+    </form>
+
+    <div class="demo-info">
+      <h4>演示账号</h4>
+      <p>
+        管理员：<code>admin</code> / <code>admin123</code><br>
+        指挥员：<code>operator</code> / <code>123456</code><br>
+        查看者：<code>viewer</code> / <code>123456</code>
+      </p>
+    </div>
+  </div>
+
+  <div class="footer">三防智能研判系统 v2.0</div>
+</div>
+
+<script>
+const API_BASE = window.location.origin;
+
+// 如果已经登录，直接跳转
+(function checkAuth() {
+  const token = localStorage.getItem('sf_token');
+  if (token) {
+    fetch(API_BASE + '/api/auth/me', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    }).then(r => {
+      if (r.ok) window.location.href = '/';
+    }).catch(() => {});
+  }
+})();
+
+function doLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('error-msg');
+  errEl.classList.remove('show');
+
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+
+  if (!username || !password) {
+    errEl.textContent = '请输入用户名和密码';
+    errEl.classList.add('show');
+    return false;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '登录中...';
+
+  fetch(API_BASE + '/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  })
+  .then(r => r.json().then(data => ({ ok: r.ok, data })))
+  .then(({ ok, data }) => {
+    if (!ok) {
+      errEl.textContent = data.error || '登录失败';
+      errEl.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = '登 录';
+      return;
+    }
+    localStorage.setItem('sf_token', data.token);
+    localStorage.setItem('sf_user', JSON.stringify(data.user));
+    window.location.href = '/';
+  })
+  .catch(err => {
+    errEl.textContent = '网络错误，请检查后端服务是否启动';
+    errEl.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = '登 录';
+  });
+
+  return false;
+}
+</script>
+
+</body>
+</html>

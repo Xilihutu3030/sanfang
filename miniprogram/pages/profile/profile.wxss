@@ -1,0 +1,43 @@
+.profile-header {
+  background: linear-gradient(135deg, #0f172a, #1e40af);
+  color: #ffffff;
+  padding: 48rpx 32rpx;
+  border-radius: 16rpx;
+  margin-bottom: 24rpx;
+  text-align: center;
+}
+
+.profile-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  font-size: 40rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16rpx;
+  border: 4rpx solid rgba(255,255,255,0.3);
+}
+
+.profile-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  margin-bottom: 8rpx;
+}
+
+.profile-sub {
+  font-size: 24rpx;
+  opacity: 0.8;
+}
+
+.btn-danger {
+  background: #dc2626 !important;
+  color: #fff !important;
+  border: none;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  padding: 20rpx 0;
+}

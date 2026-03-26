@@ -1,0 +1,2559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三防形势智能研判与指挥辅助系统</title>
+<link rel="icon" href="/favicon.png" type="image/png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{display:flex;height:100vh;font-family:'Microsoft YaHei',system-ui;overflow:hidden}
+.left{width:300px;background:linear-gradient(180deg,#1e293b,#0f172a);color:#fff;padding:16px;overflow-y:auto;border-right:2px solid #334155}
+.main{flex:1;position:relative;display:flex;flex-direction:column}
+.right{width:400px;background:#f8fafc;padding:16px;overflow-y:auto;border-left:2px solid #e2e8f0}
+#map{flex:1;position:relative;background:#1a1a2e;overflow:hidden}
+#mapCanvas{display:block;width:100%;height:100%;cursor:grab}
+.header{background:#0f172a;color:#fff;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.header h2{font-size:18px;font-weight:600}
+.time-badge{background:#1e40af;padding:6px 12px;border-radius:6px;font-size:13px}
+.card{background:rgba(30,41,59,0.9);border-radius:10px;padding:14px;margin-bottom:14px;border:1px solid #334155;box-shadow:0 2px 6px rgba(0,0,0,0.2)}
+.card h4{margin-bottom:10px;color:#60a5fa;font-size:15px;display:flex;align-items:center;gap:8px}
+.item{margin:8px 0;color:#cbd5e1;font-size:13px;line-height:1.6;padding-left:8px;border-left:3px solid #475569}
+.risk{padding:16px;border-radius:10px;margin:12px 0;color:#fff;font-weight:600;font-size:16px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+.risk.high{background:linear-gradient(135deg,#dc2626,#f87171);animation:pulse 2s infinite}
+.risk.mid{background:linear-gradient(135deg,#ea580c,#fb923c)}
+.risk.low{background:linear-gradient(135deg,#2563eb,#60a5fa)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.85}}
+.btn{background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;border:none;padding:12px 16px;border-radius:8px;width:100%;margin-top:10px;cursor:pointer;font-weight:600;font-size:14px;transition:all 0.3s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(37,99,235,0.4)}
+.btn.success{background:linear-gradient(135deg,#059669,#10b981)}
+.btn.warning{background:linear-gradient(135deg,#d97706,#f59e0b)}
+.switch{display:flex;align-items:center;gap:10px;margin:8px 0;cursor:pointer}
+.switch-btn{width:42px;height:22px;background:#475569;border-radius:11px;position:relative;transition:0.3s}
+.switch-btn.active{background:#2563eb}
+.switch-btn:after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:2px;left:2px;transition:0.3s}
+.switch-btn.active:after{left:22px}
+.right .card{background:#fff;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+.right .card h4{color:#1e293b}
+.right .item{color:#475569;border-left-color:#cbd5e1}
+.top5-item{background:#f1f5f9;padding:10px;margin:8px 0;border-radius:6px;border-left:4px solid #dc2626;font-size:13px;color:#1e293b}
+.map-control{position:absolute;top:20px;left:20px;z-index:1000;background:rgba(255,255,255,0.95);padding:12px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.map-control button{margin:4px;padding:8px 14px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px}
+.status-bar{background:#0c4a6e;color:#fff;padding:8px 16px;font-size:12px;display:flex;justify-content:space-between}
+.loading{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:#fff;padding:20px 40px;border-radius:10px;z-index:9999}
+#map-popup{display:none;position:absolute;z-index:1001;background:rgba(15,23,42,0.95);color:#fff;padding:12px 16px;border-radius:8px;font-size:13px;max-width:260px;border:1px solid #475569;box-shadow:0 4px 16px rgba(0,0,0,0.5);line-height:1.6}
+#map-popup .close-btn{position:absolute;top:4px;right:8px;cursor:pointer;color:#94a3b8;font-size:16px}
+/* ========== 模态框样式 ========== */
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10000;justify-content:center;align-items:center}
+.modal-overlay.active{display:flex}
+.modal-box{background:#fff;border-radius:12px;width:600px;max-width:90vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:modalIn 0.25s ease}
+@keyframes modalIn{from{transform:scale(0.9);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #e5e7eb;background:#f8fafc;border-radius:12px 12px 0 0}
+.modal-header h3{font-size:16px;color:#1e293b;margin:0}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:#94a3b8;padding:4px 8px;border-radius:4px}
+.modal-close:hover{background:#f1f5f9;color:#475569}
+.modal-body{padding:20px}
+.modal-body .form-group{margin-bottom:14px}
+.modal-body label{display:block;font-size:13px;color:#475569;margin-bottom:4px;font-weight:600}
+.modal-body input,.modal-body select,.modal-body textarea{width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;box-sizing:border-box}
+.modal-body input:focus,.modal-body select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
+.modal-btn{display:inline-block;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s}
+.modal-btn-primary{background:#2563eb;color:#fff}.modal-btn-primary:hover{background:#1d4ed8}
+.modal-btn-success{background:#059669;color:#fff}.modal-btn-success:hover{background:#047857}
+.modal-btn-warning{background:#d97706;color:#fff}.modal-btn-warning:hover{background:#b45309}
+.modal-btn-danger{background:#dc2626;color:#fff}.modal-btn-danger:hover{background:#b91c1c}
+.modal-btn-outline{background:#fff;color:#475569;border:1px solid #d1d5db}.modal-btn-outline:hover{background:#f9fafb}
+.sim-bar{height:24px;border-radius:4px;margin:4px 0;position:relative;transition:width 0.5s;font-size:11px;color:#fff;line-height:24px;padding-left:8px;min-width:30px}
+.task-item{padding:12px;border:1px solid #e5e7eb;border-radius:8px;margin:8px 0;display:flex;justify-content:space-between;align-items:center}
+.task-item .task-info{flex:1}
+.task-item .task-title{font-weight:600;font-size:14px;color:#1e293b}
+.task-item .task-meta{font-size:12px;color:#6b7280;margin-top:4px}
+.task-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.task-badge.urgent{background:#fef2f2;color:#dc2626}
+.task-badge.high{background:#fff7ed;color:#ea580c}
+.task-badge.normal{background:#eff6ff;color:#2563eb}
+.water-station{padding:12px;border:1px solid #e5e7eb;border-radius:8px;margin:8px 0}
+.water-station .station-name{font-weight:600;font-size:14px;color:#1e293b;margin-bottom:6px}
+.water-bar-bg{height:20px;background:#f1f5f9;border-radius:10px;overflow:hidden;position:relative}
+.water-bar-fill{height:100%;border-radius:10px;transition:width 0.5s}
+.water-bar-fill.normal{background:linear-gradient(90deg,#10b981,#34d399)}
+.water-bar-fill.warning{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.water-bar-fill.danger{background:linear-gradient(90deg,#dc2626,#f87171);animation:pulse 1.5s infinite}
+.alert-rule-item{padding:10px;border:1px solid #e5e7eb;border-radius:6px;margin:6px 0;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.hazard-item{padding:10px;border:1px solid #e5e7eb;border-radius:6px;margin:6px 0;font-size:13px}
+.history-item{padding:12px;border:1px solid #e5e7eb;border-radius:8px;margin:8px 0}
+.history-item .sim-score{font-size:24px;font-weight:bold;color:#2563eb}
+/* ========== 移动端适配 ========== */
+.mobile-toggle{display:none;position:fixed;z-index:10001;width:40px;height:40px;border-radius:50%;border:none;color:#fff;font-size:20px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+#btn-left-toggle{bottom:80px;left:10px;background:#2563eb}
+#btn-right-toggle{bottom:80px;right:10px;background:#059669}
+@media(max-width:900px){
+  body{flex-direction:column}
+  .left,.right{position:fixed;z-index:9999;width:85vw;max-width:350px;height:100vh;top:0;transition:transform 0.3s ease;overflow-y:auto}
+  .left{left:0;transform:translateX(-100%)}
+  .left.open{transform:translateX(0)}
+  .right{right:0;transform:translateX(100%)}
+  .right.open{transform:translateX(0)}
+  .main{width:100%;height:100vh}
+  .header h2{font-size:14px}
+  .map-control{top:10px;left:10px;padding:6px}
+  .map-control button{padding:6px 10px;font-size:11px}
+  .mobile-toggle{display:block}
+  .modal-box{width:95vw;max-height:90vh}
+  .status-bar{font-size:10px;padding:6px 10px}
+  #elev-legend{bottom:30px;right:10px;font-size:10px;padding:6px}
+}
+</style>
+</head>
+<body>
+
+<!-- 移动端侧边栏切换按钮 -->
+<button class="mobile-toggle" id="btn-left-toggle" onclick="togglePanel('left')">&equiv;</button>
+<button class="mobile-toggle" id="btn-right-toggle" onclick="togglePanel('right')">&#9776;</button>
+
+<div class="left">
+  <div style="text-align:center;margin-bottom:20px">
+    <h3 style="color:#60a5fa;font-size:16px;margin-bottom:8px">三防智能研判系统</h3>
+    <div style="font-size:12px;color:#94a3b8" id="user-bar">
+      <span id="user-info">未登录</span>
+      <a href="/login" id="login-link" style="color:#60a5fa;text-decoration:none;margin-left:6px">登录</a>
+      <a href="javascript:void(0)" id="logout-link" onclick="doLogout()" style="color:#f87171;text-decoration:none;margin-left:6px;display:none">退出</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h4>定位与搜索</h4>
+    <div style="display:flex;gap:6px">
+      <input id="loc-input" type="text" placeholder="输入地名或坐标" style="flex:1;padding:8px;border:1px solid #475569;border-radius:6px;background:#1e293b;color:#fff;font-size:13px">
+      <button onclick="searchLocation()" style="padding:8px 12px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">搜索</button>
+    </div>
+    <button class="btn" onclick="geoLocate()">自动定位当前位置</button>
+    <div class="item" id="loc-info">当前位置: 未定位</div>
+  </div>
+
+  <div class="card">
+    <h4>区域圈选控制</h4>
+    <button class="btn" onclick="startDraw('rectangle')">矩形框选</button>
+    <button class="btn" onclick="startDraw('polygon')">手绘区域</button>
+    <button class="btn" onclick="startDraw('circle')">圆形范围</button>
+    <div class="item" id="area-info">未选择区域</div>
+    <button class="btn success" onclick="startAIAnalysis()" style="margin-top:16px">开始智能研判</button>
+  </div>
+
+  <div class="card">
+    <h4>气象数据</h4>
+    <div class="item">预警：<span id="warning">加载中...</span></div>
+    <div class="item">1小时雨量：<span id="rain-1h">--</span> mm</div>
+    <div class="item">24小时雨量：<span id="rain-24h">--</span> mm</div>
+    <div class="item">6小时预报：<span id="forecast-6h">--</span></div>
+    <div class="item">更新：<span id="update-time">--</span></div>
+    <button class="btn warning" onclick="forceRefreshWeather()">刷新气象</button>
+  </div>
+
+  <div class="card">
+    <h4>地形图层控制</h4>
+    <div class="switch" onclick="toggleLayer('terrain')">
+      <div class="switch-btn active" id="sw-terrain"></div>
+      <span>高程地形图</span>
+    </div>
+    <div class="switch" onclick="toggleLayer('contour')">
+      <div class="switch-btn active" id="sw-contour"></div>
+      <span>等高线</span>
+    </div>
+    <div class="switch" onclick="toggleLayer('lowland')">
+      <div class="switch-btn active" id="sw-lowland"></div>
+      <span>低洼易涝高亮</span>
+    </div>
+
+  </div>
+
+  <div class="card">
+    <h4>本地风险点</h4>
+    <div id="hazard-stats">
+      <div class="item">易涝点：--</div>
+      <div class="item">危房：--</div>
+      <div class="item">地下空间：--</div>
+      <div class="item">河道：--</div>
+    </div>
+    <button class="btn" onclick="showHazards()">查看风险分布</button>
+  </div>
+
+  <div class="card">
+    <h4>潮汐/海洋数据</h4>
+    <div id="tide-info">
+      <div class="item">潮汐状态：<span id="tide-status">加载中...</span></div>
+      <div class="item">当前潮位：<span id="tide-level">--</span></div>
+      <div class="item">浪高：<span id="wave-height">--</span></div>
+      <div class="item">涌浪：<span id="swell-height">--</span></div>
+      <div class="item">下次高潮：<span id="next-high">--</span></div>
+      <div class="item">海洋风险：<span id="marine-risk">--</span></div>
+    </div>
+    <button class="btn warning" onclick="refreshTideData()">刷新潮汐</button>
+  </div>
+
+  <!-- ========== 高级功能 ========== -->
+  <div class="card" style="border-top:2px solid #f59e0b">
+    <h4 style="color:#f59e0b">高级功能</h4>
+    <button class="btn" onclick="openSimulation()">情景推演</button>
+    <button class="btn" onclick="openTaskPanel()">任务派单</button>
+    <button class="btn" onclick="openWaterPanel()">水位监测</button>
+    <button class="btn" onclick="openAlertPanel()">预警设置</button>
+    <button class="btn" onclick="openHazardEditor()">自定义风险点</button>
+    <button class="btn" onclick="openHistoryCompare()">历史灾情对比</button>
+  </div>
+
+  <!-- 地图图层增强 -->
+  <div class="card">
+    <h4>增强图层</h4>
+    <div class="switch" onclick="toggleLayer('radar')">
+      <div class="switch-btn" id="sw-radar"></div>
+      <span>气象雷达</span>
+    </div>
+    <div class="switch" onclick="toggleLayer('heatmap')">
+      <div class="switch-btn" id="sw-heatmap"></div>
+      <span>风险热力图</span>
+    </div>
+    <div class="switch" onclick="toggleLayer('water')">
+      <div class="switch-btn" id="sw-water"></div>
+      <span>水位站点</span>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="header">
+    <h2>2D 高程地形图</h2>
+    <div class="time-badge" id="sys-time">--</div>
+  </div>
+
+  <div id="map">
+    <canvas id="mapCanvas"></canvas>
+    <div class="map-control">
+      <button onclick="mapZoomIn()">+ 放大</button>
+      <button onclick="mapZoomOut()">- 缩小</button>
+      <button onclick="geoLocate()">重新定位</button>
+      <button onclick="fetchDEMFromServer()" style="background:#059669">刷新地形</button>
+    </div>
+    <div id="elev-legend" style="position:absolute;bottom:40px;right:20px;z-index:1000;background:rgba(0,0,0,0.85);padding:10px;border-radius:8px;color:#fff;font-size:11px">
+      <div style="font-weight:bold;margin-bottom:6px">高程图例</div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div><span style="display:inline-block;width:16px;height:10px;background:#08306b;border-radius:2px"></span> &lt;10m</div>
+        <div><span style="display:inline-block;width:16px;height:10px;background:#1565c0;border-radius:2px"></span> 10-20m</div>
+        <div><span style="display:inline-block;width:16px;height:10px;background:#2196f3;border-radius:2px"></span> 20-30m</div>
+        <div><span style="display:inline-block;width:16px;height:10px;background:#43a047;border-radius:2px"></span> 30-50m</div>
+        <div><span style="display:inline-block;width:16px;height:10px;background:#8bc34a;border-radius:2px"></span> 50-80m</div>
+        <div><span style="display:inline-block;width:16px;height:10px;background:#f9a825;border-radius:2px"></span> 80-120m</div>
+        <div><span style="display:inline-block;width:16px;height:10px;background:#ef6c00;border-radius:2px"></span> 120-200m</div>
+        <div><span style="display:inline-block;width:16px;height:10px;background:#6d4c41;border-radius:2px"></span> &gt;200m</div>
+      </div>
+      <div style="margin-top:6px;border-top:1px solid #555;padding-top:4px">
+        <div><span style="display:inline-block;width:16px;height:10px;background:#dc2626;opacity:0.6;border-radius:2px"></span> 极低洼(&lt;30m)</div>
+        <div><span style="display:inline-block;width:16px;height:10px;background:#f59e0b;opacity:0.6;border-radius:2px"></span> 低洼(&lt;50m)</div>
+      </div>
+    </div>
+    <div id="map-popup"><span class="close-btn" onclick="closeMapPopup()">&times;</span><div id="map-popup-content"></div></div>
+  </div>
+
+  <div class="status-bar">
+    <span>经度: <span id="lng">--</span> | 纬度: <span id="lat">--</span></span>
+    <span>缩放: <span id="zoom-level">13</span> | 区域: <span id="current-area">--</span></span>
+    <span>系统状态: <span style="color:#10b981">运行中</span></span>
+  </div>
+</div>
+
+<div class="right">
+  <h3 style="margin-bottom:16px;color:#1e293b;font-size:18px">智能研判结果</h3>
+
+  <div id="judge-empty" style="text-align:center;padding:60px 20px;color:#94a3b8">
+    <div style="font-size:48px;margin-bottom:16px;opacity:0.3">&#9741;</div>
+    <div style="font-size:15px;margin-bottom:8px">尚未执行研判</div>
+    <div style="font-size:13px;line-height:1.8">
+      1. 在左侧定位或搜索目标区域<br>
+      2. 使用圈选工具选定分析范围<br>
+      3. 点击「开始智能研判」
+    </div>
+  </div>
+
+  <div id="judge-result" style="display:none">
+    <div class="risk low" id="risk-level">
+      <div style="font-size:20px;margin-bottom:4px">--</div>
+      <div style="font-size:13px;opacity:0.9">--</div>
+    </div>
+
+    <div class="card" id="risk-type-card" style="display:none">
+      <h4>主要风险类型</h4>
+      <div class="item" id="risk-type"></div>
+    </div>
+
+    <div class="card" id="top5-card" style="display:none">
+      <h4>Top5 最危险点位</h4>
+      <div id="top5-list"></div>
+    </div>
+
+    <div class="card" id="flood-card" style="display:none">
+      <h4>淹没预判（基于地形）</h4>
+      <div class="item" id="flood-pred"></div>
+    </div>
+
+    <div class="card" id="suggestions-card" style="display:none">
+      <h4>指挥建议</h4>
+      <div class="item" id="suggestions"></div>
+    </div>
+
+    <div class="card" id="leader-card" style="display:none">
+      <h4>领导汇报参考</h4>
+      <div class="item" id="leader-report" style="background:#fef3c7;color:#92400e;padding:12px;border-radius:6px;border-left:4px solid #f59e0b"></div>
+    </div>
+
+    <div class="card" id="resources-card" style="display:none">
+      <h4>可调度应急资源</h4>
+      <div id="nearby-resources"></div>
+    </div>
+
+    <button class="btn success" onclick="copyReport()">一键复制研判简报</button>
+    <button class="btn" onclick="exportPDF()">导出PDF报告</button>
+    <button class="btn warning" onclick="generateTasks()">生成任务派单</button>
+    <button class="btn" onclick="saveHistory()">保存本次研判</button>
+  </div>
+</div>
+
+<div class="loading" id="loading">
+  <div style="text-align:center">
+    <div style="font-size:24px;margin-bottom:10px">...</div>
+    <div>智能研判中，请稍候...</div>
+  </div>
+</div>
+
+<!-- ========== 模态框：情景推演 ========== -->
+<div class="modal-overlay" id="modal-sim">
+  <div class="modal-box">
+    <div class="modal-header"><h3>情景推演</h3><button class="modal-close" onclick="closeModal('modal-sim')">&times;</button></div>
+    <div class="modal-body">
+      <p style="color:#6b7280;font-size:13px;margin-bottom:14px">假设不同雨量/预警情景，模拟分析风险变化</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label>24h累计雨量(mm)</label><input id="sim-rain24" type="number" value="100" min="0" max="500"></div>
+        <div class="form-group"><label>1h雨量(mm)</label><input id="sim-rain1" type="number" value="30" min="0" max="200"></div>
+        <div class="form-group"><label>预警等级</label>
+          <select id="sim-warning"><option value="0">无预警</option><option value="1">蓝色</option><option value="2" selected>黄色</option><option value="3">橙色</option><option value="4">红色</option></select>
+        </div>
+        <div class="form-group"><label>未来6h预报</label><input id="sim-forecast" type="text" value="中到大雨" placeholder="如：暴雨转中雨"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="modal-btn modal-btn-primary" onclick="runSimulation()">单情景推演</button>
+        <button class="modal-btn modal-btn-warning" onclick="runMultiSimulation()">多情景对比</button>
+      </div>
+      <div id="sim-result" style="margin-top:16px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 模态框：任务派单 ========== -->
+<div class="modal-overlay" id="modal-tasks">
+  <div class="modal-box" style="width:780px">
+    <div class="modal-header"><h3>任务派单与跟踪</h3><button class="modal-close" onclick="closeModal('modal-tasks')">&times;</button></div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="modal-btn modal-btn-success" onclick="generateTasks()">从研判结果生成任务</button>
+        <button class="modal-btn modal-btn-warning" onclick="batchAssignTasks()">一键全部派发</button>
+        <select id="task-filter" onchange="loadTasks()" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">
+          <option value="">全部状态</option><option value="pending">待指派</option><option value="in_progress">执行中</option><option value="completed">已完成</option>
+        </select>
+        <span id="task-stats" style="font-size:12px;color:#6b7280;line-height:32px;margin-left:auto"></span>
+      </div>
+      <div id="task-list" style="max-height:420px;overflow-y:auto"><div style="text-align:center;color:#94a3b8;padding:40px">暂无任务，请先执行研判后生成任务</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 任务指派子弹窗 -->
+<div class="modal-overlay" id="modal-assign" style="z-index:10002">
+  <div class="modal-box" style="width:480px">
+    <div class="modal-header"><h3 id="assign-title">指派任务</h3><button class="modal-close" onclick="closeModal('modal-assign')">&times;</button></div>
+    <div class="modal-body">
+      <div style="background:#f0f9ff;border-left:4px solid #2563eb;padding:10px 14px;border-radius:4px;margin-bottom:14px;font-size:13px">
+        <div id="assign-task-info"></div>
+      </div>
+      <div class="form-group"><label>选择值班人员</label></div>
+      <div id="staff-picker" style="max-height:200px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:12px"></div>
+      <div style="font-size:12px;color:#6b7280;margin-bottom:8px">或手动填写：</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div class="form-group"><label>姓名</label><input id="assign-name" type="text" placeholder="执行人姓名"></div>
+        <div class="form-group"><label>电话</label><input id="assign-phone" type="text" placeholder="手机号码"></div>
+      </div>
+      <button class="modal-btn modal-btn-primary" onclick="confirmAssign()" style="width:100%">确认指派并通知</button>
+    </div>
+  </div>
+</div>
+
+<!-- 任务详情子弹窗 -->
+<div class="modal-overlay" id="modal-task-detail" style="z-index:10002">
+  <div class="modal-box" style="width:500px">
+    <div class="modal-header"><h3>任务详情</h3><button class="modal-close" onclick="closeModal('modal-task-detail')">&times;</button></div>
+    <div class="modal-body" id="task-detail-body"></div>
+  </div>
+</div>
+
+<!-- ========== 模态框：水位监测 ========== -->
+<div class="modal-overlay" id="modal-water">
+  <div class="modal-box">
+    <div class="modal-header"><h3>水位监测</h3><button class="modal-close" onclick="closeModal('modal-water')">&times;</button></div>
+    <div class="modal-body">
+      <div id="water-list"><div style="text-align:center;color:#94a3b8;padding:40px">加载中...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 模态框：预警设置 ========== -->
+<div class="modal-overlay" id="modal-alerts">
+  <div class="modal-box">
+    <div class="modal-header"><h3>预警规则设置</h3><button class="modal-close" onclick="closeModal('modal-alerts')">&times;</button></div>
+    <div class="modal-body">
+      <div style="border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:14px;background:#f8fafc">
+        <div style="font-weight:600;font-size:13px;margin-bottom:10px">添加预警规则</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div class="form-group"><label>监测指标</label>
+            <select id="alert-condition"><option value="rain_24h">24h雨量</option><option value="rain_1h">1h雨量</option><option value="warning_level">预警等级</option><option value="risk_score">风险评分</option></select>
+          </div>
+          <div class="form-group"><label>阈值</label><input id="alert-threshold" type="number" value="50" min="0"></div>
+          <div class="form-group"><label>通知方式</label>
+            <select id="alert-notify"><option value="toast">系统弹窗</option><option value="sms">短信通知</option><option value="wechat">企业微信</option></select>
+          </div>
+        </div>
+        <button class="modal-btn modal-btn-primary" onclick="createAlertRule()" style="margin-top:6px">添加规则</button>
+      </div>
+      <div style="font-weight:600;font-size:13px;margin-bottom:8px">已有规则</div>
+      <div id="alert-rules-list"><div style="text-align:center;color:#94a3b8;padding:20px">加载中...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 模态框：自定义风险点 ========== -->
+<div class="modal-overlay" id="modal-hazard-edit">
+  <div class="modal-box">
+    <div class="modal-header"><h3>自定义风险点管理</h3><button class="modal-close" onclick="closeModal('modal-hazard-edit')">&times;</button></div>
+    <div class="modal-body">
+      <div style="border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:14px;background:#f8fafc">
+        <div style="font-weight:600;font-size:13px;margin-bottom:10px">添加风险点</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="form-group"><label>名称</label><input id="hz-name" type="text" placeholder="如：XX隧道"></div>
+          <div class="form-group"><label>类型</label>
+            <select id="hz-type"><option value="隧道">隧道</option><option value="地下空间">地下空间</option><option value="河道">河道</option><option value="危房">危房</option><option value="边坡">边坡</option><option value="易涝点">易涝点</option><option value="桥梁">桥梁</option></select>
+          </div>
+          <div class="form-group"><label>纬度</label><input id="hz-lat" type="number" step="0.0001" placeholder="23.1291"></div>
+          <div class="form-group"><label>经度</label><input id="hz-lng" type="number" step="0.0001" placeholder="113.2644"></div>
+          <div class="form-group"><label>风险等级</label>
+            <select id="hz-level"><option value="重大">重大</option><option value="较大">较大</option><option value="一般">一般</option></select>
+          </div>
+          <div class="form-group"><label>备注</label><input id="hz-note" type="text" placeholder="选填"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button class="modal-btn modal-btn-primary" onclick="saveCustomHazard()">保存风险点</button>
+          <button class="modal-btn modal-btn-outline" onclick="pickHazardFromMap()">从地图选点</button>
+        </div>
+      </div>
+      <div style="font-weight:600;font-size:13px;margin-bottom:8px">已添加的自定义风险点</div>
+      <div id="custom-hazard-list"><div style="text-align:center;color:#94a3b8;padding:20px">加载中...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 模态框：历史对比 ========== -->
+<div class="modal-overlay" id="modal-history">
+  <div class="modal-box">
+    <div class="modal-header"><h3>历史灾情对比</h3><button class="modal-close" onclick="closeModal('modal-history')">&times;</button></div>
+    <div class="modal-body">
+      <p style="color:#6b7280;font-size:13px;margin-bottom:14px">搜索与当前气象条件相似的历史研判记录</p>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="modal-btn modal-btn-primary" onclick="searchHistory()">搜索相似事件</button>
+      </div>
+      <div id="history-result"><div style="text-align:center;color:#94a3b8;padding:40px">点击搜索以查找历史相似事件</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== 全局变量 ====================
+var API_BASE = window.location.origin;
+var cvs, ctx;
+var mapState = { centerLat: 23.1291, centerLng: 113.2644, zoom: 13 };
+var layers = { terrain: true, contour: true, lowland: true, radar: false, heatmap: false, water: false };
+var demData = null;
+var lastJudgeResult = null;
+var _hazardData = [];
+var _riverPath = [];
+var _locatedPos = null;
+var _drawnShape = null;
+var _drawMode = null;
+var _drawStart = null;
+var _drawCurrent = null;
+var _polygonPoints = [];
+var _dragging = false;
+var _dragStartX = 0, _dragStartY = 0;
+var map = null; // 兼容层
+
+// ==================== 瓦片系统 ====================
+var _tileCache = {};
+var _tileLoading = {};
+var _tileFails = {};
+var TILE_SIZE = 256;
+// 国内可用瓦片源：高德wprd → 高德http → OSM
+var TILE_SOURCES = [
+  function(z,x,y){ var d=((x+y)%4)+1; return 'https://wprd0'+d+'.is.autonavi.com/appmaptile?x='+x+'&y='+y+'&z='+z+'&lang=zh_cn&size=1&scl=1&style=7'; },
+  function(z,x,y){ var d=((x+y)%4)+1; return 'http://wprd0'+d+'.is.autonavi.com/appmaptile?x='+x+'&y='+y+'&z='+z+'&lang=zh_cn&size=1&scl=1&style=7'; },
+  function(z,x,y){ return 'https://tile.openstreetmap.org/'+z+'/'+x+'/'+y+'.png'; }
+];
+var _curTileSrc = 0;
+var _tilesReady = false;
+var _tileErrCount = 0;
+var _tileLoadQueue = [];
+var _tileLoadActive = 0;
+var MAX_CONCURRENT = 6;
+var _isDragging = false;
+
+function _tileUrl(z, x, y) { return TILE_SOURCES[_curTileSrc](z, x, y); }
+function _lngLatToTile(lng, lat, z) {
+  var n = Math.pow(2, z);
+  var tx = Math.floor((lng + 180) / 360 * n);
+  var latR = lat * Math.PI / 180;
+  var ty = Math.floor((1 - Math.log(Math.tan(latR) + 1/Math.cos(latR)) / Math.PI) / 2 * n);
+  return {x: tx, y: ty};
+}
+function _tileToLngLat(tx, ty, z) {
+  var n = Math.pow(2, z);
+  var lng = tx / n * 360 - 180;
+  var lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * ty / n))) * 180 / Math.PI;
+  return {lng: lng, lat: lat};
+}
+function _processQueue() {
+  while (_tileLoadActive < MAX_CONCURRENT && _tileLoadQueue.length > 0) {
+    var item = _tileLoadQueue.shift();
+    _startLoad(item.z, item.x, item.y, item.key);
+  }
+}
+function _startLoad(z, x, y, key) {
+  _tileLoadActive++;
+  var img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = function() {
+    _tileCache[key] = img; delete _tileLoading[key]; _tilesReady = true;
+    _tileLoadActive--; _processQueue(); renderMap();
+  };
+  img.onerror = function() {
+    delete _tileLoading[key]; _tileLoadActive--;
+    _tileErrCount++; _tileFails[key] = (_tileFails[key]||0) + 1;
+    if (_tileErrCount >= 5 && _curTileSrc < TILE_SOURCES.length - 1) {
+      _curTileSrc++; _tileFails = {}; _tileCache = {}; _tileErrCount = 0;
+      _tileLoadQueue = []; _tileLoadActive = 0;
+      console.log('切换瓦片源:', _curTileSrc); renderMap();
+    }
+    _processQueue();
+  };
+  img.src = _tileUrl(z, x, y);
+}
+function _loadTile(z, x, y) {
+  var key = z+'/'+x+'/'+y;
+  if (_tileCache[key]) return _tileCache[key];
+  if (_tileLoading[key] || _tileFails[key] >= 2) return null;
+  // 拖拽中不加载新瓦片
+  if (_isDragging) return null;
+  _tileLoading[key] = true;
+  _tileLoadQueue.push({z:z, x:x, y:y, key:key});
+  _processQueue();
+  return null;
+}
+// 查找低一级zoom的缓存瓦片作为占位
+function _findParentTile(z, x, y) {
+  for (var dz = 1; dz <= 3; dz++) {
+    var pz = z - dz; if (pz < 1) break;
+    var px = x >> dz, py = y >> dz;
+    var pk = pz+'/'+px+'/'+py;
+    if (_tileCache[pk]) {
+      var subX = x - (px << dz), subY = y - (py << dz), subN = 1 << dz;
+      return { img:_tileCache[pk], sx: subX/subN*256, sy: subY/subN*256, sw: 256/subN, sh: 256/subN };
+    }
+  }
+  return null;
+}
+function _cleanTileCache() {
+  var keys = Object.keys(_tileCache);
+  if (keys.length > 500) {
+    keys.slice(0, keys.length - 300).forEach(function(k) { delete _tileCache[k]; });
+  }
+}
+function _renderTiles() {
+  var z = Math.round(mapState.zoom);
+  if (z < 1) z = 1; if (z > 18) z = 18;
+  var b = getViewBounds();
+  var tl = _lngLatToTile(b.swLng, b.neLat, z);
+  var br = _lngLatToTile(b.neLng, b.swLat, z);
+  var count = 0;
+  for (var tx = tl.x; tx <= br.x; tx++) {
+    for (var ty = tl.y; ty <= br.y; ty++) {
+      var nw = _tileToLngLat(tx, ty, z);
+      var se = _tileToLngLat(tx+1, ty+1, z);
+      var x1 = lngToX(nw.lng), y1 = latToY(nw.lat);
+      var x2 = lngToX(se.lng), y2 = latToY(se.lat);
+      if (x2 < 0 || x1 > cvs.width || y2 < 0 || y1 > cvs.height) continue;
+      var tImg = _loadTile(z, tx, ty);
+      if (tImg) {
+        ctx.drawImage(tImg, x1, y1, x2-x1, y2-y1); count++;
+      } else {
+        // 用低zoom的缓存瓦片放大显示作为占位
+        var parent = _findParentTile(z, tx, ty);
+        if (parent) {
+          ctx.drawImage(parent.img, parent.sx, parent.sy, parent.sw, parent.sh, x1, y1, x2-x1, y2-y1);
+          count++;
+        } else {
+          ctx.fillStyle = '#1e293b'; ctx.fillRect(x1, y1, x2-x1, y2-y1);
+        }
+      }
+    }
+  }
+  _cleanTileCache();
+  return count;
+}
+
+// ==================== 高程色阶（连续渐变） ====================
+var ELEV_STOPS = [
+  {elev:0,   r:8,   g:48,  b:107},
+  {elev:10,  r:21,  g:101, b:192},
+  {elev:20,  r:33,  g:150, b:243},
+  {elev:30,  r:67,  g:160, b:71},
+  {elev:50,  r:139, g:195, b:74},
+  {elev:80,  r:249, g:168, b:37},
+  {elev:120, r:239, g:108, b:0},
+  {elev:200, r:109, g:76,  b:65},
+  {elev:500, r:78,  g:52,  b:46}
+];
+function getElevRGB(e) {
+  if (e <= ELEV_STOPS[0].elev) return ELEV_STOPS[0];
+  for (var i = 1; i < ELEV_STOPS.length; i++) {
+    if (e <= ELEV_STOPS[i].elev) {
+      var t = (e - ELEV_STOPS[i-1].elev) / (ELEV_STOPS[i].elev - ELEV_STOPS[i-1].elev);
+      var a = ELEV_STOPS[i-1], b2 = ELEV_STOPS[i];
+      return { r: a.r+(b2.r-a.r)*t|0, g: a.g+(b2.g-a.g)*t|0, b: a.b+(b2.b-a.b)*t|0 };
+    }
+  }
+  return ELEV_STOPS[ELEV_STOPS.length-1];
+}
+// 保留旧接口兼容
+var ELEV_COLORS = [
+  {max:10,  fill:'#08306b'},{max:20,  fill:'#1565c0'},{max:30,  fill:'#2196f3'},
+  {max:50,  fill:'#43a047'},{max:80,  fill:'#8bc34a'},{max:120, fill:'#f9a825'},
+  {max:200, fill:'#ef6c00'},{max:99999,fill:'#6d4c41'}
+];
+function getElevColor(e) {
+  for (var i = 0; i < ELEV_COLORS.length; i++) if (e < ELEV_COLORS[i].max) return ELEV_COLORS[i];
+  return ELEV_COLORS[7];
+}
+
+// ==================== 认证相关 ====================
+function getToken() { return localStorage.getItem('sf_token') || ''; }
+function getUser() {
+  try { return JSON.parse(localStorage.getItem('sf_user') || 'null'); } catch(e) { return null; }
+}
+function authHeaders() {
+  var h = { 'Content-Type': 'application/json' };
+  var t = getToken();
+  if (t) h['Authorization'] = 'Bearer ' + t;
+  return h;
+}
+function doLogout() {
+  localStorage.removeItem('sf_token');
+  localStorage.removeItem('sf_user');
+  window.location.href = '/login';
+}
+function initUserBar() {
+  var user = getUser();
+  var roleNames = { admin:'管理员', operator:'指挥员', viewer:'查看者' };
+  if (user) {
+    document.getElementById('user-info').textContent = (user.display_name || user.username) + ' (' + (roleNames[user.role]||user.role) + ')';
+    document.getElementById('login-link').style.display = 'none';
+    document.getElementById('logout-link').style.display = 'inline';
+  }
+}
+
+// ==================== Canvas 2D 地图引擎 (Mercator投影) ====================
+function _mercY(lat) { var r = lat * Math.PI / 180; return Math.log(Math.tan(Math.PI/4 + r/2)); }
+function _invMercY(my) { return (2 * Math.atan(Math.exp(my)) - Math.PI/2) * 180 / Math.PI; }
+function getScale() { return 256 * Math.pow(2, mapState.zoom) / (2 * Math.PI); }
+function lngToX(lng) { return cvs.width/2 + (lng - mapState.centerLng) * Math.PI/180 * getScale(); }
+function latToY(lat) { return cvs.height/2 - (_mercY(lat) - _mercY(mapState.centerLat)) * getScale(); }
+function xToLng(x) { return mapState.centerLng + (x - cvs.width/2) / getScale() * 180/Math.PI; }
+function yToLat(y) { return _invMercY(_mercY(mapState.centerLat) + (cvs.height/2 - y) / getScale()); }
+
+function getViewBounds() {
+  return { swLat: yToLat(cvs.height), swLng: xToLng(0), neLat: yToLat(0), neLng: xToLng(cvs.width) };
+}
+
+function mapZoomIn() { if (mapState.zoom < 18) { mapState.zoom++; debouncedFetchDEM(); renderMap(); } }
+function mapZoomOut() { if (mapState.zoom > 5) { mapState.zoom--; debouncedFetchDEM(); renderMap(); } }
+
+function resizeCanvas() {
+  var container = document.getElementById('map');
+  cvs.width = container.clientWidth;
+  cvs.height = container.clientHeight;
+  renderMap();
+}
+
+function initMap() {
+  cvs = document.getElementById('mapCanvas');
+  if (!cvs) return;
+  ctx = cvs.getContext('2d');
+
+  // 创建兼容map对象
+  map = {
+    getCenter: function() { return { lat: mapState.centerLat, lng: mapState.centerLng }; },
+    getBounds: function() {
+      var b = getViewBounds();
+      return {
+        getSouthWest: function() { return { lat: b.swLat, lng: b.swLng }; },
+        getNorthEast: function() { return { lat: b.neLat, lng: b.neLng }; }
+      };
+    },
+    setView: function(latlng, zoom) {
+      mapState.centerLat = Array.isArray(latlng) ? latlng[0] : latlng.lat;
+      mapState.centerLng = Array.isArray(latlng) ? latlng[1] : latlng.lng;
+      if (zoom != null) mapState.zoom = zoom;
+      fetchDEM(); renderMap();
+    },
+    _events: {},
+    on: function(ev, fn) { if (!this._events[ev]) this._events[ev] = []; this._events[ev].push({fn:fn, once:false}); },
+    once: function(ev, fn) { if (!this._events[ev]) this._events[ev] = []; this._events[ev].push({fn:fn, once:true}); },
+    fire: function(ev, data) {
+      var arr = this._events[ev] || []; this._events[ev] = [];
+      arr.forEach(function(h) { h.fn(data); if (!h.once) map._events[ev].push(h); });
+    },
+    locate: function(opts) {
+      var self = this;
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function(pos) {
+            var ll = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            if (opts && opts.setView) { mapState.centerLat = ll.lat; mapState.centerLng = ll.lng; renderMap(); }
+            self.fire('locationfound', { latlng: ll });
+          },
+          function(err) { self.fire('locationerror', { message: err.message }); },
+          { timeout: opts.timeout || 8000, enableHighAccuracy: opts.enableHighAccuracy || false }
+        );
+      } else {
+        setTimeout(function() { self.fire('locationerror', { message: '浏览器不支持定位' }); }, 100);
+      }
+    }
+  };
+
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  // 鼠标事件
+  cvs.addEventListener('mousedown', onMouseDown);
+  cvs.addEventListener('mousemove', onMouseMove);
+  cvs.addEventListener('mouseup', onMouseUp);
+  cvs.addEventListener('mouseleave', onMouseUp);
+  cvs.addEventListener('wheel', onWheel, { passive: false });
+  cvs.addEventListener('click', onMapClick);
+  cvs.addEventListener('dblclick', onMapDblClick);
+
+  // 触摸事件
+  cvs.addEventListener('touchstart', onTouchStart, { passive: false });
+  cvs.addEventListener('touchmove', onTouchMove, { passive: false });
+  cvs.addEventListener('touchend', onTouchEnd);
+
+  document.getElementById('area-info').textContent = '地图就绪，请圈选区域';
+  fetchDEM();
+  geoLocate();
+}
+
+// ==================== 鼠标/触摸交互 ====================
+function onMouseDown(e) {
+  var rect = cvs.getBoundingClientRect();
+  var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  closeMapPopup();
+
+  if (_drawMode) {
+    if (_drawMode === 'rectangle' || _drawMode === 'circle') {
+      _drawStart = { lat: yToLat(my), lng: xToLng(mx) };
+      _drawCurrent = { lat: yToLat(my), lng: xToLng(mx) };
+    } else if (_drawMode === 'polygon') {
+      _polygonPoints.push({ lat: yToLat(my), lng: xToLng(mx) });
+      renderMap();
+    }
+    return;
+  }
+  _dragging = true; _isDragging = true; _dragStartX = mx; _dragStartY = my;
+  cvs.style.cursor = 'grabbing';
+}
+
+function onMouseMove(e) {
+  var rect = cvs.getBoundingClientRect();
+  var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  // 坐标追踪
+  document.getElementById('lng').textContent = xToLng(mx).toFixed(4);
+  document.getElementById('lat').textContent = yToLat(my).toFixed(4);
+
+  if (_dragging) {
+    var oldLng = xToLng(_dragStartX), oldLat = yToLat(_dragStartY);
+    var newLng = xToLng(mx), newLat = yToLat(my);
+    mapState.centerLng -= (newLng - oldLng);
+    mapState.centerLat -= (newLat - oldLat);
+    _dragStartX = mx; _dragStartY = my;
+    renderMap();
+  }
+  if (_drawMode && _drawStart && (_drawMode === 'rectangle' || _drawMode === 'circle')) {
+    _drawCurrent = { lat: yToLat(my), lng: xToLng(mx) };
+    renderMap();
+  }
+  if (_drawMode === 'polygon' && _polygonPoints.length > 0) {
+    _drawCurrent = { lat: yToLat(my), lng: xToLng(mx) };
+    renderMap();
+  }
+}
+
+function onMouseUp(e) {
+  if (_dragging) {
+    _dragging = false; _isDragging = false;
+    cvs.style.cursor = _drawMode ? 'crosshair' : 'grab';
+    // 停止拖拽后才加载新瓦片 + DEM
+    _tileLoadQueue = []; renderMap(); debouncedFetchDEM();
+  }
+  if (_drawMode && _drawStart && _drawCurrent && (_drawMode === 'rectangle' || _drawMode === 'circle')) {
+    finishDraw(_drawMode);
+  }
+}
+
+function onWheel(e) {
+  e.preventDefault();
+  var rect = cvs.getBoundingClientRect();
+  var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  var oldZoom = mapState.zoom;
+  if (e.deltaY < 0 && mapState.zoom < 18) mapState.zoom++;
+  else if (e.deltaY > 0 && mapState.zoom > 5) mapState.zoom--;
+  if (mapState.zoom !== oldZoom) {
+    // Mercator缩放：保持鼠标所指位置不动
+    var mouseLng = xToLng(mx), mouseLat = yToLat(my);
+    // 临时切到新zoom计算
+    var oldCLng = mapState.centerLng, oldCLat = mapState.centerLat;
+    // 反算新中心使鼠标位置对应同一经纬度
+    var newScale = getScale();
+    mapState.centerLng = mouseLng - (mx - cvs.width/2) / newScale * 180/Math.PI;
+    mapState.centerLat = _invMercY(_mercY(mouseLat) + (cvs.height/2 - my) / newScale);
+    document.getElementById('zoom-level').textContent = mapState.zoom;
+    // 缩放时清空队列，优先加载新zoom的瓦片
+    _tileLoadQueue = []; debouncedFetchDEM(); renderMap();
+  }
+}
+
+function onMapClick(e) {
+  if (_drawMode) return;
+  var rect = cvs.getBoundingClientRect();
+  var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  var pos = { lat: yToLat(my), lng: xToLng(mx) };
+
+  // 点击风险点
+  for (var i = 0; i < _hazardData.length; i++) {
+    var h = _hazardData[i]; if (!h.lat || !h.lng) continue;
+    if (Math.abs(mx - lngToX(h.lng)) < 14 && Math.abs(my - latToY(h.lat)) < 14) {
+      showMapPopup(mx, my, '<b>' + h.name + '</b><br>类型：' + h.type + '<br>等级：' + h.level + '<br>高程：' + h.elevation + 'm<br>位置：' + h.location);
+      return;
+    }
+  }
+  // 点击高程信息
+  if (demData) {
+    var b = demData.bounds, gs = demData.grid_size;
+    var latStep = (b.ne_lat - b.sw_lat) / gs, lngStep = (b.ne_lng - b.sw_lng) / gs;
+    var ci = Math.floor((pos.lat - b.sw_lat) / latStep), cj = Math.floor((pos.lng - b.sw_lng) / lngStep);
+    if (ci >= 0 && ci < gs && cj >= 0 && cj < gs) {
+      var idx = ci * (gs + 1) + cj, p = demData.points[idx];
+      if (p) {
+        var e1=p.elevation, e2=(demData.points[idx+1]||p).elevation, e3=(demData.points[idx+gs+1]||p).elevation, e4=(demData.points[idx+gs+2]||p).elevation;
+        var avg = (e1+e2+e3+e4)/4, mn = Math.min(e1,e2,e3,e4).toFixed(1), mxv = Math.max(e1,e2,e3,e4).toFixed(1);
+        var rt = avg<30?'<span style="color:#ef4444">极低洼，高风险</span>':avg<50?'<span style="color:#f59e0b">低洼区域</span>':'<span style="color:#10b981">正常高程</span>';
+        showMapPopup(mx, my, '<b>高程信息</b><br>平均海拔：<b>'+avg.toFixed(1)+'m</b><br>高差：'+mn+'m ~ '+mxv+'m<br>风险：'+rt+'<br><span style="color:#94a3b8;font-size:11px">'+pos.lat.toFixed(4)+'N, '+pos.lng.toFixed(4)+'E</span>');
+      }
+    }
+  }
+}
+
+function onMapDblClick(e) {
+  if (_drawMode === 'polygon' && _polygonPoints.length >= 3) { finishDraw('polygon'); }
+}
+
+// 触摸支持
+var _touchDist = 0, _touchZoom = 0;
+function onTouchStart(e) {
+  e.preventDefault(); var rect = cvs.getBoundingClientRect();
+  if (e.touches.length === 1) {
+    _dragging = true; _dragStartX = e.touches[0].clientX - rect.left; _dragStartY = e.touches[0].clientY - rect.top;
+  } else if (e.touches.length === 2) {
+    _dragging = false;
+    var dx = e.touches[0].clientX - e.touches[1].clientX, dy = e.touches[0].clientY - e.touches[1].clientY;
+    _touchDist = Math.sqrt(dx*dx+dy*dy); _touchZoom = mapState.zoom;
+  }
+}
+function onTouchMove(e) {
+  e.preventDefault(); var rect = cvs.getBoundingClientRect();
+  if (e.touches.length === 1 && _dragging) {
+    var mx = e.touches[0].clientX - rect.left, my = e.touches[0].clientY - rect.top;
+    var s = getScale();
+    mapState.centerLng -= (mx - _dragStartX) / s; mapState.centerLat += (my - _dragStartY) / s;
+    _dragStartX = mx; _dragStartY = my; renderMap();
+  } else if (e.touches.length === 2) {
+    var dx = e.touches[0].clientX - e.touches[1].clientX, dy = e.touches[0].clientY - e.touches[1].clientY;
+    var dist = Math.sqrt(dx*dx+dy*dy), nz = Math.round(_touchZoom + Math.log2(dist / _touchDist));
+    nz = Math.max(5, Math.min(18, nz));
+    if (nz !== mapState.zoom) { mapState.zoom = nz; renderMap(); }
+  }
+}
+function onTouchEnd(e) { _dragging = false; _isDragging = false; _tileLoadQueue = []; renderMap(); debouncedFetchDEM(); }
+
+// ==================== 弹窗 ====================
+function showMapPopup(px, py, html) {
+  var popup = document.getElementById('map-popup'), mapDiv = document.getElementById('map');
+  document.getElementById('map-popup-content').innerHTML = html;
+  popup.style.display = 'block';
+  popup.style.left = Math.min(px + 15, mapDiv.clientWidth - 270) + 'px';
+  popup.style.top = Math.min(py - 10, mapDiv.clientHeight - 160) + 'px';
+}
+function closeMapPopup() { document.getElementById('map-popup').style.display = 'none'; }
+
+// ==================== 主渲染 ====================
+var _renderQ = false;
+function renderMap() {
+  if (_renderQ) return; _renderQ = true;
+  requestAnimationFrame(function() { _renderQ = false; _doRender(); });
+}
+function _doRender() {
+  if (!cvs || !ctx) return;
+  var w = cvs.width, h = cvs.height;
+  ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, 0, w, h);
+  // 1. 底图瓦片（道路、建筑、地名）
+  var tileCount = _renderTiles();
+  // 拖拽中跳过重叠加层 → 流畅拖拽
+  if (_isDragging) { _renderScaleBar(); return; }
+  // 2. 半透明高程叠加
+  if (layers.terrain && demData) _renderElevGrid();
+  // 3. 经纬网格（仅无瓦片时明显）
+  if (!tileCount) _renderGeoGrid();
+  // 4. 低洼高亮
+  if (layers.lowland && demData) _renderLowland();
+  // 5. 等高线标注
+  if (layers.contour && demData) _renderElevLabels();
+  // 6. 气象雷达回波
+  if (layers.radar) _renderRadarOverlay();
+  // 7. 风险热力图
+  if (layers.heatmap) _renderHeatmap();
+  // 8. 风险点
+  _renderHazards();
+  // 9. 水位站点标记
+  if (layers.water) _renderWaterStations();
+  _renderLocationMarker();
+  if (_drawnShape) _renderDrawnShape();
+  if (_drawMode && ((_drawStart && _drawCurrent) || _polygonPoints.length > 0)) _renderDrawPreview();
+  _renderScaleBar();
+}
+
+// ==================== 地理网格 ====================
+function _renderGeoGrid() {
+  var b = getViewBounds(), sp;
+  if (mapState.zoom >= 15) sp = 0.005;
+  else if (mapState.zoom >= 13) sp = 0.01;
+  else if (mapState.zoom >= 11) sp = 0.05;
+  else if (mapState.zoom >= 9) sp = 0.1;
+  else sp = 0.5;
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 0.5;
+  ctx.font = '10px monospace'; ctx.fillStyle = 'rgba(255,255,255,0.35)';
+
+  var startLng = Math.floor(b.swLng / sp) * sp;
+  for (var lng = startLng; lng <= b.neLng + sp; lng += sp) {
+    var x = lngToX(lng); ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, cvs.height); ctx.stroke();
+    if (x > 5 && x < cvs.width - 40) ctx.fillText(lng.toFixed(sp < 0.01 ? 3 : 2) + '\u00b0E', x + 3, 14);
+  }
+  var startLat = Math.floor(b.swLat / sp) * sp;
+  for (var lat = startLat; lat <= b.neLat + sp; lat += sp) {
+    var y = latToY(lat); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cvs.width, y); ctx.stroke();
+    if (y > 20 && y < cvs.height - 5) ctx.fillText(lat.toFixed(sp < 0.01 ? 3 : 2) + '\u00b0N', 4, y - 3);
+  }
+}
+
+// ==================== 高程网格 ====================
+// ==================== 高程渲染（像素级平滑渐变） ====================
+function _renderElevGrid() {
+  var pts = demData.points, gs = demData.grid_size, b = demData.bounds;
+  var hasT = _tilesReady;
+  var alpha = hasT ? 90 : 140;
+  // DEM区域在canvas上的像素范围
+  var px0 = lngToX(b.sw_lng), py0 = latToY(b.ne_lat);
+  var px1 = lngToX(b.ne_lng), py1 = latToY(b.sw_lat);
+  var dw = Math.round(px1 - px0), dh = Math.round(py1 - py0);
+  if (dw < 2 || dh < 2) return;
+  // 限制分辨率避免过大
+  var maxRes = 300;
+  var rw = Math.min(dw, maxRes), rh = Math.min(dh, maxRes);
+  // 构建高程网格
+  var grid = [];
+  for (var r = 0; r <= gs; r++) {
+    var row = [];
+    for (var c = 0; c <= gs; c++) { var idx = r*(gs+1)+c; row.push(pts[idx] ? pts[idx].elevation : 0); }
+    grid.push(row);
+  }
+  // 创建ImageData，用双线性插值逐像素着色
+  var imgData = ctx.createImageData(rw, rh);
+  var d = imgData.data;
+  for (var py = 0; py < rh; py++) {
+    var gy = (rh-1-py) / (rh-1) * gs;
+    var gi = Math.min(Math.floor(gy), gs-1), fy = gy - gi;
+    for (var px = 0; px < rw; px++) {
+      var gx = px / (rw-1) * gs;
+      var gj = Math.min(Math.floor(gx), gs-1), fx = gx - gj;
+      var elev = grid[gi][gj]*(1-fx)*(1-fy) + grid[gi][gj+1]*fx*(1-fy) + grid[gi+1][gj]*(1-fx)*fy + grid[gi+1][gj+1]*fx*fy;
+      var rgb = getElevRGB(elev);
+      var off = (py*rw+px)*4;
+      d[off]=rgb.r; d[off+1]=rgb.g; d[off+2]=rgb.b; d[off+3]=alpha;
+    }
+  }
+  // 画到临时canvas再缩放到目标区域
+  var tmp = document.createElement('canvas');
+  tmp.width = rw; tmp.height = rh;
+  tmp.getContext('2d').putImageData(imgData, 0, 0);
+  ctx.drawImage(tmp, px0, py0, dw, dh);
+}
+
+// ==================== 等高线标签 ====================
+// ==================== 等高线标签（稀疏+圆角气泡） ====================
+function _renderElevLabels() {
+  var pts = demData.points, gs = demData.grid_size, b = demData.bounds;
+  var latS = (b.ne_lat - b.sw_lat) / gs, lngS = (b.ne_lng - b.sw_lng) / gs;
+  ctx.font = '10px "Microsoft YaHei",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  // 更稀疏：每4格标一个
+  var step = Math.max(3, Math.round(gs / 5));
+  for (var i = step; i < gs; i += step) for (var j = step; j < gs; j += step) {
+    var idx = i * (gs + 1) + j; if (!pts[idx]) continue;
+    var elev = pts[idx].elevation;
+    var x = lngToX(b.sw_lng + (j+0.5)*lngS), y = latToY(b.sw_lat + (i+0.5)*latS);
+    if (x < 20 || x > cvs.width-20 || y < 20 || y > cvs.height-20) continue;
+    var text = elev.toFixed(0) + 'm', tw = ctx.measureText(text).width;
+    var bw = tw+10, bh = 18, bx = x-bw/2, by = y-bh/2, br = 4;
+    // 圆角气泡背景
+    ctx.globalAlpha = 0.75;
+    ctx.fillStyle = elev<30 ? 'rgba(220,38,38,0.85)' : elev<50 ? 'rgba(234,88,12,0.8)' : 'rgba(0,0,0,0.65)';
+    ctx.beginPath();
+    ctx.moveTo(bx+br,by); ctx.lineTo(bx+bw-br,by); ctx.quadraticCurveTo(bx+bw,by,bx+bw,by+br);
+    ctx.lineTo(bx+bw,by+bh-br); ctx.quadraticCurveTo(bx+bw,by+bh,bx+bw-br,by+bh);
+    ctx.lineTo(bx+br,by+bh); ctx.quadraticCurveTo(bx,by+bh,bx,by+bh-br);
+    ctx.lineTo(bx,by+br); ctx.quadraticCurveTo(bx,by,bx+br,by);
+    ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1.0;
+    ctx.fillStyle = '#fff'; ctx.fillText(text, x, y);
+  }
+  ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+}
+
+// ==================== 低洼高亮 ====================
+// ==================== 低洼高亮（平滑渲染） ====================
+function _renderLowland() {
+  var pts = demData.points, gs = demData.grid_size, b = demData.bounds;
+  var hasT = _tilesReady;
+  var px0 = lngToX(b.sw_lng), py0 = latToY(b.ne_lat);
+  var px1 = lngToX(b.ne_lng), py1 = latToY(b.sw_lat);
+  var dw = Math.round(px1-px0), dh = Math.round(py1-py0);
+  if (dw < 2 || dh < 2) return;
+  var maxRes = 200;
+  var rw = Math.min(dw, maxRes), rh = Math.min(dh, maxRes);
+  var grid = [];
+  for (var r = 0; r <= gs; r++) {
+    var row = [];
+    for (var c = 0; c <= gs; c++) { var idx=r*(gs+1)+c; row.push(pts[idx]?pts[idx].elevation:999); }
+    grid.push(row);
+  }
+  var imgData = ctx.createImageData(rw, rh);
+  var d = imgData.data, hasPixel = false;
+  for (var py = 0; py < rh; py++) {
+    var gy = (rh-1-py)/(rh-1)*gs, gi = Math.min(Math.floor(gy),gs-1), fy = gy-gi;
+    for (var px = 0; px < rw; px++) {
+      var gx = px/(rw-1)*gs, gj = Math.min(Math.floor(gx),gs-1), fx = gx-gj;
+      var elev = grid[gi][gj]*(1-fx)*(1-fy)+grid[gi][gj+1]*fx*(1-fy)+grid[gi+1][gj]*(1-fx)*fy+grid[gi+1][gj+1]*fx*fy;
+      var off = (py*rw+px)*4;
+      if (elev < 50) {
+        hasPixel = true;
+        if (elev < 30) {
+          var intensity = 1 - elev/30;
+          d[off]=220; d[off+1]=38; d[off+2]=38; d[off+3]=Math.round(intensity*(hasT?50:70));
+        } else {
+          var intensity = 1 - (elev-30)/20;
+          d[off]=245; d[off+1]=158; d[off+2]=11; d[off+3]=Math.round(intensity*(hasT?30:45));
+        }
+      }
+    }
+  }
+  if (!hasPixel) return;
+  var tmp = document.createElement('canvas');
+  tmp.width = rw; tmp.height = rh;
+  tmp.getContext('2d').putImageData(imgData, 0, 0);
+  ctx.drawImage(tmp, px0, py0, dw, dh);
+}
+
+// ==================== 风险点标记 ====================
+function _renderHazards() {
+  _hazardData.forEach(function(h) {
+    if (!h.lat || !h.lng) return;
+    var x = lngToX(h.lng), y = latToY(h.lat);
+    if (x < -20 || x > cvs.width+20 || y < -20 || y > cvs.height+20) return;
+    // 外圈
+    ctx.beginPath(); ctx.arc(x, y, 11, 0, Math.PI*2);
+    ctx.fillStyle = h.level==='重大' ? 'rgba(220,38,38,0.25)' : 'rgba(245,158,11,0.25)'; ctx.fill();
+    // 内点
+    ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2);
+    ctx.fillStyle = h.level==='重大' ? '#dc2626' : '#f59e0b'; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    // 名称
+    if (mapState.zoom >= 11) {
+      ctx.font = '11px "Microsoft YaHei"'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+      ctx.fillText(h.name, x, y - 15); ctx.textAlign = 'start';
+    }
+  });
+}
+
+// ==================== 定位标记 ====================
+function _renderLocationMarker() {
+  if (!_locatedPos) return;
+  var x = lngToX(_locatedPos.lng), y = latToY(_locatedPos.lat);
+  if (x < -30 || x > cvs.width+30 || y < -30 || y > cvs.height+30) return;
+  ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(37,99,235,0.15)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI*2);
+  ctx.fillStyle = '#2563eb'; ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.stroke();
+}
+
+// ==================== 比例尺 ====================
+function _renderScaleBar() {
+  var pxPerKm = getScale() / 111 * Math.cos(mapState.centerLat * Math.PI / 180);
+  var target = 100, targetKm = target / pxPerKm;
+  var nice = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100], niceKm = nice[nice.length-1];
+  for (var i = 0; i < nice.length; i++) { if (nice[i] >= targetKm * 0.4) { niceKm = nice[i]; break; } }
+  var barPx = niceKm * pxPerKm, bx = 20, by = cvs.height - 25;
+  ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(bx-4, by-16, barPx+8, 24);
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx+barPx, by);
+  ctx.moveTo(bx, by-5); ctx.lineTo(bx, by+3); ctx.moveTo(bx+barPx, by-5); ctx.lineTo(bx+barPx, by+3); ctx.stroke();
+  ctx.font = '11px "Microsoft YaHei"'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+  ctx.fillText(niceKm >= 1 ? niceKm + 'km' : (niceKm*1000) + 'm', bx + barPx/2, by - 5); ctx.textAlign = 'start';
+}
+
+// ==================== 气象雷达回波叠加 ====================
+var _radarData = null;
+function _renderRadarOverlay() {
+  // 生成模拟雷达回波数据（实际项目对接气象雷达API）
+  if (!_radarData || _radarData.zoom !== Math.round(mapState.zoom)) {
+    var b = getViewBounds(), res = 60;
+    var latStep = (b.neLat - b.swLat) / res, lngStep = (b.neLng - b.swLng) / res;
+    var grid = [];
+    var t = Date.now() / 10000;
+    for (var i = 0; i < res; i++) for (var j = 0; j < res; j++) {
+      var lat = b.swLat + i * latStep, lng = b.swLng + j * lngStep;
+      // Perlin-like噪声模拟雨带移动
+      var v = Math.sin(lat*8+t)*Math.cos(lng*6-t*0.7)*0.4 + Math.sin(lat*3-t*1.2)*Math.cos(lng*4+t)*0.3 + Math.sin(lat*15+lng*12)*0.15;
+      v = Math.max(0, (v + 0.2) * 1.2); // 偏移使部分区域有回波
+      grid.push({lat:lat, lng:lng, v:Math.min(v, 1)});
+    }
+    _radarData = {grid:grid, res:res, bounds:b, zoom:Math.round(mapState.zoom)};
+  }
+  var g2 = _radarData, res = g2.res, b = g2.bounds;
+  var px0 = lngToX(b.swLng), py0 = latToY(b.neLat);
+  var px1 = lngToX(b.neLng), py1 = latToY(b.swLat);
+  var dw = Math.round(px1-px0), dh = Math.round(py1-py0);
+  if (dw < 2 || dh < 2) return;
+  var rw = Math.min(dw, 200), rh = Math.min(dh, 200);
+  var imgData = ctx.createImageData(rw, rh);
+  var d = imgData.data;
+  for (var py = 0; py < rh; py++) {
+    var gy = (rh-1-py)/(rh-1)*(res-1);
+    var gi = Math.min(Math.floor(gy), res-2), fy = gy-gi;
+    for (var px = 0; px < rw; px++) {
+      var gx = px/(rw-1)*(res-1);
+      var gj = Math.min(Math.floor(gx), res-2), fx = gx-gj;
+      var i00=gi*res+gj, i01=gi*res+gj+1, i10=(gi+1)*res+gj, i11=(gi+1)*res+gj+1;
+      var v = g2.grid[i00].v*(1-fx)*(1-fy)+g2.grid[i01].v*fx*(1-fy)+g2.grid[i10].v*(1-fx)*fy+g2.grid[i11].v*fx*fy;
+      if (v < 0.05) continue;
+      var off = (py*rw+px)*4;
+      // 雷达色阶: 绿->黄->橙->红->紫
+      if (v < 0.25) { d[off]=0; d[off+1]=Math.round(180+v*300); d[off+2]=0; }
+      else if (v < 0.5) { d[off]=Math.round((v-0.25)*4*255); d[off+1]=230; d[off+2]=0; }
+      else if (v < 0.75) { d[off]=255; d[off+1]=Math.round(230-(v-0.5)*4*180); d[off+2]=0; }
+      else { d[off]=220; d[off+1]=0; d[off+2]=Math.round((v-0.75)*4*200); }
+      d[off+3] = Math.round(v * 120);
+    }
+  }
+  var tmp = document.createElement('canvas');
+  tmp.width = rw; tmp.height = rh;
+  tmp.getContext('2d').putImageData(imgData, 0, 0);
+  ctx.drawImage(tmp, px0, py0, dw, dh);
+}
+// 雷达动画：开启时每3秒刷新
+var _radarTimer = null;
+function _startRadarAnim() {
+  if (_radarTimer) return;
+  _radarTimer = setInterval(function() { if (layers.radar) { _radarData = null; renderMap(); } }, 3000);
+}
+
+// ==================== 风险热力图 ====================
+function _renderHeatmap() {
+  if (!_hazardData || !_hazardData.length) return;
+  var w = cvs.width, h = cvs.height;
+  var imgData = ctx.createImageData(w, h);
+  var d = imgData.data;
+  var buf = new Float32Array(w * h); // 热度缓冲
+  // 每个风险点在像素空间产生高斯热斑
+  var radius = Math.max(40, Math.min(120, mapState.zoom * 8));
+  _hazardData.forEach(function(hz) {
+    if (!hz.lat || !hz.lng) return;
+    var cx = lngToX(hz.lng), cy = latToY(hz.lat);
+    var weight = hz.level === '重大' ? 1.0 : hz.level === '较大' ? 0.7 : 0.4;
+    var x0 = Math.max(0, Math.floor(cx - radius)), x1 = Math.min(w-1, Math.ceil(cx + radius));
+    var y0 = Math.max(0, Math.floor(cy - radius)), y1 = Math.min(h-1, Math.ceil(cy + radius));
+    var r2 = radius * radius;
+    for (var py = y0; py <= y1; py++) {
+      var dy = py - cy;
+      for (var px = x0; px <= x1; px++) {
+        var dx = px - cx, dist2 = dx*dx + dy*dy;
+        if (dist2 < r2) {
+          buf[py*w+px] += weight * (1 - dist2/r2);
+        }
+      }
+    }
+  });
+  // 归一化并着色
+  var maxVal = 0;
+  for (var i = 0; i < buf.length; i++) if (buf[i] > maxVal) maxVal = buf[i];
+  if (maxVal < 0.01) return;
+  var hasPixel = false;
+  for (var i = 0; i < buf.length; i++) {
+    var v = buf[i] / maxVal;
+    if (v < 0.05) continue;
+    hasPixel = true;
+    var off = i * 4;
+    // 蓝->绿->黄->红 色阶
+    if (v < 0.25) { d[off]=0; d[off+1]=0; d[off+2]=Math.round(v*4*255); }
+    else if (v < 0.5) { d[off]=0; d[off+1]=Math.round((v-0.25)*4*255); d[off+2]=Math.round((0.5-v)*4*255); }
+    else if (v < 0.75) { d[off]=Math.round((v-0.5)*4*255); d[off+1]=255; d[off+2]=0; }
+    else { d[off]=255; d[off+1]=Math.round((1-v)*4*255); d[off+2]=0; }
+    d[off+3] = Math.round(Math.min(v*1.5, 1) * 140);
+  }
+  if (!hasPixel) return;
+  var tmp = document.createElement('canvas');
+  tmp.width = w; tmp.height = h;
+  tmp.getContext('2d').putImageData(imgData, 0, 0);
+  ctx.drawImage(tmp, 0, 0);
+}
+
+// ==================== 水位站点标记 ====================
+var _waterStationsCache = null;
+var _waterLastLoad = 0;
+function _renderWaterStations() {
+  // 每60秒从后端加载一次
+  if (!_waterStationsCache || Date.now() - _waterLastLoad > 60000) {
+    _waterLastLoad = Date.now();
+    fetch(API_BASE + '/api/water/stations', {headers:authHeaders()})
+      .then(function(r){return r.json()})
+      .then(function(data) {
+        _waterStationsCache = data.stations || [];
+        renderMap();
+      })
+      .catch(function(){});
+    if (!_waterStationsCache) return;
+  }
+  _waterStationsCache.forEach(function(s) {
+    if (!s.lat || !s.lng) return;
+    var x = lngToX(s.lng), y = latToY(s.lat);
+    if (x < -20 || x > cvs.width+20 || y < -20 || y > cvs.height+20) return;
+    var cls = s.alert_status || 'normal';
+    var color = cls==='danger'?'#dc2626':cls==='warning'?'#f59e0b':'#2563eb';
+    // 水滴形标记
+    ctx.beginPath();
+    ctx.arc(x, y-6, 8, Math.PI*0.2, Math.PI*0.8, true);
+    ctx.lineTo(x, y+6);
+    ctx.closePath();
+    ctx.fillStyle = color; ctx.globalAlpha = 0.9; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.globalAlpha = 1;
+    // 水位数值
+    if (mapState.zoom >= 11) {
+      var level = (s.current_level || 0).toFixed(1) + 'm';
+      ctx.font = 'bold 11px "Microsoft YaHei"'; ctx.textAlign = 'center';
+      ctx.fillStyle = '#fff';
+      ctx.fillText(level, x, y - 8);
+      ctx.fillStyle = color;
+      ctx.fillText(s.name, x, y + 18);
+      ctx.textAlign = 'start';
+    }
+  });
+}
+
+// ==================== 绘制区域选择 ====================
+function _renderDrawnShape() {
+  ctx.globalAlpha = 0.25; ctx.fillStyle = '#2563eb'; ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 2;
+  if (_drawnShape.type === 'rectangle') {
+    var x1=lngToX(_drawnShape.swLng), y1=latToY(_drawnShape.neLat), x2=lngToX(_drawnShape.neLng), y2=latToY(_drawnShape.swLat);
+    ctx.fillRect(x1,y1,x2-x1,y2-y1); ctx.globalAlpha=0.8; ctx.strokeRect(x1,y1,x2-x1,y2-y1);
+  } else if (_drawnShape.type === 'circle') {
+    var cx=lngToX(_drawnShape.centerLng), cy=latToY(_drawnShape.centerLat);
+    var rDeg = _drawnShape.radius / 111000, rPx = rDeg * getScale();
+    ctx.beginPath(); ctx.arc(cx,cy,rPx,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=0.8; ctx.stroke();
+  } else if (_drawnShape.type === 'polygon') {
+    var pts = _drawnShape.points; if (pts.length < 3) return;
+    ctx.beginPath(); ctx.moveTo(lngToX(pts[0].lng), latToY(pts[0].lat));
+    for (var i=1;i<pts.length;i++) ctx.lineTo(lngToX(pts[i].lng), latToY(pts[i].lat));
+    ctx.closePath(); ctx.fill(); ctx.globalAlpha=0.8; ctx.stroke();
+  }
+  ctx.globalAlpha = 1.0;
+}
+
+function _renderDrawPreview() {
+  ctx.setLineDash([6,4]); ctx.strokeStyle = '#93c5fd'; ctx.lineWidth = 2; ctx.fillStyle = '#2563eb';
+  if (_drawMode === 'rectangle' && _drawStart && _drawCurrent) {
+    var x1=lngToX(_drawStart.lng),y1=latToY(_drawStart.lat),x2=lngToX(_drawCurrent.lng),y2=latToY(_drawCurrent.lat);
+    ctx.globalAlpha=0.15; ctx.fillRect(x1,y1,x2-x1,y2-y1); ctx.globalAlpha=0.7; ctx.strokeRect(x1,y1,x2-x1,y2-y1);
+  } else if (_drawMode === 'circle' && _drawStart && _drawCurrent) {
+    var cx=lngToX(_drawStart.lng),cy=latToY(_drawStart.lat);
+    var dx2=lngToX(_drawCurrent.lng)-cx, dy2=latToY(_drawCurrent.lat)-cy, r=Math.sqrt(dx2*dx2+dy2*dy2);
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.globalAlpha=0.15; ctx.fill(); ctx.globalAlpha=0.7; ctx.stroke();
+  } else if (_drawMode === 'polygon' && _polygonPoints.length > 0) {
+    ctx.globalAlpha = 0.7; ctx.beginPath();
+    ctx.moveTo(lngToX(_polygonPoints[0].lng), latToY(_polygonPoints[0].lat));
+    for (var i=1;i<_polygonPoints.length;i++) ctx.lineTo(lngToX(_polygonPoints[i].lng), latToY(_polygonPoints[i].lat));
+    if (_drawCurrent) ctx.lineTo(lngToX(_drawCurrent.lng), latToY(_drawCurrent.lat));
+    ctx.stroke();
+    _polygonPoints.forEach(function(p) {
+      ctx.beginPath(); ctx.arc(lngToX(p.lng), latToY(p.lat), 4, 0, Math.PI*2);
+      ctx.fillStyle='#60a5fa'; ctx.globalAlpha=1; ctx.fill();
+    });
+  }
+  ctx.setLineDash([]); ctx.globalAlpha = 1.0;
+}
+
+// ==================== 圈选工具 ====================
+function startDraw(type) {
+  _drawMode = type; _drawStart = null; _drawCurrent = null; _polygonPoints = [];
+  _drawnShape = null;
+  cvs.style.cursor = 'crosshair';
+  showToast(type==='polygon' ? '单击添加顶点，双击完成圈选' : '按住鼠标拖拽绘制' + (type==='rectangle'?'矩形':'圆形'));
+  renderMap();
+}
+
+function finishDraw(type) {
+  if (type === 'rectangle' && _drawStart && _drawCurrent) {
+    _drawnShape = {
+      type:'rectangle',
+      swLat: Math.min(_drawStart.lat, _drawCurrent.lat), swLng: Math.min(_drawStart.lng, _drawCurrent.lng),
+      neLat: Math.max(_drawStart.lat, _drawCurrent.lat), neLng: Math.max(_drawStart.lng, _drawCurrent.lng)
+    };
+    var dLat = Math.abs(_drawCurrent.lat - _drawStart.lat), dLng = Math.abs(_drawCurrent.lng - _drawStart.lng);
+    var cLat = (_drawStart.lat + _drawCurrent.lat) / 2;
+    var area = (dLat * 111) * (dLng * 111 * Math.cos(cLat * Math.PI / 180));
+    document.getElementById('area-info').innerHTML = '已选矩形区域约 ' + area.toFixed(2) + ' km\u00b2';
+  } else if (type === 'circle' && _drawStart && _drawCurrent) {
+    var dLatM = (_drawCurrent.lat - _drawStart.lat) * 111000;
+    var dLngM = (_drawCurrent.lng - _drawStart.lng) * 111000 * Math.cos(_drawStart.lat * Math.PI / 180);
+    var radius = Math.sqrt(dLatM*dLatM + dLngM*dLngM);
+    _drawnShape = { type:'circle', centerLat:_drawStart.lat, centerLng:_drawStart.lng, radius:radius };
+    var area = Math.PI * radius * radius / 1e6;
+    document.getElementById('area-info').innerHTML = '已选圆形区域约 ' + area.toFixed(2) + ' km\u00b2';
+  } else if (type === 'polygon' && _polygonPoints.length >= 3) {
+    _drawnShape = { type:'polygon', points:_polygonPoints.slice() };
+    var area = 0, n = _polygonPoints.length;
+    for (var i = 0; i < n; i++) { var j = (i+1)%n; area += _polygonPoints[i].lng * _polygonPoints[j].lat - _polygonPoints[j].lng * _polygonPoints[i].lat; }
+    var avgLat = _polygonPoints.reduce(function(s,p){return s+p.lat;},0) / n;
+    area = Math.abs(area)/2 * 111*111 * Math.cos(avgLat * Math.PI / 180);
+    document.getElementById('area-info').innerHTML = '已选多边形区域约 ' + area.toFixed(2) + ' km\u00b2';
+  }
+  _drawMode = null; _drawStart = null; _drawCurrent = null; _polygonPoints = [];
+  cvs.style.cursor = 'grab'; renderMap();
+  // 圈选完成后，自动本地化所有数据
+  if (_drawnShape) onAreaSelected();
+}
+
+// ==================== 圈选后数据本地化 ====================
+function getShapeCenter(shape) {
+  if (!shape) return null;
+  if (shape.type === 'rectangle') return { lat: (shape.swLat + shape.neLat) / 2, lng: (shape.swLng + shape.neLng) / 2 };
+  if (shape.type === 'circle') return { lat: shape.centerLat, lng: shape.centerLng };
+  if (shape.type === 'polygon' && shape.points && shape.points.length) {
+    var sLat = 0, sLng = 0;
+    shape.points.forEach(function(p) { sLat += p.lat; sLng += p.lng; });
+    return { lat: sLat / shape.points.length, lng: sLng / shape.points.length };
+  }
+  return null;
+}
+
+function getShapeBounds(shape) {
+  if (!shape) return null;
+  if (shape.type === 'rectangle') return { swLat: shape.swLat, swLng: shape.swLng, neLat: shape.neLat, neLng: shape.neLng };
+  if (shape.type === 'circle') {
+    var dLat = shape.radius / 111000, dLng = shape.radius / (111000 * Math.cos(shape.centerLat * Math.PI / 180));
+    return { swLat: shape.centerLat - dLat, swLng: shape.centerLng - dLng, neLat: shape.centerLat + dLat, neLng: shape.centerLng + dLng };
+  }
+  if (shape.type === 'polygon' && shape.points && shape.points.length) {
+    var lats = shape.points.map(function(p){return p.lat;}), lngs = shape.points.map(function(p){return p.lng;});
+    return { swLat: Math.min.apply(null,lats), swLng: Math.min.apply(null,lngs), neLat: Math.max.apply(null,lats), neLng: Math.max.apply(null,lngs) };
+  }
+  return null;
+}
+
+function pointInShape(lat, lng, shape) {
+  if (!shape) return true;
+  if (shape.type === 'rectangle') return lat >= shape.swLat && lat <= shape.neLat && lng >= shape.swLng && lng <= shape.neLng;
+  if (shape.type === 'circle') {
+    var dLatM = (lat - shape.centerLat) * 111000, dLngM = (lng - shape.centerLng) * 111000 * Math.cos(shape.centerLat * Math.PI / 180);
+    return Math.sqrt(dLatM*dLatM + dLngM*dLngM) <= shape.radius;
+  }
+  if (shape.type === 'polygon') {
+    // 射线法判断点是否在多边形内
+    var inside = false, pts = shape.points, n = pts.length;
+    for (var i = 0, j = n - 1; i < n; j = i++) {
+      if ((pts[i].lat > lat) !== (pts[j].lat > lat) && lng < (pts[j].lng - pts[i].lng) * (lat - pts[i].lat) / (pts[j].lat - pts[i].lat) + pts[i].lng) inside = !inside;
+    }
+    return inside;
+  }
+  return true;
+}
+
+function onAreaSelected() {
+  var center = getShapeCenter(_drawnShape);
+  if (!center) return;
+
+  // 1. 更新定位到选定区域中心
+  _locatedPos = { lat: center.lat, lng: center.lng };
+  showToast('正在加载选定区域数据...');
+
+  // 2. 地图平移到选定区域中心
+  if (map) {
+    map.setView([center.lat, center.lng], mapState.zoom);
+  }
+
+  // 3. 刷新气象数据（用区域中心坐标）
+  refreshWeather();
+
+  // 4. 刷新潮汐数据
+  refreshTideData();
+
+  // 5. 加载并过滤风险点到选定区域
+  loadAndFilterHazards();
+
+  // 6. 立即更新位置显示，然后异步反向地理编码获取区域名称
+  document.getElementById('loc-info').textContent = '选定区域: ' + center.lat.toFixed(4) + ', ' + center.lng.toFixed(4) + ' (定位中...)';
+  reverseGeocode(center.lat, center.lng);
+
+  // 7. 刷新DEM地形
+  setTimeout(fetchDEM, 300);
+}
+
+function loadAndFilterHazards() {
+  var bounds = getShapeBounds(_drawnShape);
+  var boundsParam = bounds ? '&sw_lat=' + bounds.swLat + '&sw_lng=' + bounds.swLng + '&ne_lat=' + bounds.neLat + '&ne_lng=' + bounds.neLng : '';
+  fetch(API_BASE + '/api/hazards?filter=area' + boundsParam, {headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      var hazards = data.hazards || [];
+      // 客户端进一步精确过滤（矩形/圆形/多边形）
+      var filtered = hazards.filter(function(h) {
+        if (!h.lat || !h.lng) return false;
+        return pointInShape(h.lat, h.lng, _drawnShape);
+      });
+      _hazardData = filtered;
+      // 更新风险点统计
+      var stats = {};
+      filtered.forEach(function(h) { var t = h.type || ''; stats[t] = (stats[t] || 0) + 1; });
+      var el = document.getElementById('hazard-stats');
+      if (el) {
+        el.innerHTML = '<div class="item">易涝点：' + ((stats['易涝点']||0) + (stats['桥下']||0)) + '个</div>'
+          + '<div class="item">危房：' + (stats['危房']||0) + '处</div>'
+          + '<div class="item">地下空间：' + (stats['地下空间']||0) + '个</div>'
+          + '<div class="item">河道：' + (stats['河道']||0) + '段</div>'
+          + '<div class="item">隧道：' + (stats['隧道']||0) + '处</div>'
+          + '<div class="item" style="color:#60a5fa;font-weight:bold">区域内合计：' + filtered.length + '处</div>';
+      }
+      renderMap();
+      showToast('已定位到选定区域，发现 ' + filtered.length + ' 个风险点');
+    })
+    .catch(function(){ showToast('风险点加载失败'); });
+}
+
+function reverseGeocode(lat, lng) {
+  // 本地广州行政区快速识别（无需网络）
+  var localName = getLocalDistrictName(lat, lng);
+
+  fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=14&accept-language=zh', {mode:'cors'})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      if (data && data.address) {
+        var a = data.address;
+        var areaName = a.suburb || a.city_district || a.town || a.village || a.county || '';
+        var cityName = a.city || a.state || '';
+        var displayName = (cityName ? cityName + ' ' : '') + areaName;
+        _updateAreaDisplay(lat, lng, displayName || data.display_name.split(',')[0]);
+      }
+    })
+    .catch(function() {
+      // 网络不通时使用本地区域识别
+      if (localName) _updateAreaDisplay(lat, lng, localName);
+    });
+
+  // 1秒后如果还显示"定位中"就用本地名称兜底
+  if (localName) {
+    setTimeout(function() {
+      if (document.getElementById('loc-info').textContent.indexOf('定位中') > 0) {
+        _updateAreaDisplay(lat, lng, localName);
+      }
+    }, 1500);
+  }
+}
+
+function _updateAreaDisplay(lat, lng, displayName) {
+  document.getElementById('loc-info').textContent = '选定区域: ' + lat.toFixed(4) + ', ' + lng.toFixed(4) + ' (' + displayName + ')';
+  document.getElementById('current-area').textContent = displayName;
+  var areaInfo = document.getElementById('area-info');
+  if (areaInfo) {
+    var existing = areaInfo.innerHTML;
+    if (existing.indexOf('km') > 0 && existing.indexOf('|') < 0) areaInfo.innerHTML = existing + ' | ' + displayName;
+  }
+}
+
+function getLocalDistrictName(lat, lng) {
+  // 广州各区中心坐标，用于快速匹配最近行政区
+  var districts = [
+    {name:'广州 天河区', lat:23.125, lng:113.361},
+    {name:'广州 越秀区', lat:23.129, lng:113.266},
+    {name:'广州 海珠区', lat:23.084, lng:113.262},
+    {name:'广州 荔湾区', lat:23.126, lng:113.224},
+    {name:'广州 白云区', lat:23.265, lng:113.273},
+    {name:'广州 黄埔区', lat:23.182, lng:113.459},
+    {name:'广州 番禺区', lat:22.937, lng:113.348},
+    {name:'广州 花都区', lat:23.404, lng:113.220},
+    {name:'广州 南沙区', lat:22.802, lng:113.525},
+    {name:'广州 从化区', lat:23.549, lng:113.586},
+    {name:'广州 增城区', lat:23.261, lng:113.811},
+    {name:'深圳 南山区', lat:22.533, lng:113.930},
+    {name:'深圳 福田区', lat:22.541, lng:114.055},
+    {name:'佛山 南海区', lat:23.029, lng:113.143},
+    {name:'佛山 顺德区', lat:22.805, lng:113.293},
+    {name:'东莞', lat:23.043, lng:113.752},
+    {name:'中山', lat:22.516, lng:113.393},
+    {name:'珠海', lat:22.271, lng:113.576},
+    {name:'惠州', lat:23.111, lng:114.416},
+    {name:'江门', lat:22.579, lng:113.081}
+  ];
+  var minDist = Infinity, closest = null;
+  districts.forEach(function(d) {
+    var dx = (lat - d.lat) * 111, dy = (lng - d.lng) * 111 * Math.cos(lat * Math.PI / 180);
+    var dist = dx*dx + dy*dy;
+    if (dist < minDist) { minDist = dist; closest = d; }
+  });
+  return closest && minDist < 900 ? closest.name : null; // 30km以内才匹配
+}
+
+// ==================== DEM高程数据 ====================
+var _demLoading = false;
+function fetchDEM() {
+  if (_demLoading) return; _demLoading = true;
+  var b = getViewBounds();
+  demData = buildLocalDEM(b.swLat, b.swLng, b.neLat, b.neLng, 20);
+  renderMap(); _demLoading = false;
+}
+var _demTimer = null;
+function debouncedFetchDEM() { clearTimeout(_demTimer); _demTimer = setTimeout(fetchDEM, 200); }
+
+function fetchDEMFromServer() {
+  if (!map) return;
+  var b = getViewBounds();
+  showToast('加载精确高程...');
+  fetch(API_BASE + '/api/terrain/dem-grid', {
+    method:'POST', headers:authHeaders(),
+    body:JSON.stringify({bounds:{sw_lat:b.swLat,sw_lng:b.swLng,ne_lat:b.neLat,ne_lng:b.neLng},grid_size:20})
+  })
+  .then(function(r){return r.json()})
+  .then(function(data){ demData=data; renderMap(); showToast('地形已更新'); })
+  .catch(function(){ showToast('后端不可用，使用本地DEM'); });
+}
+
+function buildLocalDEM(swLat,swLng,neLat,neLng,gs) {
+  var latS=(neLat-swLat)/gs, lngS=(neLng-swLng)/gs, pts=[];
+  for (var i=0;i<=gs;i++) for (var j=0;j<=gs;j++) {
+    var lat=swLat+i*latS, lng=swLng+j*lngS;
+    var large=40*Math.sin(lat*0.5)*Math.cos(lng*0.3);
+    var medium=25*Math.sin(lat*5)*Math.cos(lng*7);
+    var small=8*Math.sin(lat*50)*Math.cos(lng*60);
+    var base=30+10*Math.abs(Math.sin(lat*Math.PI/180));
+    pts.push({latitude:lat, longitude:lng, elevation:Math.max(0, Math.round((base+large+medium+small)*10)/10)});
+  }
+  return {bounds:{sw_lat:swLat,sw_lng:swLng,ne_lat:neLat,ne_lng:neLng}, grid_size:gs, points:pts};
+}
+
+// ==================== 图层切换 ====================
+function toggleLayer(layer) {
+  layers[layer] = !layers[layer];
+  document.getElementById('sw-' + layer).classList.toggle('active');
+  if (layer === 'radar') { if (layers.radar) _startRadarAnim(); else { clearInterval(_radarTimer); _radarTimer = null; } }
+  if (layer === 'water' && layers.water) { _waterStationsCache = null; _waterLastLoad = 0; }
+  renderMap();
+}
+
+// ==================== 移动端面板切换 ====================
+function togglePanel(side) {
+  var panel = document.querySelector('.' + side);
+  var isOpen = panel.classList.contains('open');
+  // 先关闭所有面板
+  document.querySelectorAll('.left,.right').forEach(function(p){ p.classList.remove('open'); });
+  if (!isOpen) panel.classList.add('open');
+}
+
+// ==================== 定位 ====================
+function geoLocate() {
+  if (!map) return;
+  document.getElementById('loc-info').textContent = '正在定位...';
+
+  map.locate({setView: true, maxZoom: 13, timeout: 8000, enableHighAccuracy: false});
+
+  map.once('locationfound', function(e) {
+    _locatedPos = { lat: e.latlng.lat, lng: e.latlng.lng };
+    document.getElementById('loc-info').textContent = '当前位置: ' + e.latlng.lat.toFixed(4) + ', ' + e.latlng.lng.toFixed(4) + ' (GPS)';
+    document.getElementById('current-area').textContent = e.latlng.lat.toFixed(2) + ',' + e.latlng.lng.toFixed(2);
+    fetchDEM(); setTimeout(refreshTideData, 500);
+  });
+
+  map.once('locationerror', function(e) {
+    console.warn('浏览器定位失败:', e.message);
+    fetch('https://ipapi.co/json/', {mode:'cors'}).then(function(r){return r.json()}).then(function(data) {
+      if (data && data.latitude && data.longitude) {
+        _locatedPos = { lat: data.latitude, lng: data.longitude };
+        map.setView([data.latitude, data.longitude], 13);
+        var city = data.city || data.region || '';
+        document.getElementById('loc-info').textContent = '当前位置: ' + data.latitude.toFixed(4) + ', ' + data.longitude.toFixed(4) + ' (IP定位' + (city ? ':'+city : '') + ')';
+        document.getElementById('current-area').textContent = city || (data.latitude.toFixed(2) + ',' + data.longitude.toFixed(2));
+        fetchDEM(); setTimeout(refreshTideData, 500);
+      } else { fallbackDefault(); }
+    }).catch(function() { fallbackDefault(); });
+  });
+
+  function fallbackDefault() {
+    _locatedPos = { lat: 23.1291, lng: 113.2644 };
+    document.getElementById('loc-info').textContent = '使用默认位置(广州)，可在上方搜索框输入地名定位';
+    document.getElementById('current-area').textContent = '广州市';
+    map.setView([23.1291, 113.2644], 13);
+    fetchDEM(); setTimeout(refreshTideData, 500);
+  }
+
+  setTimeout(function() {
+    if (document.getElementById('loc-info').textContent === '正在定位...') fallbackDefault();
+  }, 12000);
+}
+
+function searchLocation() {
+  var val = document.getElementById('loc-input').value.trim();
+  if (!val || !map) return;
+  var parts = val.split(/[,\s]+/).map(Number);
+  if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+    var lat = Math.abs(parts[0]) > 90 ? parts[1] : parts[0];
+    var lng = Math.abs(parts[0]) > 90 ? parts[0] : parts[1];
+    _locatedPos = { lat: lat, lng: lng };
+    map.setView([lat, lng], 13);
+    document.getElementById('loc-info').textContent = '定位: ' + lat.toFixed(4) + ', ' + lng.toFixed(4);
+    document.getElementById('current-area').textContent = lat.toFixed(2) + ',' + lng.toFixed(2);
+    fetchDEM(); refreshTideData(); return;
+  }
+  document.getElementById('loc-info').textContent = '搜索中...';
+  fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(val) + '&format=json&limit=1&accept-language=zh')
+    .then(function(r){return r.json()})
+    .then(function(results) {
+      if (results && results.length > 0) {
+        var p = results[0];
+        _locatedPos = { lat: parseFloat(p.lat), lng: parseFloat(p.lon) };
+        map.setView([parseFloat(p.lat), parseFloat(p.lon)], 13);
+        document.getElementById('loc-info').textContent = '定位: ' + (p.display_name || val);
+        document.getElementById('current-area').textContent = p.display_name ? p.display_name.split(',')[0] : val;
+        fetchDEM(); refreshTideData();
+      } else {
+        showToast('未找到该地点');
+        document.getElementById('loc-info').textContent = '搜索无结果';
+      }
+    })
+    .catch(function() { showToast('搜索失败，请检查网络'); document.getElementById('loc-info').textContent = '搜索失败'; });
+}
+
+// ==================== 潮汐数据 ====================
+function refreshTideData() {
+  if (!map) return;
+  var c = map.getCenter();
+  document.getElementById('tide-status').textContent = '加载中...';
+  fetch(API_BASE + '/api/tide?lat=' + c.lat + '&lng=' + c.lng, {headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      var tide=data.tide||{}, marine=data.marine||{};
+      var tc=tide.current||{}, mc=marine.current||{};
+      document.getElementById('tide-status').textContent = tc.trend_cn || '--';
+      document.getElementById('tide-level').textContent = tc.level!=null ? tc.level.toFixed(2)+'m' : '--';
+      document.getElementById('wave-height').textContent = mc.wave_height!=null ? mc.wave_height+'m' : '--';
+      document.getElementById('swell-height').textContent = mc.swell_height!=null ? mc.swell_height+'m' : '--';
+      var highs = tide.next_high_tides || [];
+      document.getElementById('next-high').textContent = highs.length ? highs[0].time.replace('T',' ') : '--';
+      var mr = marine.risk || {};
+      document.getElementById('marine-risk').textContent = (mr.level_cn||'--') + (mr.factors&&mr.factors.length ? ' ('+mr.factors.join(', ')+')' : '');
+    })
+    .catch(function(){ document.getElementById('tide-status').textContent = '数据获取失败'; });
+}
+
+// ==================== 气象数据 ====================
+function refreshWeather() {
+  document.getElementById('warning').textContent = '刷新中...';
+  var url = API_BASE + '/api/weather';
+  if (map) { var c = map.getCenter(); url += '?lat=' + c.lat + '&lng=' + c.lng; }
+  fetch(url, {headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      var info = data['\u7efc\u5408\u7814\u5224'] || data;
+      document.getElementById('warning').textContent = info['\u9884\u8b66\u7b49\u7ea7'] || info.warning || '无预警';
+      document.getElementById('rain-1h').textContent = info['\u5f53\u524d\u96e8\u91cf_1h'] != null ? info['\u5f53\u524d\u96e8\u91cf_1h'] : '0';
+      document.getElementById('rain-24h').textContent = info['\u7d2f\u8ba1\u96e8\u91cf_24h'] != null ? info['\u7d2f\u8ba1\u96e8\u91cf_24h'] : '0';
+      document.getElementById('forecast-6h').textContent = info['\u672a\u67656h\u9884\u62a5'] || '--';
+      document.getElementById('update-time').textContent = data.update_time || new Date().toLocaleTimeString();
+    })
+    .catch(function(){ document.getElementById('warning').textContent = '获取失败'; });
+}
+
+function forceRefreshWeather() {
+  document.getElementById('warning').textContent = '正在抓取...';
+  fetch(API_BASE + '/api/weather/refresh', {method:'POST', headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      var info = data['\u7efc\u5408\u7814\u5224'] || data;
+      document.getElementById('warning').textContent = info['\u9884\u8b66\u7b49\u7ea7'] || '无预警';
+      document.getElementById('rain-1h').textContent = info['\u5f53\u524d\u96e8\u91cf_1h'] != null ? info['\u5f53\u524d\u96e8\u91cf_1h'] : '0';
+      document.getElementById('rain-24h').textContent = info['\u7d2f\u8ba1\u96e8\u91cf_24h'] != null ? info['\u7d2f\u8ba1\u96e8\u91cf_24h'] : '0';
+      document.getElementById('forecast-6h').textContent = info['\u672a\u67656h\u9884\u62a5'] || '--';
+      document.getElementById('update-time').textContent = data.update_time || new Date().toLocaleTimeString();
+      showToast('气象数据已刷新');
+    })
+    .catch(function(){ refreshWeather(); });
+}
+
+// ==================== 智能研判 ====================
+function startAIAnalysis() {
+  try {
+    document.getElementById('loading').style.display = 'block';
+  } catch(e) {}
+
+  // 如果尚未加载风险点数据，先自动加载再研判
+  if (!_hazardData || _hazardData.length === 0) {
+    fetch(API_BASE + '/api/hazards', {headers:authHeaders()})
+      .then(function(r){return r.json()})
+      .then(function(data) {
+        _hazardData = data.hazards || [];
+        _doStartAIAnalysis();
+      })
+      .catch(function(e) {
+        console.warn('加载风险点失败，继续研判:', e);
+        _doStartAIAnalysis();
+      });
+  } else {
+    _doStartAIAnalysis();
+  }
+}
+
+function _doStartAIAnalysis() {
+  // 30秒超时保护：无论成功失败，都隐藏loading
+  var _judgeTimeout = setTimeout(function() {
+    try { document.getElementById('loading').style.display = 'none'; } catch(e){}
+    showToast('研判超时，请重试');
+  }, 30000);
+
+  try {
+    var rain24h = parseFloat(document.getElementById('rain-24h').textContent) || 0;
+    var warningText = (document.getElementById('warning').textContent || '').trim();
+    var center = map ? map.getCenter() : {lat:23.13, lng:113.26};
+
+    // 收集真实气象 + 坐标 + 圈选区域 + 已加载风险点
+    var payload = {
+      weather: {
+        rain_24h: rain24h,
+        rain_1h: parseFloat(document.getElementById('rain-1h').textContent) || 0,
+        warning_level: parseWarningLevel(warningText),
+        warning_text: warningText,
+        forecast: (document.getElementById('forecast-6h').textContent || '--').trim()
+      },
+      center: { lat: center.lat, lng: center.lng }
+    };
+    // 传圈选区域
+    if (_drawnShape) payload.area = _drawnShape;
+    // 传真实风险点数据
+    if (_hazardData && _hazardData.length > 0) payload.hazards = _hazardData;
+    // 传潮汐数据
+    try {
+      var tideEl = document.getElementById('tide-level');
+      if (tideEl) {
+        var tideText = tideEl.textContent;
+        if (tideText && tideText !== '--') payload.tide = { level: tideText };
+      }
+    } catch(e) { /* 潮汐非必须 */ }
+
+    console.log('[研判] 发送请求, payload大小:', JSON.stringify(payload).length);
+
+    fetch(API_BASE + '/api/ai/judge', {method:'POST', headers:authHeaders(), body:JSON.stringify(payload)})
+      .then(function(r){
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(result) {
+        clearTimeout(_judgeTimeout);
+        document.getElementById('loading').style.display = 'none';
+        if (result.error) { showToast('研判失败: ' + result.error); return; }
+        lastJudgeResult = result; renderJudgeResult(result); showToast('智能研判完成');
+      })
+      .catch(function(e) {
+        clearTimeout(_judgeTimeout);
+        document.getElementById('loading').style.display = 'none';
+        console.error('研判请求失败:', e);
+        showToast('研判请求失败: ' + (e.message || '网络错误'));
+      });
+  } catch(ex) {
+    clearTimeout(_judgeTimeout);
+    try { document.getElementById('loading').style.display = 'none'; } catch(e){}
+    console.error('研判初始化异常:', ex);
+    showToast('研判异常: ' + (ex.message || '未知错误'));
+  }
+}
+
+function parseWarningLevel(text) {
+  if (text.indexOf('红色')>=0) return 4; if (text.indexOf('橙色')>=0) return 3;
+  if (text.indexOf('黄色')>=0) return 2; if (text.indexOf('蓝色')>=0) return 1; return 0;
+}
+
+function renderJudgeResult(result) {
+  // 显示结果面板，隐藏空白提示
+  document.getElementById('judge-empty').style.display = 'none';
+  document.getElementById('judge-result').style.display = '';
+
+  var ri = result['1_综合风险等级'] || {};
+  var level = ri['等级'] || '未知', rc = 'low';
+  if (level.indexOf('极高')>=0) rc='high'; else if (level.indexOf('高')>=0||level.indexOf('中')>=0) rc='mid';
+  var rEl = document.getElementById('risk-level'); rEl.className = 'risk ' + rc;
+  rEl.innerHTML = '<div style="font-size:20px;margin-bottom:4px">风险等级：'+level+'（'+(ri['得分']||'--')+'）</div><div style="font-size:13px;opacity:0.9">'+(ri['响应等级']||'')+' | '+(result['研判时间']||'')+'</div>';
+
+  // 风险因子 + 风险类型
+  var factors = ri['风险因子'] || [];
+  var mr = result['2_主要风险类型'] || [];
+  var riskTypeCard = document.getElementById('risk-type-card');
+  if (factors.length > 0 || mr.length > 0) {
+    riskTypeCard.style.display = '';
+    var html = '';
+    if (factors.length > 0) {
+      html += factors.map(function(f){return '<span style="display:inline-block;background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:4px;margin:2px;font-size:13px">'+f+'</span>'}).join(' ');
+    }
+    if (mr.length > 0) {
+      html += '<div style="margin-top:8px">' + mr.map(function(r){return '<span style="display:inline-block;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;margin:2px;font-size:13px">'+r+'</span>'}).join(' ') + '</div>';
+    }
+    document.getElementById('risk-type').innerHTML = html;
+  } else {
+    riskTypeCard.style.display = 'none';
+  }
+
+  // Top5 - 有才显示
+  var top5 = result['3_Top5危险点位'] || [];
+  var top5Card = document.getElementById('top5-card');
+  if (top5.length > 0) {
+    top5Card.style.display = '';
+    document.getElementById('top5-list').innerHTML = top5.map(function(p){var action=p['处置建议']?'<div style="font-size:12px;color:#6b7280;margin:2px 0 6px 16px">'+p['处置建议']+'</div>':'';return '<div class="top5-item">'+p['排名']+'. '+p['名称']+' - '+p['类型']+'（'+p['风险分']+'分）'+action+'</div>';}).join('');
+  } else {
+    top5Card.style.display = 'none';
+  }
+
+  // 淹没预判 - 有数据才显示
+  var flood = result['4_淹没预判'] || {};
+  var floodCard = document.getElementById('flood-card');
+  var hasFlood = flood['可能淹没面积'] || flood['最大积水深度'] || flood['灾害持续时间'];
+  if (hasFlood) {
+    floodCard.style.display = '';
+    document.getElementById('flood-pred').innerHTML = '可能淹没面积：<strong>'+(flood['可能淹没面积']||'--')+'</strong><br>最大积水深度：<strong>'+(flood['最大积水深度']||'--')+'</strong><br>灾害持续时间：<strong>'+(flood['灾害持续时间']||'--')+'</strong>';
+  } else {
+    floodCard.style.display = 'none';
+  }
+
+  // 指挥建议
+  var sug = result['5_指挥建议'] || [];
+  var sugCard = document.getElementById('suggestions-card');
+  if (sug.length > 0) {
+    sugCard.style.display = '';
+    if (sug.length === 1) {
+      document.getElementById('suggestions').innerHTML = sug[0];
+    } else {
+      document.getElementById('suggestions').innerHTML = sug.map(function(s,i){return (i+1)+'. '+s}).join('<br>');
+    }
+  } else {
+    sugCard.style.display = 'none';
+  }
+
+  // 领导汇报
+  var leader = result['6_领导汇报'] || '';
+  var leaderCard = document.getElementById('leader-card');
+  var leaderEl = document.getElementById('leader-report');
+  if (leader) {
+    leaderCard.style.display = '';
+    leaderEl.innerHTML = leader;
+  } else {
+    leaderCard.style.display = 'none';
+  }
+
+  // 可调度资源
+  var res = result['7_可调度资源'];
+  var resCard = document.getElementById('resources-card');
+  var resEl = document.getElementById('nearby-resources');
+  if (res && Object.keys(res).length > 0) {
+    resCard.style.display = '';
+    var html = '';
+    var typeOrder = ['facilities', 'personnel', 'materials', 'vehicles'];
+    var typeIcons = {facilities:'场所设施', personnel:'人员队伍', materials:'物资装备', vehicles:'车辆运力'};
+    typeOrder.forEach(function(key) {
+      var group = res[key];
+      if (!group || !group.items || group.items.length === 0) return;
+      html += '<div style="margin-bottom:10px"><div style="font-weight:bold;font-size:13px;color:#1e40af;margin-bottom:4px;border-bottom:1px solid #e5e7eb;padding-bottom:2px">' + (group.label || typeIcons[key]) + '（' + group.items.length + '）</div>';
+      group.items.forEach(function(item) {
+        var parts = [];
+        if (key === 'facilities') {
+          parts.push('<b>' + (item.name||'') + '</b>');
+          if (item.type) parts.push(item.type);
+          if (item.capacity) parts.push('容纳' + item.capacity + '人');
+          if (item.distance_km !== null && item.distance_km !== undefined) parts.push(item.distance_km + 'km');
+          if (item.phone) parts.push(item.phone);
+        } else if (key === 'personnel') {
+          parts.push('<b>' + (item.name||'') + '</b>');
+          if (item.team) parts.push(item.team);
+          if (item.status) parts.push(item.status);
+          if (item.phone) parts.push(item.phone);
+        } else if (key === 'materials') {
+          parts.push('<b>' + (item.name||'') + '</b>');
+          if (item.quantity) parts.push(item.quantity + (item.unit||''));
+          if (item.location) parts.push(item.location);
+        } else if (key === 'vehicles') {
+          parts.push('<b>' + (item.plate_number||'') + '</b>');
+          if (item.type) parts.push(item.type);
+          if (item.driver) parts.push(item.driver);
+          if (item.driver_phone) parts.push(item.driver_phone);
+        }
+        html += '<div style="font-size:12px;padding:2px 0;color:#374151">' + parts.join(' | ') + '</div>';
+      });
+      html += '</div>';
+    });
+    resEl.innerHTML = html;
+  } else {
+    resCard.style.display = 'none';
+  }
+}
+
+// ==================== 简报/保存/风险 ====================
+function copyReport() {
+  var text;
+  if (lastJudgeResult && lastJudgeResult['简报文本']) { text = lastJudgeResult['简报文本']; }
+  else { text = '【三防研判简报】\n时间：' + new Date().toLocaleString() + '\n风险等级：' + document.getElementById('risk-level').textContent + '\n请先执行智能研判以获取完整简报。'; }
+  navigator.clipboard.writeText(text).then(function(){showToast('简报已复制到剪贴板')}).catch(function(){
+    var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('简报已复制到剪贴板');
+  });
+}
+
+function saveHistory() {
+  if (!lastJudgeResult) { showToast('请先执行智能研判'); return; }
+  fetch(API_BASE + '/api/history', {method:'POST', headers:authHeaders(), body:JSON.stringify(lastJudgeResult)})
+    .then(function(r){return r.json()})
+    .then(function(data){ showToast(data.message || '保存成功'); })
+    .catch(function(){ showToast('保存失败'); });
+}
+
+function showHazards() {
+  fetch(API_BASE + '/api/hazards', {headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      var hazards = data.hazards || [], stats = data['统计'] || {};
+      var el = document.getElementById('hazard-stats');
+      if (el) {
+        el.innerHTML = '<div class="item">易涝点：'+(stats['易涝点']||0)+'个</div><div class="item">危房：'+(stats['危房']||0)+'处</div><div class="item">地下空间：'+(stats['地下空间']||0)+'个</div><div class="item">河道：'+(stats['河道']||0)+'段</div><div class="item">隧道：'+(stats['隧道']||0)+'处</div><div class="item" style="color:#60a5fa;font-weight:bold">合计：'+(stats['总计']||hazards.length)+'处</div>';
+      }
+      _hazardData = hazards;
+      showToast('已标注 ' + hazards.length + ' 个风险点');
+      renderMap();
+    })
+    .catch(function(){ showToast('获取风险点失败'); });
+}
+
+// ==================== Toast & 时钟 ====================
+function showToast(msg) {
+  var toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div'); toast.id = 'toast';
+    toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:12px 28px;border-radius:8px;z-index:99999;font-size:14px;transition:opacity 0.3s;pointer-events:none';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg; toast.style.opacity = '1';
+  clearTimeout(toast._timer); toast._timer = setTimeout(function(){ toast.style.opacity = '0'; }, 2500);
+}
+
+setInterval(function(){
+  document.getElementById('sys-time').textContent = new Date().toLocaleString('zh-CN', {
+    year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit'
+  });
+}, 1000);
+
+// ==================== 页面加载 ====================
+window.onload = function() {
+  initUserBar();
+  initMap();
+  refreshWeather();
+  setInterval(refreshWeather, 300000);
+  initSSE();
+};
+
+// ==================== 模态框通用 ====================
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+// ==================== 情景推演 ====================
+function openSimulation() { openModal('modal-sim'); document.getElementById('sim-result').innerHTML = ''; }
+
+function runSimulation() {
+  var payload = {
+    rain_24h: parseFloat(document.getElementById('sim-rain24').value) || 0,
+    rain_1h: parseFloat(document.getElementById('sim-rain1').value) || 0,
+    warning_level: parseInt(document.getElementById('sim-warning').value) || 0,
+    forecast: document.getElementById('sim-forecast').value || ''
+  };
+  if (_drawnShape) payload.area = _drawnShape;
+  if (_hazardData && _hazardData.length) payload.hazards = _hazardData;
+  document.getElementById('sim-result').innerHTML = '<div style="text-align:center;color:#6b7280;padding:20px">推演计算中...</div>';
+  fetch(API_BASE + '/api/simulate', {method:'POST', headers:authHeaders(), body:JSON.stringify(payload)})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      if (data.error) { document.getElementById('sim-result').innerHTML = '<div style="color:#dc2626">'+data.error+'</div>'; return; }
+      var res = data.result || data;
+      var ri = res['1_综合风险等级'] || {};
+      var html = '<div style="padding:12px;border-radius:8px;background:'+(ri['得分']>=80?'#fef2f2':ri['得分']>=50?'#fff7ed':'#eff6ff')+';margin-bottom:12px">';
+      html += '<div style="font-weight:700;font-size:16px;color:#1e293b">风险等级: '+(ri['等级']||'--')+' (得分:'+(ri['得分']||'--')+')</div>';
+      html += '<div style="font-size:13px;color:#475569;margin-top:4px">'+(ri['响应等级']||'')+'</div></div>';
+      var sug = res['5_指挥建议'] || [];
+      if (sug.length) { html += '<div style="font-weight:600;margin-bottom:6px">指挥建议:</div><div style="font-size:13px;color:#374151">' + sug.map(function(s,i){return (i+1)+'. '+s}).join('<br>') + '</div>'; }
+      document.getElementById('sim-result').innerHTML = html;
+    })
+    .catch(function(e){ document.getElementById('sim-result').innerHTML = '<div style="color:#dc2626">推演失败: '+e.message+'</div>'; });
+}
+
+function runMultiSimulation() {
+  var scenarios = [
+    {rain_24h:50, rain_1h:15, warning_level:1, label:'蓝色预警(50mm)'},
+    {rain_24h:100, rain_1h:30, warning_level:2, label:'黄色预警(100mm)'},
+    {rain_24h:150, rain_1h:50, warning_level:3, label:'橙色预警(150mm)'},
+    {rain_24h:250, rain_1h:80, warning_level:4, label:'红色预警(250mm)'}
+  ];
+  document.getElementById('sim-result').innerHTML = '<div style="text-align:center;color:#6b7280;padding:20px">多情景推演中...</div>';
+  var payload = {scenarios: scenarios};
+  if (_drawnShape) payload.area = _drawnShape;
+  if (_hazardData && _hazardData.length) payload.hazards = _hazardData;
+  fetch(API_BASE + '/api/simulate', {method:'POST', headers:authHeaders(), body:JSON.stringify(payload)})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      var results = data.results || [];
+      if (!results.length && data.result) results = [data];
+      var html = '<div style="font-weight:600;margin-bottom:10px">多情景对比:</div>';
+      var colors = ['#2563eb','#f59e0b','#ea580c','#dc2626'];
+      results.forEach(function(item, i) {
+        var res = item.result || item;
+        var ri = res['1_综合风险等级'] || {};
+        var score = ri['得分'] || 0;
+        var lbl = item.label || scenarios[i].label;
+        html += '<div style="margin-bottom:8px"><div style="font-size:12px;color:#475569;margin-bottom:2px">'+lbl+' - '+(ri['等级']||'')+'</div>';
+        html += '<div class="sim-bar" style="background:'+colors[Math.min(i,3)]+';width:'+Math.max(score,5)+'%">'+score+'分</div></div>';
+      });
+      document.getElementById('sim-result').innerHTML = html;
+    })
+    .catch(function(e){ document.getElementById('sim-result').innerHTML = '<div style="color:#dc2626">推演失败: '+e.message+'</div>'; });
+}
+
+// ==================== PDF导出 ====================
+function exportPDF() {
+  if (!lastJudgeResult) { showToast('请先执行智能研判'); return; }
+  var r = lastJudgeResult;
+  var ri = r['1_综合风险等级'] || {};
+  var top5 = r['3_Top5危险点位'] || [];
+  var flood = r['4_淹没预判'] || {};
+  var sug = r['5_指挥建议'] || [];
+  var leader = r['6_领导汇报'] || '';
+
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>三防研判报告</title><style>';
+  html += 'body{font-family:"Microsoft YaHei",sans-serif;padding:40px;color:#1e293b;max-width:800px;margin:0 auto}';
+  html += 'h1{text-align:center;color:#1e40af;border-bottom:3px solid #2563eb;padding-bottom:12px}';
+  html += '.meta{text-align:center;color:#6b7280;margin-bottom:24px}';
+  html += '.risk-box{padding:16px;border-radius:8px;text-align:center;color:#fff;font-size:18px;font-weight:700;margin:16px 0}';
+  html += '.risk-box.high{background:#dc2626}.risk-box.mid{background:#ea580c}.risk-box.low{background:#2563eb}';
+  html += 'table{width:100%;border-collapse:collapse;margin:12px 0}th,td{border:1px solid #d1d5db;padding:8px 10px;text-align:left;font-size:13px}';
+  html += 'th{background:#f1f5f9;font-weight:600}.section{margin-top:20px}.section h3{color:#1e40af;border-left:4px solid #2563eb;padding-left:10px}';
+  html += '.leader-box{background:#fef3c7;border-left:4px solid #f59e0b;padding:12px;border-radius:6px;color:#92400e;margin-top:12px}';
+  html += '@media print{body{padding:20px}}</style></head><body>';
+  html += '<h1>三防形势智能研判报告</h1>';
+  html += '<div class="meta">研判时间: '+(r['研判时间']||new Date().toLocaleString())+'</div>';
+
+  var rc = 'low'; var lvl = ri['等级']||'';
+  if (lvl.indexOf('极高')>=0) rc='high'; else if (lvl.indexOf('高')>=0||lvl.indexOf('中')>=0) rc='mid';
+  html += '<div class="risk-box '+rc+'">风险等级: '+lvl+' (得分:'+(ri['得分']||'--')+')<br><span style="font-size:14px">'+(ri['响应等级']||'')+'</span></div>';
+
+  if (top5.length) {
+    html += '<div class="section"><h3>Top5 危险点位</h3><table><tr><th>排名</th><th>名称</th><th>类型</th><th>风险分</th><th>处置建议</th></tr>';
+    top5.forEach(function(p){ html += '<tr><td>'+p['排名']+'</td><td>'+p['名称']+'</td><td>'+p['类型']+'</td><td>'+p['风险分']+'</td><td>'+(p['处置建议']||'')+'</td></tr>'; });
+    html += '</table></div>';
+  }
+  if (flood['可能淹没面积']) {
+    html += '<div class="section"><h3>淹没预判</h3><table><tr><th>指标</th><th>预判结果</th></tr>';
+    html += '<tr><td>可能淹没面积</td><td>'+flood['可能淹没面积']+'</td></tr>';
+    html += '<tr><td>最大积水深度</td><td>'+(flood['最大积水深度']||'--')+'</td></tr>';
+    html += '<tr><td>灾害持续时间</td><td>'+(flood['灾害持续时间']||'--')+'</td></tr></table></div>';
+  }
+  if (sug.length) {
+    html += '<div class="section"><h3>指挥建议</h3><ol style="padding-left:20px">';
+    sug.forEach(function(s){ html += '<li style="margin:6px 0;line-height:1.6">'+s+'</li>'; });
+    html += '</ol></div>';
+  }
+  if (leader) { html += '<div class="section"><h3>领导汇报参考</h3><div class="leader-box">'+leader+'</div></div>'; }
+  html += '<div style="margin-top:30px;text-align:center;color:#94a3b8;font-size:12px">--- 三防形势智能研判与指挥辅助系统 自动生成 ---</div>';
+  html += '</body></html>';
+
+  var blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var win = window.open(url, '_blank');
+  if (win) { setTimeout(function(){ win.print(); }, 800); }
+  else { var a=document.createElement('a'); a.href=url; a.download='三防研判报告_'+new Date().toISOString().slice(0,10)+'.html'; a.click(); }
+  showToast('报告已生成，可通过浏览器打印为PDF');
+}
+
+// ==================== 任务派单 ====================
+var _currentAssignTaskId = null;
+var _staffCache = null;
+
+function openTaskPanel() { openModal('modal-tasks'); loadTasks(); }
+
+function generateTasks() {
+  if (!lastJudgeResult) { showToast('请先执行智能研判'); return; }
+  var payload = { judge_result: lastJudgeResult };
+  if (_hazardData && _hazardData.length) payload.hazards = _hazardData;
+  showToast('正在生成任务...');
+  fetch(API_BASE + '/api/tasks/batch', {method:'POST', headers:authHeaders(), body:JSON.stringify(payload)})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      if (data.error) { showToast('生成失败: '+data.error); return; }
+      showToast('已生成 '+(data.task_ids?data.task_ids.length:0)+' 个任务，请指派执行人');
+      loadTasks();
+    })
+    .catch(function(e){ showToast('任务生成失败: '+e.message); });
+}
+
+function loadTasks() {
+  var filter = document.getElementById('task-filter') ? document.getElementById('task-filter').value : '';
+  var url = API_BASE + '/api/tasks' + (filter ? '?status='+filter : '');
+  fetch(url, {headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      var tasks = data.tasks || [];
+      var stats = data.stats || {};
+      var statsEl = document.getElementById('task-stats');
+      if (statsEl) statsEl.textContent = '待指派:'+stats.pending+' 执行中:'+stats.in_progress+' 已完成:'+stats.completed+' 共:'+stats.total;
+      if (!tasks.length) { document.getElementById('task-list').innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px">暂无任务，请先执行研判后生成任务</div>'; return; }
+      var html = '';
+      tasks.forEach(function(t) {
+        var priClass = t.priority==='urgent'?'urgent':t.priority==='high'?'high':'normal';
+        var priLabel = {urgent:'紧急',high:'重要',normal:'普通'}[t.priority]||t.priority;
+        var statusMap = {pending:'待指派',in_progress:'执行中',completed:'已完成'};
+        var statusLabel = statusMap[t.status]||t.status;
+        var statusColor = t.status==='completed'?'#10b981':t.status==='in_progress'?'#2563eb':'#f59e0b';
+        html += '<div class="task-item" style="cursor:pointer" onclick="openTaskDetail(\''+t.id+'\')">';
+        html += '<div class="task-info">';
+        html += '<div class="task-title"><span class="task-badge '+priClass+'">'+priLabel+'</span> '+t.title+'</div>';
+        html += '<div class="task-meta">';
+        html += '<span style="color:'+statusColor+';font-weight:600">'+statusLabel+'</span>';
+        if (t.assigned_name) html += ' | '+t.assigned_name+(t.assigned_phone?' '+t.assigned_phone:'');
+        else html += ' | <span style="color:#f59e0b">未指派</span>';
+        html += ' | '+(t.type||'')+' | '+(t.created_at||'').slice(5,16);
+        html += '</div>';
+        if (t.description) html += '<div style="font-size:12px;color:#6b7280;margin-top:2px;max-width:500px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+t.description+'</div>';
+        if (t.feedback) html += '<div style="font-size:12px;color:#059669;margin-top:2px">[反馈] '+t.feedback+'</div>';
+        html += '</div>';
+        html += '<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">';
+        if (t.status === 'pending') {
+          html += '<button class="modal-btn modal-btn-primary" style="white-space:nowrap;padding:4px 12px;font-size:12px" onclick="event.stopPropagation();openAssignModal(\''+t.id+'\',\''+_escHtml(t.title)+'\',\''+_escHtml(t.description||'')+'\',\''+t.priority+'\')">指派</button>';
+        } else if (t.status === 'in_progress') {
+          html += '<button class="modal-btn modal-btn-success" style="white-space:nowrap;padding:4px 12px;font-size:12px" onclick="event.stopPropagation();completeTask(\''+t.id+'\')">标记完成</button>';
+        } else {
+          html += '<span style="color:#10b981;font-size:12px">已完成</span>';
+        }
+        html += '</div></div>';
+      });
+      document.getElementById('task-list').innerHTML = html;
+    })
+    .catch(function(e){ document.getElementById('task-list').innerHTML = '<div style="color:#dc2626;padding:20px">加载失败: '+e.message+'</div>'; });
+}
+
+function _escHtml(s) { return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+function openAssignModal(taskId, title, desc, priority) {
+  _currentAssignTaskId = taskId;
+  var priLabel = {urgent:'紧急',high:'重要',normal:'普通'}[priority]||priority;
+  document.getElementById('assign-title').textContent = '指派任务 ' + taskId;
+  document.getElementById('assign-task-info').innerHTML = '<b>'+title+'</b><br><span style="color:#6b7280">'+priLabel+' | '+desc+'</span>';
+  document.getElementById('assign-name').value = '';
+  document.getElementById('assign-phone').value = '';
+  loadStaffPicker();
+  openModal('modal-assign');
+}
+
+function loadStaffPicker() {
+  var el = document.getElementById('staff-picker');
+  el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:12px">加载人员...</div>';
+  fetch(API_BASE + '/api/staff?on_duty=1', {headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      _staffCache = data.staff || [];
+      var groups = data.groups || {};
+      if (!_staffCache.length) { el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:12px">暂无值班人员</div>'; return; }
+      var html = '';
+      Object.keys(groups).forEach(function(gname) {
+        html += '<div style="padding:6px 12px;font-size:11px;color:#6b7280;background:#f8fafc;font-weight:600;border-bottom:1px solid #f1f5f9">'+gname+'</div>';
+        groups[gname].forEach(function(s) {
+          html += '<div style="padding:8px 12px;border-bottom:1px solid #f1f5f9;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:background 0.15s" ';
+          html += 'onmouseover="this.style.background=\'#eff6ff\'" onmouseout="this.style.background=\'#fff\'" ';
+          html += 'onclick="pickStaff(\''+s.id+'\',\''+s.name+'\',\''+s.phone+'\')">';
+          html += '<div><span style="font-weight:600;font-size:13px">'+s.name+'</span> <span style="font-size:11px;color:#6b7280">'+s.role+'</span></div>';
+          html += '<div style="font-size:12px;color:#6b7280">'+s.phone+' <span style="font-size:11px;color:#94a3b8">'+s.area+'</span></div>';
+          html += '</div>';
+        });
+      });
+      el.innerHTML = html;
+    })
+    .catch(function(e){ el.innerHTML = '<div style="color:#dc2626;padding:12px">加载失败</div>'; });
+}
+
+function pickStaff(sid, name, phone) {
+  document.getElementById('assign-name').value = name;
+  document.getElementById('assign-phone').value = phone;
+  document.getElementById('assign-name').dataset.staffId = sid;
+  showToast('已选择: ' + name);
+}
+
+function confirmAssign() {
+  var name = document.getElementById('assign-name').value.trim();
+  var phone = document.getElementById('assign-phone').value.trim();
+  if (!name) { showToast('请选择或填写执行人'); return; }
+  var staffId = document.getElementById('assign-name').dataset.staffId || '';
+  var payload = { staff_id: staffId, staff_name: name, staff_phone: phone };
+  fetch(API_BASE + '/api/tasks/' + _currentAssignTaskId + '/assign', {method:'POST', headers:authHeaders(), body:JSON.stringify(payload)})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      if (data.error) { showToast('指派失败: '+data.error); return; }
+      showToast(data.message || '已指派');
+      closeModal('modal-assign');
+      loadTasks();
+    })
+    .catch(function(e){ showToast('指派失败: '+e.message); });
+}
+
+function batchAssignTasks() {
+  fetch(API_BASE + '/api/tasks?status=pending', {headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      var pending = data.tasks || [];
+      if (!pending.length) { showToast('没有待指派的任务'); return; }
+      return fetch(API_BASE + '/api/staff?on_duty=1', {headers:authHeaders()})
+        .then(function(r){return r.json()})
+        .then(function(sdata) {
+          var staff = sdata.staff || [];
+          if (!staff.length) { showToast('没有在岗人员，请先添加值班人员'); return; }
+          var leaders = staff.filter(function(s){ return s.role.indexOf('组长')>=0||s.role.indexOf('队长')>=0||s.role.indexOf('主任')>=0; });
+          var members = staff.filter(function(s){ return leaders.indexOf(s)<0; });
+          var li=0,mi=0,promises=[];
+          pending.forEach(function(t) {
+            var person;
+            if (t.priority==='urgent'&&leaders.length){person=leaders[li%leaders.length];li++;}
+            else if(members.length){person=members[mi%members.length];mi++;}
+            else{person=staff[mi%staff.length];mi++;}
+            promises.push(fetch(API_BASE+'/api/tasks/'+t.id+'/assign',{method:'POST',headers:authHeaders(),body:JSON.stringify({staff_id:person.id,staff_name:person.name,staff_phone:person.phone})}));
+          });
+          return Promise.all(promises).then(function(){showToast('已一键派发 '+pending.length+' 个任务');loadTasks();});
+        });
+    })
+    .catch(function(e){ showToast('派发失败: '+e.message); });
+}
+
+function openTaskDetail(taskId) {
+  var body = document.getElementById('task-detail-body');
+  body.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:30px">加载中...</div>';
+  openModal('modal-task-detail');
+  Promise.all([
+    fetch(API_BASE+'/api/tasks',{headers:authHeaders()}).then(function(r){return r.json()}),
+    fetch(API_BASE+'/api/tasks/'+taskId+'/logs',{headers:authHeaders()}).then(function(r){return r.json()})
+  ]).then(function(results) {
+    var tasks=results[0].tasks||[],logs=results[1].logs||[],t=null;
+    for(var i=0;i<tasks.length;i++) if(tasks[i].id===taskId){t=tasks[i];break;}
+    if(!t){body.innerHTML='<div style="color:#dc2626">任务不存在</div>';return;}
+    var priLabel={urgent:'紧急',high:'重要',normal:'普通'}[t.priority]||t.priority;
+    var statusLabel={pending:'待指派',in_progress:'执行中',completed:'已完成'}[t.status]||t.status;
+    var statusColor=t.status==='completed'?'#10b981':t.status==='in_progress'?'#2563eb':'#f59e0b';
+    var html='';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+    html+='<div><span class="task-badge '+(t.priority==='urgent'?'urgent':t.priority==='high'?'high':'normal')+'">'+priLabel+'</span> <span style="font-weight:700;font-size:15px">'+t.title+'</span></div>';
+    html+='<span style="color:'+statusColor+';font-weight:600;font-size:14px">'+statusLabel+'</span></div>';
+    html+='<table style="width:100%;font-size:13px;margin-bottom:14px;border-collapse:collapse">';
+    html+='<tr><td style="color:#6b7280;padding:4px 0;width:80px">任务编号</td><td style="padding:4px 0">'+t.id+'</td></tr>';
+    html+='<tr><td style="color:#6b7280;padding:4px 0">类型</td><td>'+(t.type||'--')+'</td></tr>';
+    html+='<tr><td style="color:#6b7280;padding:4px 0">执行人</td><td style="font-weight:600">'+(t.assigned_name||'<span style="color:#f59e0b">未指派</span>')+(t.assigned_phone?' ('+t.assigned_phone+')':'')+'</td></tr>';
+    html+='<tr><td style="color:#6b7280;padding:4px 0">位置</td><td>'+(t.location||'--')+'</td></tr>';
+    html+='<tr><td style="color:#6b7280;padding:4px 0">描述</td><td>'+(t.description||'--')+'</td></tr>';
+    html+='<tr><td style="color:#6b7280;padding:4px 0">创建时间</td><td>'+(t.created_at||'--')+'</td></tr>';
+    if(t.completed_time)html+='<tr><td style="color:#6b7280;padding:4px 0">完成时间</td><td>'+t.completed_time+'</td></tr>';
+    if(t.feedback)html+='<tr><td style="color:#6b7280;padding:4px 0">执行反馈</td><td style="color:#059669">'+t.feedback+'</td></tr>';
+    html+='</table>';
+    if(logs.length){
+      html+='<div style="font-weight:600;font-size:13px;margin-bottom:8px;color:#475569">操作记录</div>';
+      html+='<div style="border-left:2px solid #e5e7eb;padding-left:14px;margin-left:6px">';
+      logs.forEach(function(log){
+        var actionLabel={assign:'指派',complete:'完成',feedback:'反馈',create:'创建'}[log.action]||log.action;
+        var color=log.action==='complete'?'#10b981':log.action==='assign'?'#2563eb':'#6b7280';
+        html+='<div style="position:relative;margin-bottom:10px;font-size:12px">';
+        html+='<div style="position:absolute;left:-20px;top:2px;width:10px;height:10px;border-radius:50%;background:'+color+'"></div>';
+        html+='<span style="color:#94a3b8">'+(log.created_at||'').slice(5,16)+'</span> ';
+        html+='<span style="color:'+color+';font-weight:600">'+actionLabel+'</span>';
+        if(log.operator)html+=' <span style="color:#475569">'+log.operator+'</span>';
+        if(log.content)html+=' <span style="color:#6b7280">'+log.content+'</span>';
+        html+='</div>';
+      });
+      html+='</div>';
+    }
+    html+='<div style="margin-top:14px;display:flex;gap:8px">';
+    if(t.status==='pending'){
+      html+='<button class="modal-btn modal-btn-primary" onclick="closeModal(\'modal-task-detail\');openAssignModal(\''+t.id+'\',\''+_escHtml(t.title)+'\',\''+_escHtml(t.description||'')+'\',\''+t.priority+'\')">指派执行人</button>';
+    }
+    if(t.status==='in_progress'){
+      html+='<button class="modal-btn modal-btn-success" onclick="submitFeedback(\''+t.id+'\')">提交反馈/完成</button>';
+    }
+    html+='<button class="modal-btn modal-btn-outline" onclick="closeModal(\'modal-task-detail\')">关闭</button>';
+    html+='</div>';
+    body.innerHTML=html;
+  }).catch(function(e){body.innerHTML='<div style="color:#dc2626">加载失败: '+e.message+'</div>';});
+}
+
+function submitFeedback(taskId) {
+  var feedback=prompt('请输入执行反馈（如: 已到达现场，隧道积水30cm，已封闭入口）');
+  if(feedback===null)return;
+  var status=confirm('任务是否已完成？\n确定=标记完成  取消=仅提交进度反馈')?'completed':'in_progress';
+  fetch(API_BASE+'/api/tasks/'+taskId+'/feedback',{method:'POST',headers:authHeaders(),body:JSON.stringify({status:status,feedback:feedback})})
+    .then(function(r){return r.json()})
+    .then(function(data){showToast(data.message||'反馈已提交');closeModal('modal-task-detail');loadTasks();})
+    .catch(function(e){showToast('提交失败: '+e.message);});
+}
+
+function completeTask(taskId) {
+  var feedback=prompt('完成备注（选填，如: 积水已退，恢复通行）')||'任务完成';
+  fetch(API_BASE+'/api/tasks/'+taskId+'/feedback',{method:'POST',headers:authHeaders(),body:JSON.stringify({status:'completed',feedback:feedback})})
+    .then(function(r){return r.json()})
+    .then(function(data){showToast(data.message||'任务已完成');loadTasks();})
+    .catch(function(e){showToast('操作失败: '+e.message);});
+}
+
+// ==================== 水位监测 ====================
+function openWaterPanel() {
+  openModal('modal-water');
+  document.getElementById('water-list').innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px">加载中...</div>';
+  fetch(API_BASE + '/api/water/stations', {headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      var stations = data.stations || [];
+      if (!stations.length) { document.getElementById('water-list').innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px">暂无水位监测站点</div>'; return; }
+      var html = '';
+      stations.forEach(function(s) {
+        var level = s.current_level || 0;
+        var warn = s.warning_level || 5;
+        var danger = s.danger_level || 7;
+        var pct = Math.min(level / danger * 100, 100);
+        var cls = level >= danger ? 'danger' : level >= warn ? 'warning' : 'normal';
+        var statusText = level >= danger ? '超警戒' : level >= warn ? '接近警戒' : '正常';
+        html += '<div class="water-station">';
+        html += '<div class="station-name">'+s.name+' <span style="font-size:12px;color:'+({danger:'#dc2626',warning:'#f59e0b',normal:'#10b981'}[cls])+'">'+statusText+'</span></div>';
+        html += '<div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:4px"><span>当前: '+level.toFixed(2)+'m</span><span>警戒: '+warn+'m | 危险: '+danger+'m</span></div>';
+        html += '<div class="water-bar-bg"><div class="water-bar-fill '+cls+'" style="width:'+pct+'%"></div></div>';
+        html += '<div style="font-size:11px;color:#94a3b8;margin-top:4px">'+(s.river_name||'')+' | '+(s.station_type||'')+' | 更新:'+(s.update_time||'--').slice(0,16)+'</div>';
+        html += '</div>';
+      });
+      document.getElementById('water-list').innerHTML = html;
+    })
+    .catch(function(e){ document.getElementById('water-list').innerHTML = '<div style="color:#dc2626;padding:20px">加载失败: '+e.message+'</div>'; });
+}
+
+// ==================== 预警规则 ====================
+function openAlertPanel() { openModal('modal-alerts'); loadAlertRules(); }
+
+function loadAlertRules() {
+  fetch(API_BASE + '/api/alerts/rules', {headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      var rules = data.rules || [];
+      if (!rules.length) { document.getElementById('alert-rules-list').innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px">暂无预警规则</div>'; return; }
+      var condLabels = {rain_24h:'24h雨量',rain_1h:'1h雨量',warning_level:'预警等级',risk_score:'风险评分'};
+      var html = '';
+      rules.forEach(function(rule) {
+        html += '<div class="alert-rule-item"><div>';
+        html += '<span style="font-weight:600">'+(condLabels[rule.condition_type]||rule.condition_type)+'</span>';
+        html += ' &ge; <span style="color:#dc2626;font-weight:600">'+rule.threshold+'</span>';
+        html += ' &rarr; '+(rule.notify_type||'toast');
+        html += ' <span style="color:#94a3b8;font-size:11px">'+(rule.enabled?'启用':'停用')+'</span>';
+        html += '</div>';
+        html += '<button class="modal-btn modal-btn-danger" style="padding:4px 10px;font-size:11px" onclick="deleteAlertRule(\''+rule.id+'\')">删除</button></div>';
+      });
+      document.getElementById('alert-rules-list').innerHTML = html;
+    })
+    .catch(function(e){ document.getElementById('alert-rules-list').innerHTML = '<div style="color:#dc2626">加载失败</div>'; });
+}
+
+function createAlertRule() {
+  var payload = {
+    condition_type: document.getElementById('alert-condition').value,
+    threshold: parseFloat(document.getElementById('alert-threshold').value) || 0,
+    notify_type: document.getElementById('alert-notify').value
+  };
+  fetch(API_BASE + '/api/alerts/rules', {method:'POST', headers:authHeaders(), body:JSON.stringify(payload)})
+    .then(function(r){return r.json()})
+    .then(function(data) { showToast(data.message||'规则已添加'); loadAlertRules(); })
+    .catch(function(e){ showToast('添加失败: '+e.message); });
+}
+
+function deleteAlertRule(ruleId) {
+  fetch(API_BASE + '/api/alerts/rules/' + ruleId, {method:'DELETE', headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) { showToast(data.message||'已删除'); loadAlertRules(); })
+    .catch(function(e){ showToast('删除失败: '+e.message); });
+}
+
+// ==================== 自定义风险点 ====================
+function openHazardEditor() { openModal('modal-hazard-edit'); loadCustomHazards(); }
+
+function loadCustomHazards() {
+  fetch(API_BASE + '/api/custom-hazards', {headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      var hazards = data.hazards || [];
+      if (!hazards.length) { document.getElementById('custom-hazard-list').innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px">暂无自定义风险点</div>'; return; }
+      var html = '';
+      hazards.forEach(function(h) {
+        html += '<div class="hazard-item"><div style="display:flex;justify-content:space-between;align-items:center">';
+        html += '<div><span style="font-weight:600">'+h.name+'</span> <span style="color:#6b7280;font-size:12px">'+h.type+' | '+h.level+'</span></div>';
+        html += '<button class="modal-btn modal-btn-danger" style="padding:2px 8px;font-size:11px" onclick="deleteCustomHazard(\''+h.id+'\')">删除</button>';
+        html += '</div>';
+        html += '<div style="font-size:11px;color:#94a3b8;margin-top:4px">'+h.lat.toFixed(4)+', '+h.lng.toFixed(4)+(h.note?' | '+h.note:'')+'</div></div>';
+      });
+      document.getElementById('custom-hazard-list').innerHTML = html;
+    })
+    .catch(function(e){ document.getElementById('custom-hazard-list').innerHTML = '<div style="color:#dc2626">加载失败</div>'; });
+}
+
+function saveCustomHazard() {
+  var name = document.getElementById('hz-name').value.trim();
+  var lat = parseFloat(document.getElementById('hz-lat').value);
+  var lng = parseFloat(document.getElementById('hz-lng').value);
+  if (!name) { showToast('请输入风险点名称'); return; }
+  if (isNaN(lat) || isNaN(lng)) { showToast('请输入有效的经纬度'); return; }
+  var payload = {
+    name: name, type: document.getElementById('hz-type').value,
+    lat: lat, lng: lng, level: document.getElementById('hz-level').value,
+    note: document.getElementById('hz-note').value || ''
+  };
+  fetch(API_BASE + '/api/custom-hazards', {method:'POST', headers:authHeaders(), body:JSON.stringify(payload)})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      showToast(data.message||'已保存');
+      document.getElementById('hz-name').value = '';
+      document.getElementById('hz-note').value = '';
+      loadCustomHazards();
+      // 同步添加到地图上
+      _hazardData.push({name:payload.name, type:payload.type, lat:payload.lat, lng:payload.lng, level:payload.level, elevation:0, location:''});
+      renderMap();
+    })
+    .catch(function(e){ showToast('保存失败: '+e.message); });
+}
+
+function deleteCustomHazard(hzId) {
+  fetch(API_BASE + '/api/custom-hazards/' + hzId, {method:'DELETE', headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) { showToast(data.message||'已删除'); loadCustomHazards(); })
+    .catch(function(e){ showToast('删除失败: '+e.message); });
+}
+
+var _pickingHazard = false;
+function pickHazardFromMap() {
+  closeModal('modal-hazard-edit');
+  _pickingHazard = true;
+  showToast('请在地图上点击选择风险点位置');
+  cvs.style.cursor = 'crosshair';
+  cvs.addEventListener('click', _onPickHazardClick, {once: true});
+}
+function _onPickHazardClick(e) {
+  if (!_pickingHazard) return;
+  _pickingHazard = false;
+  cvs.style.cursor = 'grab';
+  var rect = cvs.getBoundingClientRect();
+  var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  var lat = yToLat(my), lng = xToLng(mx);
+  document.getElementById('hz-lat').value = lat.toFixed(4);
+  document.getElementById('hz-lng').value = lng.toFixed(4);
+  showToast('已选择坐标: '+lat.toFixed(4)+', '+lng.toFixed(4));
+  openModal('modal-hazard-edit');
+}
+
+// ==================== 历史对比 ====================
+function openHistoryCompare() { openModal('modal-history'); }
+
+function searchHistory() {
+  var rain24 = parseFloat(document.getElementById('rain-24h').textContent) || 0;
+  var rain1 = parseFloat(document.getElementById('rain-1h').textContent) || 0;
+  document.getElementById('history-result').innerHTML = '<div style="text-align:center;color:#6b7280;padding:30px">搜索中...</div>';
+  fetch(API_BASE + '/api/history/compare?rain_24h='+rain24+'&rain_1h='+rain1, {headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      var records = data.records || [];
+      if (!records.length) { document.getElementById('history-result').innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px">未找到相似历史记录<br><span style="font-size:12px">请先保存更多研判记录以建立历史库</span></div>'; return; }
+      var html = '';
+      records.forEach(function(rec) {
+        html += '<div class="history-item"><div style="display:flex;justify-content:space-between;align-items:center">';
+        html += '<div><div style="font-weight:600;font-size:14px">'+(rec.time||'').slice(0,16)+'</div>';
+        html += '<div style="font-size:12px;color:#6b7280;margin-top:2px">24h雨量:'+(rec.rain_24h||0)+'mm | 风险:'+(rec.risk_level||'--')+'</div></div>';
+        html += '<div class="sim-score">'+(rec.similarity||0)+'%</div>';
+        html += '</div></div>';
+      });
+      document.getElementById('history-result').innerHTML = html;
+    })
+    .catch(function(e){ document.getElementById('history-result').innerHTML = '<div style="color:#dc2626;padding:20px">搜索失败: '+e.message+'</div>'; });
+}
+
+// ==================== SSE 实时协同 ====================
+var _sseSource = null;
+function initSSE() {
+  if (typeof EventSource === 'undefined') return;
+  try {
+    var token = getToken();
+    var url = API_BASE + '/api/collab/events' + (token ? '?token='+token : '');
+    _sseSource = new EventSource(url);
+    _sseSource.addEventListener('alert', function(e) {
+      try { var d = JSON.parse(e.data); showToast('[预警] ' + (d.message||d.title||'')); } catch(x){}
+    });
+    _sseSource.addEventListener('task', function(e) {
+      try { var d = JSON.parse(e.data); showToast('[任务] ' + (d.message||d.title||'')); } catch(x){}
+    });
+    _sseSource.addEventListener('collab', function(e) {
+      try { var d = JSON.parse(e.data); showToast('[协同] ' + (d.message||d.user||'')); } catch(x){}
+    });
+    _sseSource.onerror = function() { setTimeout(function(){ if(_sseSource) _sseSource.close(); initSSE(); }, 10000); };
+  } catch(e) { console.warn('SSE初始化失败:', e); }
+}
+</script>
+
+</body>
+</html>

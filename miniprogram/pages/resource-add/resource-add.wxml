@@ -1,0 +1,70 @@
+<view class="container">
+  <!-- 识别提示条 -->
+  <view class="ai-hint-bar" wx:if="{{fromAi}}">
+    <text class="ai-hint-icon">📋</text>
+    <text class="ai-hint-text">已自动识别填写，请核实后提交</text>
+  </view>
+
+  <view class="card">
+    <view class="form-group" wx:for="{{fields}}" wx:key="key">
+      <view class="form-label">
+        {{item.label}}
+        <text class="required" wx:if="{{item.required}}">*</text>
+        <text class="ai-field-tag" wx:if="{{aiFilledKeys.indexOf(item.key) >= 0}}">识别</text>
+      </view>
+      <block wx:if="{{item.picker}}">
+        <picker
+          mode="selector"
+          range="{{item.picker}}"
+          value="{{pickerIndices[item.key] || 0}}"
+          data-key="{{item.key}}"
+          bindchange="onPickerChange"
+        >
+          <view class="form-picker {{aiFilledKeys.indexOf(item.key) >= 0 ? 'ai-filled' : ''}}">
+            <text>{{formData[item.key] || '请选择'}}</text>
+            <text class="list-item-arrow">▼</text>
+          </view>
+        </picker>
+      </block>
+      <block wx:else>
+        <input
+          class="form-input {{aiFilledKeys.indexOf(item.key) >= 0 ? 'ai-filled' : ''}}"
+          type="{{item.type || 'text'}}"
+          value="{{formData[item.key]}}"
+          placeholder="{{item.placeholder}}"
+          data-key="{{item.key}}"
+          bindinput="onInput"
+        />
+      </block>
+    </view>
+
+    <!-- 定位模块 -->
+    <view class="form-group">
+      <view class="form-label">定点位置（坐标）</view>
+
+      <!-- 已选位置显示 -->
+      <view class="loc-display" wx:if="{{locationLabel}}">
+        <text class="loc-icon">📍</text>
+        <text class="loc-text">{{locationLabel}}</text>
+        <text class="loc-clear" bindtap="clearLocation">✕</text>
+      </view>
+      <view class="loc-display loc-empty" wx:else>
+        <text class="loc-text-empty">未设置坐标</text>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="loc-actions">
+        <view class="loc-btn loc-btn-gps {{locating ? 'loc-btn-loading' : ''}}" bindtap="autoLocate">
+          <text>{{locating ? '定位中...' : '📡 自动定位'}}</text>
+        </view>
+        <view class="loc-btn loc-btn-map" bindtap="pickOnMap">
+          <text>🗺️ 地图选点</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <button class="btn btn-primary btn-large" bindtap="submit" disabled="{{submitting}}">
+    {{submitting ? '提交中...' : (editId ? '保存修改' : '确认添加')}}
+  </button>
+</view>

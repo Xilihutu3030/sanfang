@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>洪灾现场应急处置指挥系统</title>
+<link rel="icon" href="/favicon.png" type="image/png">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+@font-face { font-family:'num'; src:local('DIN Alternate'), local('Helvetica Neue'); }
+
+body {
+  font-family: -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif;
+  background: #0a0e1a;
+  color: #e2e8f0;
+  overflow-x: hidden;
+}
+
+/* ===== 全屏首屏 ===== */
+.hero {
+  position: relative;
+  width: 100%; height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.hero-bg {
+  position: absolute; inset: 0;
+  background: url('/static/images/hero-bg.png') center/cover no-repeat;
+  filter: brightness(0.35);
+  z-index: 0;
+}
+.hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(10,14,26,0.4) 0%, rgba(10,14,26,0.7) 60%, #0a0e1a 100%);
+  z-index: 1;
+}
+.hero-content {
+  position: relative; z-index: 2;
+  text-align: center;
+  padding: 0 20px;
+  animation: fadeUp 1.2s ease-out;
+}
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(40px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.hero-badge {
+  display: inline-block;
+  padding: 6px 20px;
+  border: 1px solid rgba(245,158,11,0.5);
+  border-radius: 20px;
+  font-size: 14px;
+  color: #f59e0b;
+  letter-spacing: 4px;
+  margin-bottom: 28px;
+  backdrop-filter: blur(8px);
+  background: rgba(245,158,11,0.08);
+}
+.hero-title {
+  font-size: 56px;
+  font-weight: 800;
+  letter-spacing: 8px;
+  line-height: 1.2;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #93c5fd 50%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+}
+.hero-sub {
+  font-size: 20px;
+  color: #94a3b8;
+  letter-spacing: 6px;
+  margin-bottom: 50px;
+  font-weight: 300;
+}
+.hero-enter {
+  display: inline-block;
+  padding: 16px 60px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  letter-spacing: 4px;
+  text-decoration: none;
+  transition: all 0.3s;
+  box-shadow: 0 4px 24px rgba(245,158,11,0.3);
+}
+.hero-enter:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(245,158,11,0.5);
+}
+
+/* ===== 能力卡片区 ===== */
+.features {
+  padding: 80px 60px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.features-title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  margin-bottom: 12px;
+  color: #e2e8f0;
+}
+.features-line {
+  width: 60px; height: 3px;
+  background: linear-gradient(90deg, #f59e0b, #f97316);
+  margin: 0 auto 50px;
+  border-radius: 2px;
+}
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+.card {
+  background: linear-gradient(160deg, rgba(30,41,59,0.8), rgba(15,23,42,0.9));
+  border: 1px solid rgba(96,165,250,0.15);
+  border-radius: 12px;
+  padding: 32px 24px;
+  text-align: center;
+  transition: all 0.3s;
+}
+.card:hover {
+  border-color: rgba(245,158,11,0.4);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+.card-icon {
+  width: 56px; height: 56px;
+  margin: 0 auto 20px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+}
+.card-icon.blue   { background: rgba(59,130,246,0.15); }
+.card-icon.amber  { background: rgba(245,158,11,0.15); }
+.card-icon.green  { background: rgba(34,197,94,0.15); }
+.card-icon.red    { background: rgba(239,68,68,0.15); }
+.card h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #f1f5f9;
+  letter-spacing: 2px;
+}
+.card p {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.8;
+}
+
+/* ===== 数据概览条 ===== */
+.stats {
+  padding: 60px 0;
+  background: linear-gradient(90deg, rgba(30,58,138,0.2), rgba(15,23,42,0.6), rgba(30,58,138,0.2));
+  border-top: 1px solid rgba(96,165,250,0.1);
+  border-bottom: 1px solid rgba(96,165,250,0.1);
+}
+.stats-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+}
+.stat-num {
+  font-family: 'num', 'Helvetica Neue', sans-serif;
+  font-size: 42px;
+  font-weight: 700;
+  color: #60a5fa;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.stat-num .unit { font-size: 16px; color: #94a3b8; font-weight: 400; margin-left: 2px; }
+.stat-label { font-size: 14px; color: #64748b; letter-spacing: 2px; }
+
+/* ===== 底部 ===== */
+.footer {
+  text-align: center;
+  padding: 40px 20px;
+  color: #475569;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+/* ===== 滚动指示 ===== */
+.scroll-hint {
+  position: absolute;
+  bottom: 30px;
+  left: 50%; transform: translateX(-50%);
+  z-index: 2;
+  animation: bounce 2s infinite;
+}
+.scroll-hint span {
+  display: block;
+  width: 24px; height: 24px;
+  border-right: 2px solid rgba(255,255,255,0.3);
+  border-bottom: 2px solid rgba(255,255,255,0.3);
+  transform: rotate(45deg);
+  margin: -8px auto 0;
+}
+@keyframes bounce {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50%     { transform: translateX(-50%) translateY(10px); }
+}
+
+@media(max-width:900px) {
+  .hero-title { font-size: 36px; letter-spacing: 4px; }
+  .hero-sub { font-size: 16px; }
+  .cards { grid-template-columns: repeat(2, 1fr); }
+  .stats-inner { flex-wrap: wrap; gap: 30px; }
+}
+@media(max-width:500px) {
+  .hero-title { font-size: 28px; }
+  .cards { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- 首屏 -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-badge">FLOOD EMERGENCY RESPONSE</div>
+    <h1 class="hero-title">洪灾现场应急处置</h1>
+    <p class="hero-sub">智能研判 &middot; 实时监测 &middot; 精准指挥 &middot; 高效调度</p>
+    <a class="hero-enter" href="/system">进入指挥系统</a>
+  </div>
+  <div class="scroll-hint"><span></span></div>
+</section>
+
+<!-- 核心能力 -->
+<section class="features">
+  <h2 class="features-title">系统核心能力</h2>
+  <div class="features-line"></div>
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon blue">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </div>
+      <h3>实时气象监测</h3>
+      <p>自动采集降雨量、风速、预警信号等气象数据，实时掌握天气态势变化</p>
+    </div>
+    <div class="card">
+      <div class="card-icon amber">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </div>
+      <h3>智能风险研判</h3>
+      <p>基于气象、地形、风险点数据综合评估，自动生成风险等级与应对建议</p>
+    </div>
+    <div class="card">
+      <div class="card-icon green">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </div>
+      <h3>资源精准调度</h3>
+      <p>自动匹配周边应急人员、物资、车辆与避险场所，一键查看可调度资源</p>
+    </div>
+    <div class="card">
+      <div class="card-icon red">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+      </div>
+      <h3>辅助决策简报</h3>
+      <p>自动生成研判报告与领导汇报参考，支持历史存档与回溯分析</p>
+    </div>
+  </div>
+</section>
+
+<!-- 数据统计 -->
+<section class="stats">
+  <div class="stats-inner">
+    <div>
+      <div class="stat-num" id="s1">0<span class="unit">个</span></div>
+      <div class="stat-label">风险监测点</div>
+    </div>
+    <div>
+      <div class="stat-num" id="s2">0<span class="unit">类</span></div>
+      <div class="stat-label">应急资源</div>
+    </div>
+    <div>
+      <div class="stat-num" id="s3">0<span class="unit">项</span></div>
+      <div class="stat-label">气象指标</div>
+    </div>
+    <div>
+      <div class="stat-num" id="s4">24<span class="unit">h</span></div>
+      <div class="stat-label">不间断监测</div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  洪灾现场应急处置指挥系统 &copy; 2025
+</footer>
+
+<script>
+// 数字滚动动画
+function animateNum(el, target, duration) {
+  var start = 0, startTime = null;
+  function step(ts) {
+    if (!startTime) startTime = ts;
+    var p = Math.min((ts - startTime) / duration, 1);
+    var val = Math.floor(p * target);
+    el.firstChild.textContent = val;
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+// 首屏加载后触发
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting) {
+      animateNum(document.getElementById('s1'), 58, 1500);
+      animateNum(document.getElementById('s2'), 4, 800);
+      animateNum(document.getElementById('s3'), 12, 1000);
+      observer.disconnect();
+    }
+  });
+}, { threshold: 0.3 });
+observer.observe(document.querySelector('.stats'));
+
+// 加载真实数据
+fetch('/api/hazards').then(function(r){ return r.json(); }).then(function(d){
+  var n = d.hazards ? d.hazards.length : 0;
+  if (n > 0) document.getElementById('s1').innerHTML = n + '<span class="unit">个</span>';
+}).catch(function(){});
+</script>
+</body>
+</html>

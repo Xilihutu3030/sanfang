@@ -1,0 +1,45 @@
+{
+  "update_time": "2026-03-20 16:41:15",
+  "target_area": "广州市",
+  "sources": [
+    {
+      "source": "中央气象台",
+      "status": "success",
+      "data": "雷达回波数据获取成功"
+    },
+    {
+      "source": "广东省气象局",
+      "status": "success",
+      "warning": "暴雨预警信号"
+    },
+    {
+      "source": "广州市气象局",
+      "status": "success",
+      "forecast": "未来6小时大雨"
+    },
+    {
+      "source": "和风天气",
+      "status": "success",
+      "temperature": 25,
+      "humidity": 85,
+      "rain_1h": 2.5,
+      "wind": "东南风3级"
+    },
+    {
+      "source": "彩云天气",
+      "status": "success",
+      "minutely_rain": "未来2小时有降雨",
+      "rain_intensity": "中雨"
+    }
+  ],
+  "综合研判": {
+    "预警等级": "暴雨蓝色预警",
+    "当前雨量_1h": 2.5,
+    "累计雨量_24h": 35.0,
+    "未来1h预报": "中雨",
+    "未来6h预报": "大雨",
+    "未来24h预报": "暴雨",
+    "雷达回波": "降雨回波逼近",
+    "风险建议": "建议启动防御响应"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "materials": [
+    {
+      "id": "M7C431654",
+      "create_time": "2026-03-02 19:47:20",
+      "last_update": "2026-03-02 19:47:20",
+      "name": "移动水泵",
+      "category": "排水设备",
+      "quantity": 10,
+      "unit": "台",
+      "location": "XX仓库",
+      "status": "可用",
+      "specs": "",
+      "manager": "",
+      "manager_phone": ""
+    }
+  ]
+}

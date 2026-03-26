@@ -1,0 +1,81 @@
+<view class="container">
+  <!-- Tab切换 -->
+  <view class="tabs">
+    <view
+      class="tab-item {{activeTab === index ? 'active' : ''}}"
+      wx:for="{{tabs}}" wx:key="key"
+      data-idx="{{index}}"
+      bindtap="switchTab"
+    >
+      {{item.icon}} {{item.label}}
+    </view>
+  </view>
+
+  <!-- 统计 -->
+  <view class="card">
+    <view class="stat-grid">
+      <view class="stat-item">
+        <text class="stat-value text-primary">{{items.length}}</text>
+        <text class="stat-label">总数</text>
+      </view>
+      <view class="stat-item" wx:if="{{statistics['可用'] !== undefined}}">
+        <text class="stat-value text-green">{{statistics['可用'] || 0}}</text>
+        <text class="stat-label">可用</text>
+      </view>
+      <view class="stat-item" wx:if="{{statistics['在岗'] !== undefined}}">
+        <text class="stat-value text-green">{{statistics['在岗'] || 0}}</text>
+        <text class="stat-label">在岗</text>
+      </view>
+      <view class="stat-item" wx:if="{{statistics['待命'] !== undefined}}">
+        <text class="stat-value text-blue">{{statistics['待命'] || 0}}</text>
+        <text class="stat-label">待命</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-row">
+    <button class="btn btn-primary" style="flex:1;" bindtap="goAdd">+ 添加</button>
+    <button class="btn btn-success" style="flex:1;" bindtap="goImport">批量导入</button>
+    <button class="btn btn-ai" style="flex:1;" bindtap="goAiRecognize">拍照识别</button>
+  </view>
+
+  <!-- 资源列表 -->
+  <view class="card" wx:if="{{items.length > 0}}">
+    <view class="resource-item" wx:for="{{items}}" wx:key="id">
+      <view class="resource-main" bindtap="editItem" data-id="{{item.id}}">
+        <!-- 人员 -->
+        <block wx:if="{{currentType === 'personnel'}}">
+          <view class="resource-title">{{item.name}}</view>
+          <view class="resource-desc">{{item.team || '--'}} | {{item.phone || '--'}}</view>
+        </block>
+        <!-- 物资 -->
+        <block wx:elif="{{currentType === 'materials'}}">
+          <view class="resource-title">{{item.name}}</view>
+          <view class="resource-desc">{{item.category || '--'}} | {{item.quantity}}{{item.unit || '个'}} | {{item.location || '--'}}</view>
+        </block>
+        <!-- 设施 -->
+        <block wx:elif="{{currentType === 'facilities'}}">
+          <view class="resource-title">{{item.name}}</view>
+          <view class="resource-desc">{{item.type || '--'}} | 容量{{item.capacity || '--'}}人 | {{item.address || '--'}}</view>
+        </block>
+        <!-- 车辆 -->
+        <block wx:elif="{{currentType === 'vehicles'}}">
+          <view class="resource-title">{{item.plate_number}} ({{item.type || '--'}})</view>
+          <view class="resource-desc">{{item.model || '--'}} | {{item.driver || '--'}} | {{item.driver_phone || '--'}}</view>
+        </block>
+      </view>
+      <view class="resource-actions">
+        <text class="tag {{item.status === '可用' || item.status === '待命' || item.status === '在岗' ? 'tag-green' : 'tag-gray'}}">{{item.status || '可用'}}</text>
+        <view class="delete-btn" catchtap="deleteItem" data-id="{{item.id}}">删除</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{!loading && items.length === 0}}">
+    <text class="empty-icon">📦</text>
+    <text class="empty-text">暂无资源数据</text>
+    <text class="empty-text">点击上方按钮添加或导入</text>
+  </view>
+</view>
