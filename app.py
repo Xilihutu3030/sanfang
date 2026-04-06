@@ -342,9 +342,15 @@ def api_ai_judge():
 
     # 4. 根据圈选区域过滤风险点（只保留圈选范围内的点）
     area = data.get('area')
+    region_name = data.get('region_name', '')
     if area and area.get('type'):
-        # 有圈选区域时，用DEFAULT_HAZARDS中落在范围内的点补充
-        if not hazards:
+        # 有区域名称时，优先从知识库获取该区域风险点
+        if not hazards and region_name:
+            from ai_judge import _find_region_hazards
+            center_obj = data.get('center', {})
+            hazards = _find_region_hazards(region_name, center_obj.get('lat'), center_obj.get('lng'))
+        # 仅在未指定区域名称时才用默认数据
+        if not hazards and not region_name:
             hazards = DEFAULT_HAZARDS
         filtered = _filter_hazards_by_area(hazards, area)
         hazards = filtered  # 即使为空也用空，不在范围内就是不在
@@ -992,8 +998,8 @@ def get_hazards():
             except Exception:
                 pass
 
-        # 无区域匹配时使用默认数据
-        if not hazards:
+        # 无区域匹配时使用默认数据（仅在未指定区域时才用默认数据）
+        if not hazards and not region:
             hazards = DEFAULT_HAZARDS
 
         # 按区域bounds过滤

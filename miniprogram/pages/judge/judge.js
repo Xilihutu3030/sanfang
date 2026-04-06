@@ -101,8 +101,8 @@ Page({
     try {
       // 获取当前区域名称和中心坐标
       const rs = this.data.regionSelected || {}
-      const regionName = rs.district || rs.city || ''
-      const center = this.data.mapCenter
+      const regionName = (rs.district && rs.district.name) || (rs.city && rs.city.name !== '直辖市' && rs.city.name) || (rs.province && rs.province.name) || ''
+      const center = this.data.regionCenter ? { latitude: this.data.regionCenter.lat, longitude: this.data.regionCenter.lng } : this.data.mapCenter
       const data = await api.hazards.list(regionName, center.latitude, center.longitude)
       const hazards = data.hazards || []
       const hazardMarkers = hazards
@@ -145,19 +145,28 @@ Page({
 
   async aiAnalyzeHazards() {
     const rs = this.data.regionSelected || {}
-    const regionName = rs.district || rs.city || ''
+    const regionName = (rs.district && rs.district.name) || (rs.city && rs.city.name !== '直辖市' && rs.city.name) || (rs.province && rs.province.name) || ''
     if (!regionName) {
       wx.showToast({ title: '请先选择区域', icon: 'none' })
       return
     }
     wx.showLoading({ title: 'AI分析中...' })
     try {
-      const center = this.data.mapCenter
+      const center = this.data.regionCenter ? { latitude: this.data.regionCenter.lat, longitude: this.data.regionCenter.lng } : this.data.mapCenter
+      // 根据区域bbox计算合理半径
+      let radiusKm = 15
+      const bbox = this.data.regionBbox
+      if (bbox) {
+        const dlat = bbox.ne_lat - bbox.sw_lat
+        const dlng = bbox.ne_lng - bbox.sw_lng
+        radiusKm = Math.max(dlat, dlng) * 111 / 2
+        radiusKm = Math.max(5, Math.min(radiusKm, 50))
+      }
       const data = await api.hazards.aiAnalyze({
         region: regionName,
         center_lat: center.latitude,
         center_lng: center.longitude,
-        radius_km: 15,
+        radius_km: radiusKm,
       })
       const hazards = data.hazards || []
       const hazardMarkers = hazards
@@ -507,6 +516,10 @@ Page({
           if (rs[k] && rs[k].name !== '直辖市') parts.push(rs[k].name)
         })
         payload.region_name = parts.join('')
+        // 传递当前已加载的风险点数据
+        if (this.data.hazards && this.data.hazards.length > 0) {
+          payload.hazards = this.data.hazards
+        }
       } else if (this.data.polyPoints.length >= 3) {
         const selectedHazards = this.data.hazards.filter(
           h => h.lat && h.lng && util.pointInPolygon(h.lat, h.lng, this.data.polyPoints)
@@ -741,6 +754,15 @@ Page({
         showRegionBorder: true,
       })
       this._mergePolygons()
+
+      // 自动移动地图中心到区域中心，并重新加载风险点和地形
+      if (center) {
+        this.setData({
+          mapCenter: { latitude: center.lat, longitude: center.lng },
+        })
+      }
+      this.loadHazards()
+      this.loadDEM()
     } catch (e) {
       console.warn('边界加载失败', e)
     }
