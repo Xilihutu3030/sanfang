@@ -8,13 +8,16 @@ Page({
     userInfo: {},
     roleNames: {
       admin: '系统管理员',
-      manager: '租户管理员',
+      manager: '管理员',
       operator: '指挥员',
       viewer: '查看者',
     },
   },
 
   onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 3 })
+    }
     const app = getApp()
     const user = app.globalData.user || wx.getStorageSync('sf_user') || {}
     this.setData({ userInfo: user })
@@ -69,7 +72,7 @@ Page({
   about() {
     wx.showModal({
       title: '关于系统',
-      content: '三防形势智能研判与指挥辅助系统\n微信小程序版 v2.0\n\n核心能力：\n- AI智能风险研判\n- 应急资源管理\n- 一键生成研判简报\n- 多租户账号管理',
+      content: '三防应急处置指挥决策辅助系统\n微信小程序版 v2.0\n\n核心能力：\n- AI智能风险研判\n- 应急资源管理\n- 一键生成研判简报\n- 多用户账号管理',
       showCancel: false,
     })
   },

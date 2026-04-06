@@ -1,0 +1,36 @@
+<view class="container">
+  <view class="section-title">添加预警规则</view>
+  <view class="card">
+    <view class="form-group">
+      <text class="label">触发条件</text>
+      <picker range="{{conditionTypes}}" range-key="name" value="{{condIdx}}" bindchange="onCondChange">
+        <view class="picker-box">{{conditionTypes[condIdx].name}} <text class="arrow">▼</text></view>
+      </picker>
+    </view>
+    <view class="form-group">
+      <text class="label">阈值</text>
+      <input type="digit" value="{{threshold}}" bindinput="onInput" data-f="threshold" placeholder="如: 50" />
+    </view>
+    <view class="form-group">
+      <text class="label">通知方式</text>
+      <picker range="{{notifyTypes}}" range-key="name" value="{{notifyIdx}}" bindchange="onNotifyChange">
+        <view class="picker-box">{{notifyTypes[notifyIdx].name}} <text class="arrow">▼</text></view>
+      </picker>
+    </view>
+    <button class="btn-primary" bindtap="addRule">添加规则</button>
+  </view>
+
+  <view class="section-title" style="margin-top: 32rpx">已有规则</view>
+  <view class="empty" wx:if="{{!rules.length}}">暂无预警规则</view>
+  <view class="rule-item" wx:for="{{rules}}" wx:key="id">
+    <view class="rule-info">
+      <text class="rule-cond">{{item.condLabel}}</text>
+      <text class="rule-op"> ≥ {{item.threshold}}</text>
+      <text class="rule-notify"> → {{item.notify_type}}</text>
+    </view>
+    <view class="rule-right">
+      <text class="rule-status {{item.enabled?'on':'off'}}">{{item.enabled?'启用':'停用'}}</text>
+      <view class="btn-del" bindtap="deleteRule" data-id="{{item.id}}">删除</view>
+    </view>
+  </view>
+</view>

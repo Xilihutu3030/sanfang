@@ -8,6 +8,9 @@ Page({
   },
 
   onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 2 })
+    }
     this.loadHistory()
   },
 
@@ -43,7 +46,7 @@ Page({
     const item = this.data.list[idx]
     if (item) {
       getApp().globalData.lastJudgeResult = item
-      wx.navigateTo({ url: '/pages/result/result' })
+      wx.navigateTo({ url: '/pages/history-detail/history-detail' })
     }
   },
 })

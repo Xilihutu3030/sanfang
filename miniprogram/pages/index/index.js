@@ -10,6 +10,9 @@ Page({
   },
 
   onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 0 })
+    }
     this.loadWeather()
     this.loadResourceStats()
     // 如果有缓存的研判结果
@@ -74,5 +77,9 @@ Page({
       getApp().globalData.lastJudgeResult = this.data.lastJudge
       wx.navigateTo({ url: '/pages/result/result' })
     }
+  },
+
+  goPage(e) {
+    wx.navigateTo({ url: e.currentTarget.dataset.url })
   },
 })

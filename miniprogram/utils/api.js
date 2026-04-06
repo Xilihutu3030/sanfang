@@ -115,23 +115,34 @@ const weather = {
 const judge = {
   run: (data) => request('/api/ai/judge', 'POST', data),
   report: (data) => request('/api/ai/report', 'POST', data),
+  responseReport: (data) => request('/api/ai/response-report', 'POST', data),
 }
 
 // ==================== 隐患点 ====================
 const hazards = {
-  list: () => request('/api/hazards'),
+  list: (region, centerLat, centerLng) => {
+    let params = []
+    if (region) params.push('region=' + encodeURIComponent(region))
+    if (centerLat) params.push('center_lat=' + centerLat)
+    if (centerLng) params.push('center_lng=' + centerLng)
+    return request('/api/hazards' + (params.length ? '?' + params.join('&') : ''))
+  },
+  aiAnalyze: (data) => request('/api/hazards/ai-analyze', 'POST', data, { timeout: 30000 }),
 }
 
 // ==================== 历史记录 ====================
 const history = {
   list: () => request('/api/history'),
   save: (data) => request('/api/history', 'POST', data),
+  delete: (id) => request(`/api/history/${id}`, 'DELETE'),
+  compare: (rain24h, rain1h) => request(`/api/history/compare?rain_24h=${rain24h}&rain_1h=${rain1h}`),
 }
 
 // ==================== 应急资源 ====================
 const resources = {
-  statistics: () => request('/api/resources/statistics'),
-  list: (type) => request(`/api/resources/${type}`),
+  statistics: (regionCode) => request('/api/resources/statistics' + (regionCode ? '?region_code=' + regionCode : '')),
+  subtypes: () => request('/api/resources/subtypes'),
+  list: (type, regionCode) => request(`/api/resources/${type}` + (regionCode ? '?region_code=' + regionCode : '')),
   add: (type, data) => request(`/api/resources/${type}`, 'POST', data),
   update: (type, id, data) => request(`/api/resources/${type}/${id}`, 'PUT', data),
   delete: (type, id) => request(`/api/resources/${type}/${id}`, 'DELETE'),
@@ -173,6 +184,89 @@ const auth = {
   changePassword: (old_password, new_password) => request('/api/auth/password', 'POST', { old_password, new_password }),
 }
 
+// ==================== 情景推演 ====================
+const simulate = {
+  run: (data) => request('/api/simulate', 'POST', data),
+}
+
+// ==================== 任务派单 ====================
+const tasks = {
+  list: (status) => request('/api/tasks' + (status ? '?status=' + status : '')),
+  batch: (data) => request('/api/tasks/batch', 'POST', data),
+  assign: (id, data) => request(`/api/tasks/${id}/assign`, 'POST', data),
+  feedback: (id, data) => request(`/api/tasks/${id}/feedback`, 'POST', data),
+  logs: (id) => request(`/api/tasks/${id}/logs`),
+}
+
+// ==================== 在岗人员 ====================
+const staff = {
+  onDuty: () => request('/api/staff?on_duty=1'),
+}
+
+// ==================== 水位监测 ====================
+const water = {
+  stations: () => request('/api/water/stations'),
+}
+
+// ==================== 预警规则 ====================
+const alerts = {
+  rules: () => request('/api/alerts/rules'),
+  addRule: (data) => request('/api/alerts/rules', 'POST', data),
+  deleteRule: (id) => request(`/api/alerts/rules/${id}`, 'DELETE'),
+}
+
+// ==================== 自定义风险点 ====================
+const customHazards = {
+  list: () => request('/api/custom-hazards'),
+  add: (data) => request('/api/custom-hazards', 'POST', data),
+  delete: (id) => request(`/api/custom-hazards/${id}`, 'DELETE'),
+}
+
+// ==================== 视频监控 ====================
+const cameras = {
+  list: (params) => {
+    let url = '/api/cameras?'
+    if (params) {
+      if (params.city) url += 'city=' + encodeURIComponent(params.city) + '&'
+      if (params.type) url += 'type=' + encodeURIComponent(params.type) + '&'
+    }
+    return request(url)
+  },
+  add: (data) => request('/api/cameras', 'POST', data),
+  update: (id, data) => request(`/api/cameras/${id}`, 'PUT', data),
+  delete: (id) => request(`/api/cameras/${id}`, 'DELETE'),
+}
+
+// ==================== 行政区域 ====================
+const regions = {
+  provinces: () => request('/api/regions/provinces'),
+  children: (code) => request('/api/regions/children/' + code),
+  boundary: (code, full, simplify) => request('/api/regions/boundary/' + code + '?full=' + (full ? '1' : '0') + '&simplify=' + (simplify ? '1' : '0')),
+  search: (q) => request('/api/regions/search?q=' + encodeURIComponent(q)),
+  info: (code) => request('/api/regions/info/' + code),
+  geocode: (q) => request('/api/regions/geocode?q=' + encodeURIComponent(q)),
+}
+
+// ==================== 灾情上报 ====================
+const reports = {
+  list: (params) => {
+    let url = '/api/reports?'
+    if (params) {
+      if (params.type) url += 'type=' + encodeURIComponent(params.type) + '&'
+      if (params.status) url += 'status=' + encodeURIComponent(params.status) + '&'
+      if (params.hours) url += 'hours=' + params.hours + '&'
+    }
+    return request(url)
+  },
+  get: (id) => request(`/api/reports/${id}`),
+  create: (data) => request('/api/reports', 'POST', data),
+  update: (id, data) => request(`/api/reports/${id}`, 'PUT', data),
+  delete: (id) => request(`/api/reports/${id}`, 'DELETE'),
+  upvote: (id) => request(`/api/reports/${id}/upvote`, 'POST'),
+  upload: (filePath) => uploadFile('/api/reports/upload', filePath, 'file', { timeout: 60000 }),
+  summary: (hours) => request(`/api/reports/summary?hours=${hours || 6}`),
+}
+
 module.exports = {
   request,
   uploadFile,
@@ -185,4 +279,13 @@ module.exports = {
   chat,
   tide,
   terrain,
+  simulate,
+  tasks,
+  staff,
+  water,
+  alerts,
+  customHazards,
+  cameras,
+  regions,
+  reports,
 }

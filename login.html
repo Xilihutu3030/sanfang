@@ -3,40 +3,40 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>登录 - 三防智能研判系统</title>
+<title>登录 - 智慧三防指挥调度</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'Microsoft YaHei',system-ui;background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%)}
-.login-wrapper{width:100%;max-width:420px;padding:20px}
-.login-card{background:rgba(30,41,59,0.95);border:1px solid #334155;border-radius:16px;padding:40px 32px;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'Microsoft YaHei',system-ui;background:linear-gradient(160deg,#0277bd 0%,#0288d1 30%,#00bcd4 60%,#2196f3 100%)}
+.login-wrapper{width:100%;max-width:440px;padding:20px}
+.login-card{background:rgba(255,255,255,0.92);border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:44px 36px;box-shadow:0 20px 60px rgba(2,136,209,0.3);backdrop-filter:blur(12px)}
 .logo{text-align:center;margin-bottom:32px}
-.logo-icon{font-size:48px;margin-bottom:12px}
-.logo h1{font-size:22px;color:#e2e8f0;font-weight:700;letter-spacing:1px}
-.logo p{font-size:13px;color:#94a3b8;margin-top:6px}
+.logo-icon{font-size:52px;margin-bottom:12px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.15))}
+.logo h1{font-size:24px;color:#0277bd;font-weight:800;letter-spacing:2px}
+.logo p{font-size:13px;color:#00bcd4;margin-top:8px;letter-spacing:1px}
 
 .form-group{margin-bottom:20px}
-.form-group label{display:block;font-size:13px;color:#94a3b8;margin-bottom:6px;font-weight:500}
+.form-group label{display:block;font-size:13px;color:#37474f;margin-bottom:6px;font-weight:600}
 .form-group select,
-.form-group input{width:100%;padding:12px 14px;background:#1e293b;border:1px solid #475569;border-radius:8px;color:#e2e8f0;font-size:14px;outline:none;transition:border-color 0.2s}
+.form-group input{width:100%;padding:12px 14px;background:#e0f7fa;border:1.5px solid #b2ebf2;border-radius:10px;color:#263238;font-size:14px;outline:none;transition:all 0.2s}
 .form-group select:focus,
-.form-group input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,0.15)}
-.form-group select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
-.form-group select option{background:#1e293b;color:#e2e8f0}
+.form-group input:focus{border-color:#00bcd4;box-shadow:0 0 0 3px rgba(2,136,209,0.12);background:#fff}
+.form-group select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234dd0e1' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.form-group select option{background:#fff;color:#263238}
 
-.login-btn{width:100%;padding:13px;background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.3s;margin-top:8px}
-.login-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(37,99,235,0.35)}
+.login-btn{width:100%;padding:14px;background:linear-gradient(135deg,#2196f3,#00bcd4);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;transition:all 0.3s;margin-top:8px;letter-spacing:2px;box-shadow:0 4px 20px rgba(2,136,209,0.35)}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(2,136,209,0.45)}
 .login-btn:active{transform:translateY(0)}
 .login-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}
 
-.error-msg{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none}
+.error-msg{background:#ffebee;border:1px solid #ef9a9a;color:#f44336;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none}
 .error-msg.show{display:block}
 
-.demo-info{margin-top:24px;padding:16px;background:rgba(37,99,235,0.1);border:1px solid rgba(37,99,235,0.2);border-radius:8px}
-.demo-info h4{font-size:13px;color:#60a5fa;margin-bottom:8px}
-.demo-info p{font-size:12px;color:#94a3b8;line-height:1.8}
-.demo-info code{background:rgba(37,99,235,0.2);padding:1px 6px;border-radius:3px;font-size:12px;color:#93c5fd}
+.demo-info{margin-top:24px;padding:16px;background:#e0f7fa;border:1.5px solid #b2ebf2;border-radius:12px}
+.demo-info h4{font-size:13px;color:#0288d1;margin-bottom:8px;font-weight:700}
+.demo-info p{font-size:12px;color:#37474f;line-height:1.8}
+.demo-info code{background:#b2ebf2;padding:1px 6px;border-radius:4px;font-size:12px;color:#0277bd}
 
-.footer{text-align:center;margin-top:24px;font-size:12px;color:#64748b}
+.footer{text-align:center;margin-top:24px;font-size:12px;color:rgba(255,255,255,0.6)}
 </style>
 </head>
 <body>
@@ -45,8 +45,8 @@ body{min-height:100vh;display:flex;align-items:center;justify-content:center;fon
   <div class="login-card">
     <div class="logo">
       <div class="logo-icon">🛡️</div>
-      <h1>三防智能研判系统</h1>
-      <p>三防形势智能研判与指挥辅助平台</p>
+      <h1>智慧三防指挥调度</h1>
+      <p>三防应急处置指挥决策辅助平台</p>
     </div>
 
     <div class="error-msg" id="error-msg"></div>
@@ -75,7 +75,7 @@ body{min-height:100vh;display:flex;align-items:center;justify-content:center;fon
     </div>
   </div>
 
-  <div class="footer">三防智能研判系统 v2.0</div>
+  <div class="footer">智慧三防指挥调度 v2.0</div>
 </div>
 
 <script>

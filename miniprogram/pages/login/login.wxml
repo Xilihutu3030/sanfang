@@ -1,8 +1,8 @@
 <view class="login-page">
   <view class="login-header">
     <view class="logo-icon">🛡️</view>
-    <view class="logo-title">三防智能研判系统</view>
-    <view class="logo-sub">三防形势智能研判与指挥辅助平台</view>
+    <view class="logo-title">智慧三防指挥调度</view>
+    <view class="logo-sub">三防应急处置指挥决策辅助平台</view>
   </view>
 
   <view class="login-card">
@@ -11,9 +11,9 @@
       <text>{{errorMsg}}</text>
     </view>
 
-    <!-- 租户选择 -->
+    <!-- 单位选择 -->
     <view class="form-group">
-      <text class="form-label">选择租户</text>
+      <text class="form-label">选择单位</text>
       <picker mode="selector" range="{{tenants}}" range-key="name" value="{{tenantIndex}}" bindchange="onTenantChange">
         <view class="form-picker">
           <text>{{tenants[tenantIndex].name || '请选择'}}</text>

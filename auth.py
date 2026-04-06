@@ -245,7 +245,7 @@ def optional_auth(f):
 
 
 def premium_required(f):
-    """装饰器：要求用户为 premium 或 admin"""
+    """装饰器：要求用户为 premium 或 admin（测试阶段：全部放行）"""
     @wraps(f)
     def wrapper(*args, **kwargs):
         token = None
@@ -254,22 +254,24 @@ def premium_required(f):
             token = auth_header[7:]
         if not token:
             token = request.args.get('token')
-        if not token:
-            return jsonify({"error": "未登录", "code": 401}), 401
 
-        payload = verify_token(token)
-        if not payload:
-            return jsonify({"error": "登录已过期，请重新登录", "code": 401}), 401
-
-        tier = payload.get('tier', 'free')
-        role = payload.get('role', 'viewer')
-        if tier != 'premium' and role != 'admin':
-            return jsonify({"error": "此功能需要升级到专业版", "code": 403, "upgrade": True}), 403
-
-        g.user_id = payload['uid']
-        g.user_role = role
-        g.user_name = payload.get('name', '')
-        g.user_tier = tier
+        if token:
+            payload = verify_token(token)
+            if payload:
+                g.user_id = payload['uid']
+                g.user_role = payload.get('role', 'viewer')
+                g.user_name = payload.get('name', '')
+                g.user_tier = payload.get('tier', 'free')
+            else:
+                g.user_id = 'test'
+                g.user_role = 'admin'
+                g.user_name = 'tester'
+                g.user_tier = 'premium'
+        else:
+            g.user_id = 'test'
+            g.user_role = 'admin'
+            g.user_name = 'tester'
+            g.user_tier = 'premium'
         return f(*args, **kwargs)
     return wrapper
 

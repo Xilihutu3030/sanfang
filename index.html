@@ -3,46 +3,67 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>三防形势智能研判与指挥辅助系统</title>
+<title>三防应急处置指挥决策辅助系统</title>
 <link rel="icon" href="/favicon.png" type="image/png">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flv.js@latest/dist/flv.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{display:flex;height:100vh;font-family:'Microsoft YaHei',system-ui;overflow:hidden}
-.left{width:300px;background:linear-gradient(180deg,#1e293b,#0f172a);color:#fff;padding:16px;overflow-y:auto;border-right:2px solid #334155}
+.left{width:300px;background:linear-gradient(180deg,#0277bd,#0288d1,#2196f3);color:#fff;padding:16px;overflow-y:auto;border-right:none;box-shadow:2px 0 16px rgba(2,136,209,0.3)}
 .main{flex:1;position:relative;display:flex;flex-direction:column}
-.right{width:400px;background:#f8fafc;padding:16px;overflow-y:auto;border-left:2px solid #e2e8f0}
-#map{flex:1;position:relative;background:#1a1a2e;overflow:hidden}
+.right{width:400px;background:#e0f7fa;padding:16px;overflow-y:auto;border-left:2px solid #b2ebf2}
+#map{flex:1;position:relative;background:#e8ecf1;overflow:hidden}
 #mapCanvas{display:block;width:100%;height:100%;cursor:grab}
-.header{background:#0f172a;color:#fff;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.header{background:linear-gradient(135deg,#0277bd,#00bcd4);color:#fff;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 12px rgba(2,136,209,0.25)}
 .header h2{font-size:18px;font-weight:600}
-.time-badge{background:#1e40af;padding:6px 12px;border-radius:6px;font-size:13px}
-.card{background:rgba(30,41,59,0.9);border-radius:10px;padding:14px;margin-bottom:14px;border:1px solid #334155;box-shadow:0 2px 6px rgba(0,0,0,0.2)}
-.card h4{margin-bottom:10px;color:#60a5fa;font-size:15px;display:flex;align-items:center;gap:8px}
-.item{margin:8px 0;color:#cbd5e1;font-size:13px;line-height:1.6;padding-left:8px;border-left:3px solid #475569}
+.time-badge{background:linear-gradient(135deg,#ffc107,#ffab00);padding:6px 14px;border-radius:8px;font-size:13px;color:#0277bd;font-weight:600;box-shadow:0 2px 8px rgba(255,193,7,0.3)}
+.card{background:rgba(255,255,255,0.1);border-radius:12px;padding:14px;margin-bottom:14px;border:1px solid rgba(178,235,242,0.25);box-shadow:0 2px 8px rgba(0,0,0,0.1);backdrop-filter:blur(4px)}
+.card h4{margin-bottom:10px;color:#4dd0e1;font-size:15px;display:flex;align-items:center;gap:8px;font-weight:700}
+.item{margin:8px 0;color:rgba(255,255,255,0.8);font-size:13px;line-height:1.6;padding-left:8px;border-left:3px solid rgba(77,208,225,0.5)}
 .risk{padding:16px;border-radius:10px;margin:12px 0;color:#fff;font-weight:600;font-size:16px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
 .risk.high{background:linear-gradient(135deg,#dc2626,#f87171);animation:pulse 2s infinite}
 .risk.mid{background:linear-gradient(135deg,#ea580c,#fb923c)}
-.risk.low{background:linear-gradient(135deg,#2563eb,#60a5fa)}
+.risk.low{background:linear-gradient(135deg,#00bcd4,#4dd0e1)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.85}}
-.btn{background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;border:none;padding:12px 16px;border-radius:8px;width:100%;margin-top:10px;cursor:pointer;font-weight:600;font-size:14px;transition:all 0.3s}
-.btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(37,99,235,0.4)}
-.btn.success{background:linear-gradient(135deg,#059669,#10b981)}
-.btn.warning{background:linear-gradient(135deg,#d97706,#f59e0b)}
+.btn{background:linear-gradient(135deg,#2196f3,#00bcd4);color:#fff;border:none;padding:12px 16px;border-radius:8px;width:100%;margin-top:10px;cursor:pointer;font-weight:600;font-size:14px;transition:all 0.3s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(2,136,209,0.4)}
+.btn.success{background:linear-gradient(135deg,#0288d1,#66bb6a)}
+.btn.warning{background:linear-gradient(135deg,#ff9800,#ff6d00)}
 .switch{display:flex;align-items:center;gap:10px;margin:8px 0;cursor:pointer}
-.switch-btn{width:42px;height:22px;background:#475569;border-radius:11px;position:relative;transition:0.3s}
-.switch-btn.active{background:#2563eb}
+.switch-btn{width:42px;height:22px;background:rgba(255,255,255,0.25);border-radius:11px;position:relative;transition:0.3s}
+.switch-btn.active{background:#4dd0e1}
 .switch-btn:after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:2px;left:2px;transition:0.3s}
 .switch-btn.active:after{left:22px}
-.right .card{background:#fff;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
-.right .card h4{color:#1e293b}
-.right .item{color:#475569;border-left-color:#cbd5e1}
+.right .card{background:rgba(255,255,255,0.85);border:1px solid #b2ebf2;box-shadow:0 1px 3px rgba(2,136,209,0.08);backdrop-filter:none}
+.right .card h4{color:#0277bd}
+.right .item{color:#37474f;border-left-color:#4dd0e1}
 .top5-item{background:#f1f5f9;padding:10px;margin:8px 0;border-radius:6px;border-left:4px solid #dc2626;font-size:13px;color:#1e293b}
+.hazard-list-item{background:#fff;padding:10px 12px;margin:0 0 8px 0;border-radius:8px;border-left:4px solid #0288d1;font-size:13px;color:#1e293b;cursor:pointer;transition:all 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.hazard-list-item:hover{transform:translateX(2px);box-shadow:0 2px 8px rgba(2,136,209,0.15);border-left-color:#00bcd4}
+.hazard-list-item .hl-name{font-weight:600;color:#0277bd;margin-bottom:3px;display:flex;align-items:center;gap:6px}
+.hazard-list-item .hl-type{display:inline-block;font-size:11px;padding:1px 6px;border-radius:3px;color:#fff;font-weight:500}
+.hazard-list-item .hl-desc{font-size:12px;color:#64748b;line-height:1.5;margin-top:4px}
+.hazard-list-item .hl-meta{font-size:11px;color:#94a3b8;margin-top:4px;display:flex;gap:10px}
+.hl-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.hl-tag.flood{background:#dbeafe;color:#1e40af}.hl-tag.building{background:#fef3c7;color:#92400e}.hl-tag.underground{background:#ede9fe;color:#5b21b6}
+.hl-tag.river{background:#d1fae5;color:#065f46}.hl-tag.tunnel{background:#fce7f3;color:#9d174d}.hl-tag.slope{background:#ffedd5;color:#9a3412}.hl-tag.other{background:#f1f5f9;color:#475569}
 .map-control{position:absolute;top:20px;left:20px;z-index:1000;background:rgba(255,255,255,0.95);padding:12px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
-.map-control button{margin:4px;padding:8px 14px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px}
-.status-bar{background:#0c4a6e;color:#fff;padding:8px 16px;font-size:12px;display:flex;justify-content:space-between}
-.loading{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:#fff;padding:20px 40px;border-radius:10px;z-index:9999}
-#map-popup{display:none;position:absolute;z-index:1001;background:rgba(15,23,42,0.95);color:#fff;padding:12px 16px;border-radius:8px;font-size:13px;max-width:260px;border:1px solid #475569;box-shadow:0 4px 16px rgba(0,0,0,0.5);line-height:1.6}
+.map-control button{margin:4px;padding:8px 14px;background:#00bcd4;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px}
+.status-bar{background:#e0f2f1;color:#37474f;padding:8px 16px;font-size:12px;display:flex;justify-content:space-between;border-top:1px solid #b2ebf2}
+.loading{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,0.95);color:#1e293b;padding:20px 40px;border-radius:10px;z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,0.15)}
+#map-popup{display:none;position:absolute;z-index:1001;background:#ffffff;color:#1e293b;padding:12px 16px;border-radius:8px;font-size:13px;max-width:260px;border:1px solid #e2e8f0;box-shadow:0 4px 16px rgba(0,0,0,0.12);line-height:1.6}
 #map-popup .close-btn{position:absolute;top:4px;right:8px;cursor:pointer;color:#94a3b8;font-size:16px}
+/* ========== 视频弹窗样式 ========== */
+#video-popup{display:none;position:absolute;z-index:1002;background:#fff;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.25);overflow:hidden;min-width:420px}
+#video-popup .vp-header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:linear-gradient(135deg,#0277bd,#00bcd4);color:#fff}
+#video-popup .vp-header .vp-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px}
+#video-popup .vp-header .vp-close{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:0 4px;opacity:0.8}
+#video-popup .vp-header .vp-close:hover{opacity:1}
+#video-popup video{display:block;width:420px;height:236px;background:#000}
+#video-popup .vp-info{padding:8px 14px;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center}
+#video-popup .vp-info .vp-status{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+#video-popup .vp-error{display:none;width:420px;height:236px;background:#1e293b;color:#94a3b8;font-size:14px;text-align:center;line-height:236px}
 /* ========== 模态框样式 ========== */
 .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10000;justify-content:center;align-items:center}
 .modal-overlay.active{display:flex}
@@ -83,6 +104,69 @@ body{display:flex;height:100vh;font-family:'Microsoft YaHei',system-ui;overflow:
 .hazard-item{padding:10px;border:1px solid #e5e7eb;border-radius:6px;margin:6px 0;font-size:13px}
 .history-item{padding:12px;border:1px solid #e5e7eb;border-radius:8px;margin:8px 0}
 .history-item .sim-score{font-size:24px;font-weight:bold;color:#2563eb}
+/* ========== 高级分析（付费功能）========== */
+.premium-section{margin-top:18px;border-top:2px solid #e0e7ff;padding-top:14px}
+.premium-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.premium-badge{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:0.5px}
+.premium-card{background:rgba(255,255,255,0.9);border-radius:10px;padding:14px;margin-bottom:12px;border:1px solid #e0e7ff;box-shadow:0 2px 8px rgba(37,99,235,0.06);position:relative;overflow:hidden}
+.premium-card h4{margin:0 0 10px 0;color:#1e40af;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px}
+.premium-card .sub-desc{font-size:12px;color:#6b7280;margin-bottom:10px;line-height:1.5}
+.premium-card.locked{filter:blur(2px);pointer-events:none;user-select:none}
+.premium-lock-overlay{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.7);z-index:2;justify-content:center;align-items:center;flex-direction:column;gap:6px}
+.premium-card.locked .premium-lock-overlay{display:flex}
+.premium-lock-overlay .lock-icon{font-size:28px;opacity:0.6}
+.premium-lock-overlay .lock-text{font-size:13px;color:#475569;font-weight:600}
+.premium-lock-overlay .lock-btn{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:6px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+/* 风险趋势图 */
+.trend-chart{display:flex;align-items:flex-end;gap:2px;height:100px;padding:8px 0;border-bottom:1px solid #e5e7eb}
+.trend-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.trend-bar{width:100%;min-width:20px;border-radius:4px 4px 0 0;transition:height 0.5s ease}
+.trend-label{font-size:10px;color:#6b7280;margin-top:2px}
+.trend-score{font-size:10px;font-weight:700}
+.trend-summary{margin-top:8px;font-size:12px;color:#475569;padding:6px 10px;background:#f0f9ff;border-radius:6px;border-left:3px solid #3b82f6}
+/* 分级响应方案 */
+.dept-table{width:100%;border-collapse:collapse;font-size:12px}
+.dept-table th{background:#eff6ff;color:#1e40af;padding:6px 8px;text-align:left;font-weight:600;border-bottom:2px solid #bfdbfe}
+.dept-table td{padding:6px 8px;border-bottom:1px solid #f1f5f9;color:#374151}
+.dept-table tr:hover{background:#f8fafc}
+.priority-badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:600}
+.priority-badge.p-critical{background:#fef2f2;color:#dc2626}
+.priority-badge.p-immediate{background:#fff7ed;color:#ea580c}
+.priority-badge.p-soon{background:#fefce8;color:#a16207}
+.priority-badge.p-normal{background:#f0fdf4;color:#15803d}
+.upgrade-box{margin-top:8px;font-size:12px;padding:6px 10px;border-radius:6px}
+.upgrade-box.up{background:#fef2f2;color:#991b1b;border-left:3px solid #dc2626}
+.upgrade-box.down{background:#f0fdf4;color:#166534;border-left:3px solid #16a34a}
+/* 应急时间轴 */
+.action-timeline{position:relative;padding-left:24px}
+.action-timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:#d1d5db}
+.timeline-item{position:relative;padding:6px 0 12px 0;font-size:12px}
+.timeline-item::before{content:'';position:absolute;left:-20px;top:8px;width:10px;height:10px;border-radius:50%;border:2px solid #fff;z-index:1}
+.timeline-item.t-critical::before{background:#dc2626}
+.timeline-item.t-high::before{background:#f59e0b}
+.timeline-item.t-normal::before{background:#3b82f6}
+.timeline-time{font-weight:700;color:#1e293b;margin-right:6px}
+.timeline-dept{color:#6b7280;font-size:11px}
+.timeline-action{color:#374151;margin-top:2px}
+/* 复合灾害 */
+.compound-item{padding:10px;border-radius:8px;margin:6px 0;border-left:4px solid #d1d5db}
+.compound-item.c-high{border-left-color:#dc2626;background:#fef2f2}
+.compound-item.c-mid{border-left-color:#f59e0b;background:#fffbeb}
+.compound-item.c-low{border-left-color:#3b82f6;background:#eff6ff}
+.compound-type{font-weight:700;font-size:13px;color:#1e293b}
+.compound-result{font-size:12px;color:#dc2626;font-weight:600;margin:2px 0}
+.compound-detail{font-size:12px;color:#6b7280;line-height:1.5}
+.compound-badges{display:flex;gap:6px;margin-top:4px}
+.compound-badges span{font-size:11px;padding:1px 6px;border-radius:4px;font-weight:600}
+/* 人员转移方案 */
+.evac-area{padding:10px;border-radius:8px;margin:6px 0;background:#fff;border:1px solid #e5e7eb}
+.evac-area.urgent{border-left:4px solid #dc2626}
+.evac-area.prepare{border-left:4px solid #f59e0b}
+.evac-point{font-weight:700;font-size:13px;color:#1e293b}
+.evac-pop{font-size:12px;color:#6b7280;margin:2px 0}
+.evac-method{font-size:12px;color:#374151;background:#f8fafc;padding:4px 8px;border-radius:4px;margin-top:4px}
+.evac-summary{padding:10px;background:#fef2f2;border-radius:8px;margin-top:8px;font-size:12px;color:#991b1b;border:1px solid #fecaca}
+.evac-key-points{margin-top:8px;padding:8px 10px;background:#f0f9ff;border-radius:6px;font-size:12px;color:#1e40af}
 /* ========== 移动端适配 ========== */
 .mobile-toggle{display:none;position:fixed;z-index:10001;width:40px;height:40px;border-radius:50%;border:none;color:#fff;font-size:20px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
 #btn-left-toggle{bottom:80px;left:10px;background:#2563eb}
@@ -103,6 +187,44 @@ body{display:flex;height:100vh;font-family:'Microsoft YaHei',system-ui;overflow:
   .status-bar{font-size:10px;padding:6px 10px}
   #elev-legend{bottom:30px;right:10px;font-size:10px;padding:6px}
 }
+/* ========== 行政区域选择器 ========== */
+.region-panel{margin-top:4px}
+.region-select{width:100%;padding:7px 10px;background:rgba(255,255,255,0.12);border:1px solid rgba(77,208,225,0.35);border-radius:6px;color:#fff;font-size:12px;margin-bottom:6px;appearance:none;cursor:pointer;outline:none}
+.region-select option{background:#0277bd;color:#fff}
+.region-select:disabled{opacity:0.4;cursor:not-allowed}
+.region-path{font-size:11px;color:rgba(255,255,255,0.6);padding:4px 0;word-break:break-all}
+.region-path span{color:#4dd0e1;cursor:pointer;margin:0 2px}
+.region-path span:hover{text-decoration:underline}
+.region-actions{display:flex;gap:6px;margin-top:6px}
+.region-actions button{flex:1;padding:6px 0;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:0.2s}
+.region-actions .btn-fly{background:rgba(77,208,225,0.3);color:#4dd0e1;border:1px solid rgba(77,208,225,0.4)}
+.region-actions .btn-fly:hover{background:rgba(77,208,225,0.5)}
+.region-actions .btn-clear{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.15)}
+.region-actions .btn-clear:hover{background:rgba(255,255,255,0.2)}
+/* ========== 二维码面板 ========== */
+.qr-panel .qr-form{margin-top:8px}
+.qr-panel .qr-input{width:100%;padding:7px 10px;background:rgba(255,255,255,0.12);border:1px solid rgba(77,208,225,0.35);border-radius:6px;color:#fff;font-size:12px;margin-bottom:6px;outline:none}
+.qr-panel .qr-input::placeholder{color:rgba(255,255,255,0.4)}
+.qr-panel .qr-preview{text-align:center;margin:8px 0;display:none}
+.qr-panel .qr-preview img{max-width:200px;border-radius:8px;border:2px solid rgba(77,208,225,0.3);background:#fff}
+.qr-panel .qr-link{font-size:11px;color:rgba(255,255,255,0.5);word-break:break-all;margin-top:4px;padding:6px 8px;background:rgba(0,0,0,0.15);border-radius:4px;display:none;cursor:pointer}
+.qr-panel .qr-btns{display:flex;gap:6px;margin-top:6px}
+/* ========== 灾情列表项 ========== */
+.rpt-item{padding:8px;margin:4px 0;background:rgba(255,255,255,0.08);border-radius:6px;border-left:3px solid rgba(77,208,225,0.5);cursor:pointer;transition:background 0.2s}
+.rpt-item:hover{background:rgba(255,255,255,0.15)}
+.rpt-item .rpt-title{font-size:13px;font-weight:600;color:#fff;display:flex;align-items:center;gap:4px}
+.rpt-item .rpt-meta{font-size:11px;color:rgba(255,255,255,0.55);margin-top:2px;display:flex;gap:6px;align-items:center}
+.rpt-item .rpt-sev{display:inline-block;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:600;color:#fff}
+.rpt-item.sev-critical{border-left-color:#dc2626}
+.rpt-item.sev-high{border-left-color:#ef4444}
+.rpt-item.sev-medium{border-left-color:#f59e0b}
+.rpt-item.sev-low{border-left-color:#3b82f6}
+.rpt-item .rpt-media-preview{display:flex;gap:3px;margin-top:4px}
+.rpt-item .rpt-media-preview img{width:40px;height:30px;object-fit:cover;border-radius:3px;border:1px solid rgba(255,255,255,0.2)}
+.report-filter-btn.active{background:rgba(77,208,225,0.35) !important;border-color:rgba(77,208,225,0.6) !important}
+/* ========== 左侧面板分组标题 ========== */
+.panel-group-title{font-size:11px;font-weight:700;color:rgba(77,208,225,0.8);text-transform:uppercase;letter-spacing:2px;margin:18px 0 8px 0;padding:0 4px 6px 4px;border-bottom:1px solid rgba(77,208,225,0.2)}
+.panel-group-title:first-child{margin-top:0}
 </style>
 </head>
 <body>
@@ -113,23 +235,59 @@ body{display:flex;height:100vh;font-family:'Microsoft YaHei',system-ui;overflow:
 
 <div class="left">
   <div style="text-align:center;margin-bottom:20px">
-    <h3 style="color:#60a5fa;font-size:16px;margin-bottom:8px">三防智能研判系统</h3>
-    <div style="font-size:12px;color:#94a3b8" id="user-bar">
+    <h3 style="color:#4dd0e1;font-size:16px;margin-bottom:8px;font-weight:800;letter-spacing:2px">智慧三防指挥调度</h3>
+    <div style="font-size:12px;color:rgba(255,255,255,0.5)" id="user-bar">
       <span id="user-info">未登录</span>
-      <a href="/login" id="login-link" style="color:#60a5fa;text-decoration:none;margin-left:6px">登录</a>
-      <a href="javascript:void(0)" id="logout-link" onclick="doLogout()" style="color:#f87171;text-decoration:none;margin-left:6px;display:none">退出</a>
+      <a href="/login" id="login-link" style="color:#4dd0e1;text-decoration:none;margin-left:6px;font-weight:600">登录</a>
+      <a href="javascript:void(0)" id="logout-link" onclick="doLogout()" style="color:#ef5350;text-decoration:none;margin-left:6px;display:none;font-weight:600">退出</a>
     </div>
   </div>
+
+  <!-- ====== 定位导航 ====== -->
+  <div class="panel-group-title">定位导航</div>
 
   <div class="card">
     <h4>定位与搜索</h4>
     <div style="display:flex;gap:6px">
-      <input id="loc-input" type="text" placeholder="输入地名或坐标" style="flex:1;padding:8px;border:1px solid #475569;border-radius:6px;background:#1e293b;color:#fff;font-size:13px">
-      <button onclick="searchLocation()" style="padding:8px 12px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">搜索</button>
+      <input id="loc-input" type="text" placeholder="输入地名或坐标" style="flex:1;padding:8px;border:1px solid rgba(77,208,225,0.3);border-radius:8px;background:rgba(255,255,255,0.08);color:#fff;font-size:13px">
+      <button onclick="searchLocation()" style="padding:8px 12px;background:#4dd0e1;color:#0277bd;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700">搜索</button>
     </div>
     <button class="btn" onclick="geoLocate()">自动定位当前位置</button>
     <div class="item" id="loc-info">当前位置: 未定位</div>
   </div>
+
+  <!-- ========== 行政区域选择 ========== -->
+  <div class="card">
+    <h4>行政区域</h4>
+    <div class="region-panel">
+      <select class="region-select" id="sel-province" onchange="onRegionChange('province')">
+        <option value="">-- 选择省/直辖市 --</option>
+      </select>
+      <select class="region-select" id="sel-city" onchange="onRegionChange('city')" disabled>
+        <option value="">-- 选择市/州 --</option>
+      </select>
+      <select class="region-select" id="sel-district" onchange="onRegionChange('district')" disabled>
+        <option value="">-- 选择县/区 --</option>
+      </select>
+      <select class="region-select" id="sel-town" onchange="onRegionChange('town')" disabled>
+        <option value="">-- 选择乡镇/街道 --</option>
+      </select>
+      <select class="region-select" id="sel-village" onchange="onRegionChange('village')" disabled>
+        <option value="">-- 选择村/社区 --</option>
+      </select>
+      <div class="region-path" id="region-path" style="display:none">
+        当前: <span id="region-path-text"></span>
+      </div>
+      <div class="region-actions">
+        <button class="btn-fly" onclick="flyToRegion()">定位到区域</button>
+        <button class="btn-fly" onclick="toggleRegionBoundary()" id="btn-region-boundary">显示边界</button>
+        <button class="btn-clear" onclick="clearRegion()">清除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== 研判分析 ====== -->
+  <div class="panel-group-title">研判分析</div>
 
   <div class="card">
     <h4>区域圈选控制</h4>
@@ -137,7 +295,23 @@ body{display:flex;height:100vh;font-family:'Microsoft YaHei',system-ui;overflow:
     <button class="btn" onclick="startDraw('polygon')">手绘区域</button>
     <button class="btn" onclick="startDraw('circle')">圆形范围</button>
     <div class="item" id="area-info">未选择区域</div>
-    <button class="btn success" onclick="startAIAnalysis()" style="margin-top:16px">开始智能研判</button>
+  </div>
+
+  <div class="card">
+    <h4>AI风险识别</h4>
+    <div id="hazard-stats">
+      <div class="item">易涝点：--</div>
+      <div class="item">危房：--</div>
+      <div class="item">地下空间：--</div>
+      <div class="item">河道：--</div>
+    </div>
+    <div id="hazard-summary" style="display:none;font-size:12px;color:#94a3b8;margin:6px 0;line-height:1.5"></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn" onclick="aiAnalyzeHazards()" style="flex:1">开始识别</button>
+      <button class="btn" onclick="showHazards()" style="flex:1">查看风险分布</button>
+      <button class="btn" onclick="aiAnalyzeHazards(true)" style="flex:none;padding:6px 10px" title="强制重新分析（忽略缓存）">刷新</button>
+    </div>
+    <button class="btn success" onclick="startAIAnalysis()" style="margin-top:10px;width:100%">开始智能研判</button>
   </div>
 
   <div class="card">
@@ -151,7 +325,59 @@ body{display:flex;height:100vh;font-family:'Microsoft YaHei',system-ui;overflow:
   </div>
 
   <div class="card">
-    <h4>地形图层控制</h4>
+    <h4>潮汐/海洋数据</h4>
+    <div id="tide-info">
+      <div class="item">潮汐状态：<span id="tide-status">加载中...</span></div>
+      <div class="item">当前潮位：<span id="tide-level">--</span></div>
+      <div class="item">浪高：<span id="wave-height">--</span></div>
+      <div class="item">涌浪：<span id="swell-height">--</span></div>
+      <div class="item">下次高潮：<span id="next-high">--</span></div>
+      <div class="item">海洋风险：<span id="marine-risk">--</span></div>
+    </div>
+    <button class="btn" onclick="refreshTideData()">刷新潮汐</button>
+  </div>
+
+  <!-- ====== 灾情上报 ====== -->
+  <div class="panel-group-title">灾情上报</div>
+
+  <!-- ========== 灾情上报二维码 ========== -->
+  <div class="card qr-panel">
+    <h4>灾情上报二维码</h4>
+    <div class="qr-form">
+      <input class="qr-input" id="qr-region" placeholder="区域名称，如：天河区">
+      <input class="qr-input" id="qr-org" placeholder="单位名称（选填），如：天河区应急管理局">
+      <button class="btn" onclick="generateWebQR()" style="margin-top:2px;padding:8px 12px;font-size:13px">生成上报二维码</button>
+    </div>
+    <div id="qr-result" style="display:none;margin-top:10px">
+      <div id="qr-canvas-wrap" style="text-align:center"></div>
+      <div style="margin-top:8px;display:flex;gap:6px;justify-content:center">
+        <button class="btn" onclick="downloadQRPoster()" style="width:auto;padding:6px 14px;font-size:12px">下载图片</button>
+        <button class="btn" onclick="copyQRLink()" style="width:auto;padding:6px 14px;font-size:12px;background:rgba(255,255,255,0.15)">复制链接</button>
+      </div>
+      <div class="qr-link" id="qr-link" onclick="copyQRLink()" title="点击复制" style="display:block;margin-top:6px"></div>
+    </div>
+  </div>
+
+  <!-- ========== 灾情上报列表 ========== -->
+  <div class="card" id="report-list-card" style="display:none">
+    <h4 style="display:flex;justify-content:space-between;align-items:center">
+      灾情上报动态
+      <span style="font-size:11px;font-weight:normal;opacity:0.7" id="report-list-count"></span>
+    </h4>
+    <div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap">
+      <button class="report-filter-btn active" onclick="filterReportList('all')" data-filter="all" style="padding:2px 8px;font-size:11px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:4px;color:#fff;cursor:pointer">全部</button>
+      <button class="report-filter-btn" onclick="filterReportList('critical')" data-filter="critical" style="padding:2px 8px;font-size:11px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;color:#fff;cursor:pointer">危急</button>
+      <button class="report-filter-btn" onclick="filterReportList('high')" data-filter="high" style="padding:2px 8px;font-size:11px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;color:#fff;cursor:pointer">严重</button>
+      <button class="report-filter-btn" onclick="filterReportList('pending')" data-filter="pending" style="padding:2px 8px;font-size:11px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;color:#fff;cursor:pointer">待核实</button>
+    </div>
+    <div id="report-list-body" style="max-height:300px;overflow-y:auto"></div>
+  </div>
+
+  <!-- ====== 地图图层 ====== -->
+  <div class="panel-group-title">地图图层</div>
+
+  <div class="card">
+    <h4>图层控制</h4>
     <div class="switch" onclick="toggleLayer('terrain')">
       <div class="switch-btn active" id="sw-terrain"></div>
       <span>高程地形图</span>
@@ -164,47 +390,6 @@ body{display:flex;height:100vh;font-family:'Microsoft YaHei',system-ui;overflow:
       <div class="switch-btn active" id="sw-lowland"></div>
       <span>低洼易涝高亮</span>
     </div>
-
-  </div>
-
-  <div class="card">
-    <h4>本地风险点</h4>
-    <div id="hazard-stats">
-      <div class="item">易涝点：--</div>
-      <div class="item">危房：--</div>
-      <div class="item">地下空间：--</div>
-      <div class="item">河道：--</div>
-    </div>
-    <button class="btn" onclick="showHazards()">查看风险分布</button>
-  </div>
-
-  <div class="card">
-    <h4>潮汐/海洋数据</h4>
-    <div id="tide-info">
-      <div class="item">潮汐状态：<span id="tide-status">加载中...</span></div>
-      <div class="item">当前潮位：<span id="tide-level">--</span></div>
-      <div class="item">浪高：<span id="wave-height">--</span></div>
-      <div class="item">涌浪：<span id="swell-height">--</span></div>
-      <div class="item">下次高潮：<span id="next-high">--</span></div>
-      <div class="item">海洋风险：<span id="marine-risk">--</span></div>
-    </div>
-    <button class="btn warning" onclick="refreshTideData()">刷新潮汐</button>
-  </div>
-
-  <!-- ========== 高级功能 ========== -->
-  <div class="card" style="border-top:2px solid #f59e0b">
-    <h4 style="color:#f59e0b">高级功能</h4>
-    <button class="btn" onclick="openSimulation()">情景推演</button>
-    <button class="btn" onclick="openTaskPanel()">任务派单</button>
-    <button class="btn" onclick="openWaterPanel()">水位监测</button>
-    <button class="btn" onclick="openAlertPanel()">预警设置</button>
-    <button class="btn" onclick="openHazardEditor()">自定义风险点</button>
-    <button class="btn" onclick="openHistoryCompare()">历史灾情对比</button>
-  </div>
-
-  <!-- 地图图层增强 -->
-  <div class="card">
-    <h4>增强图层</h4>
     <div class="switch" onclick="toggleLayer('radar')">
       <div class="switch-btn" id="sw-radar"></div>
       <span>气象雷达</span>
@@ -217,6 +402,46 @@ body{display:flex;height:100vh;font-family:'Microsoft YaHei',system-ui;overflow:
       <div class="switch-btn" id="sw-water"></div>
       <span>水位站点</span>
     </div>
+    <div class="switch" onclick="toggleLayer('camera')">
+      <div class="switch-btn" id="sw-camera"></div>
+      <span>视频监控</span>
+    </div>
+    <div class="switch" onclick="toggleLayer('report')">
+      <div class="switch-btn" id="sw-report"></div>
+      <span>灾情上报</span>
+    </div>
+    <div class="switch" onclick="toggleLayer('resources')">
+      <div class="switch-btn" id="sw-resources"></div>
+      <span>应急资源</span>
+    </div>
+    <div class="switch" onclick="toggleLayer('regionBorder')">
+      <div class="switch-btn" id="sw-regionBorder"></div>
+      <span>行政边界</span>
+    </div>
+  </div>
+
+  <!-- ====== 应急指挥 ====== -->
+  <div class="panel-group-title">应急指挥</div>
+
+  <div class="card">
+    <h4>应急力量与资源</h4>
+    <button class="btn" onclick="openResourcePanel()">资源配置管理</button>
+  </div>
+
+  <div class="card">
+    <h4>监测与管理</h4>
+    <button class="btn" onclick="openWaterPanel()">水位监测</button>
+    <button class="btn" onclick="openCameraPanel()">视频监控</button>
+    <button class="btn" onclick="openHazardEditor()">自定义风险点</button>
+  </div>
+
+  <!-- ========== 高级功能（测试阶段全部开放） ========== -->
+  <div class="card">
+    <h4>高级功能</h4>
+    <button class="btn" onclick="openSimulation()">情景推演</button>
+    <button class="btn" onclick="openTaskPanel()">任务派单</button>
+    <button class="btn" onclick="openAlertPanel()">预警设置</button>
+    <button class="btn" onclick="openHistoryCompare()">历史灾情对比</button>
   </div>
 </div>
 
@@ -234,7 +459,7 @@ body{display:flex;height:100vh;font-family:'Microsoft YaHei',system-ui;overflow:
       <button onclick="geoLocate()">重新定位</button>
       <button onclick="fetchDEMFromServer()" style="background:#059669">刷新地形</button>
     </div>
-    <div id="elev-legend" style="position:absolute;bottom:40px;right:20px;z-index:1000;background:rgba(0,0,0,0.85);padding:10px;border-radius:8px;color:#fff;font-size:11px">
+    <div id="elev-legend" style="position:absolute;bottom:40px;right:20px;z-index:1000;background:rgba(255,255,255,0.95);padding:12px;border-radius:10px;color:#263238;font-size:11px;border:1px solid #e0e0e0;box-shadow:0 2px 12px rgba(0,0,0,0.1)">
       <div style="font-weight:bold;margin-bottom:6px">高程图例</div>
       <div style="display:flex;flex-direction:column;gap:2px">
         <div><span style="display:inline-block;width:16px;height:10px;background:#08306b;border-radius:2px"></span> &lt;10m</div>
@@ -246,12 +471,24 @@ body{display:flex;height:100vh;font-family:'Microsoft YaHei',system-ui;overflow:
         <div><span style="display:inline-block;width:16px;height:10px;background:#ef6c00;border-radius:2px"></span> 120-200m</div>
         <div><span style="display:inline-block;width:16px;height:10px;background:#6d4c41;border-radius:2px"></span> &gt;200m</div>
       </div>
-      <div style="margin-top:6px;border-top:1px solid #555;padding-top:4px">
+      <div style="margin-top:6px;border-top:1px solid #e0e0e0;padding-top:4px">
         <div><span style="display:inline-block;width:16px;height:10px;background:#dc2626;opacity:0.6;border-radius:2px"></span> 极低洼(&lt;30m)</div>
         <div><span style="display:inline-block;width:16px;height:10px;background:#f59e0b;opacity:0.6;border-radius:2px"></span> 低洼(&lt;50m)</div>
       </div>
     </div>
     <div id="map-popup"><span class="close-btn" onclick="closeMapPopup()">&times;</span><div id="map-popup-content"></div></div>
+    <div id="video-popup">
+      <div class="vp-header">
+        <span class="vp-title" id="vp-title">监控视频</span>
+        <button class="vp-close" onclick="closeVideoPopup()">&times;</button>
+      </div>
+      <video id="video-player" controls autoplay muted playsinline></video>
+      <div class="vp-error" id="vp-error">信号中断或加载失败</div>
+      <div class="vp-info">
+        <span><span class="vp-status" id="vp-status" style="background:#10b981;display:inline-block"></span><span id="vp-source">--</span></span>
+        <span id="vp-city-type">--</span>
+      </div>
+    </div>
   </div>
 
   <div class="status-bar">
@@ -262,15 +499,28 @@ body{display:flex;height:100vh;font-family:'Microsoft YaHei',system-ui;overflow:
 </div>
 
 <div class="right">
-  <h3 style="margin-bottom:16px;color:#1e293b;font-size:18px">智能研判结果</h3>
+  <!-- ====== 风险识别结果列表 ====== -->
+  <div id="hazard-list-panel" style="display:none">
+    <h3 style="margin-bottom:12px;color:#0277bd;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:space-between">
+      风险识别结果
+      <span id="hazard-list-count" style="font-size:12px;font-weight:normal;color:#78909c"></span>
+    </h3>
+    <div id="hazard-list-summary" class="card" style="padding:10px 12px;margin-bottom:10px">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:12px" id="hazard-list-tags"></div>
+    </div>
+    <div id="hazard-list-body" style="max-height:360px;overflow-y:auto;margin-bottom:16px"></div>
+  </div>
 
-  <div id="judge-empty" style="text-align:center;padding:60px 20px;color:#94a3b8">
+  <!-- ====== 智能研判结果 ====== -->
+  <h3 style="margin-bottom:16px;color:#0277bd;font-size:18px;font-weight:700">智能研判结果</h3>
+
+  <div id="judge-empty" style="text-align:center;padding:60px 20px;color:#78909c">
     <div style="font-size:48px;margin-bottom:16px;opacity:0.3">&#9741;</div>
     <div style="font-size:15px;margin-bottom:8px">尚未执行研判</div>
     <div style="font-size:13px;line-height:1.8">
-      1. 在左侧定位或搜索目标区域<br>
-      2. 使用圈选工具选定分析范围<br>
-      3. 点击「开始智能研判」
+      1. 在左侧选择行政区域或圈选范围<br>
+      2. 点击「开始识别」发现风险点<br>
+      3. 点击「开始智能研判」生成决策
     </div>
   </div>
 
@@ -310,10 +560,57 @@ body{display:flex;height:100vh;font-family:'Microsoft YaHei',system-ui;overflow:
       <div id="nearby-resources"></div>
     </div>
 
+    <!-- ========== 高级分析（测试阶段全部开放）========== -->
+    <div class="premium-section" id="premium-section" style="display:none">
+      <div class="premium-header">
+        <span style="font-size:15px;font-weight:700;color:#1e40af">高级分析</span>
+      </div>
+
+      <!-- 1. 风险趋势预测 -->
+      <div class="premium-card" id="premium-trend-card" style="display:none">
+        <h4>&#x1F4C8; 风险趋势预测（24h）</h4>
+        <div class="sub-desc" id="premium-trend-desc"></div>
+        <div class="trend-chart" id="premium-trend-chart"></div>
+        <div class="trend-summary" id="premium-trend-summary"></div>
+      </div>
+
+      <!-- 2. 分级响应方案 -->
+      <div class="premium-card" id="premium-response-card" style="display:none">
+        <h4>&#x1F3E2; 分级响应方案</h4>
+        <div class="sub-desc" id="premium-response-level"></div>
+        <div id="premium-response-body"></div>
+      </div>
+
+      <!-- 3. 应急处置时间轴 -->
+      <div class="premium-card" id="premium-timeline-card" style="display:none">
+        <h4>&#x23F1; 应急处置时间轴</h4>
+        <div class="sub-desc" id="premium-timeline-desc"></div>
+        <div class="action-timeline" id="premium-timeline-body"></div>
+      </div>
+
+      <!-- 4. 复合灾害分析 -->
+      <div class="premium-card" id="premium-compound-card" style="display:none">
+        <h4>&#x26A0; 复合灾害分析</h4>
+        <div class="sub-desc" id="premium-compound-desc"></div>
+        <div id="premium-compound-body"></div>
+      </div>
+
+      <!-- 5. 人员转移方案 -->
+      <div class="premium-card" id="premium-evac-card" style="display:none">
+        <h4>&#x1F6B6; 人员转移方案</h4>
+        <div class="sub-desc" id="premium-evac-desc"></div>
+        <div id="premium-evac-body"></div>
+      </div>
+    </div>
+
     <button class="btn success" onclick="copyReport()">一键复制研判简报</button>
     <button class="btn" onclick="exportPDF()">导出PDF报告</button>
     <button class="btn warning" onclick="generateTasks()">生成任务派单</button>
     <button class="btn" onclick="saveHistory()">保存本次研判</button>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px dashed #b0bec5">
+      <div style="font-size:12px;color:#78909c;margin-bottom:6px">本次会话已研判 <span id="session-judge-count" style="color:#0277bd;font-weight:bold">0</span> 次</div>
+      <button class="btn" onclick="generateResponseReport()" style="background:#0277bd;color:#fff;width:100%">结束响应 &amp; 生成总结报告</button>
+    </div>
   </div>
 </div>
 
@@ -321,6 +618,22 @@ body{display:flex;height:100vh;font-family:'Microsoft YaHei',system-ui;overflow:
   <div style="text-align:center">
     <div style="font-size:24px;margin-bottom:10px">...</div>
     <div>智能研判中，请稍候...</div>
+  </div>
+</div>
+
+<!-- ========== 模态框：情景推演 ========== -->
+<!-- ========== 模态框：应急响应总结报告 ========== -->
+<div class="modal-overlay" id="modal-response-report">
+  <div class="modal-box" style="max-width:800px;max-height:90vh">
+    <div class="modal-header"><h3>应急响应总结报告</h3><button class="modal-close" onclick="closeModal('modal-response-report')">&times;</button></div>
+    <div class="modal-body" style="overflow-y:auto;max-height:calc(90vh - 60px)">
+      <div id="response-report-content" style="white-space:pre-wrap;font-family:'Microsoft YaHei',monospace;font-size:13px;line-height:1.8;color:#1e293b;background:#f8fafc;padding:20px;border-radius:8px;border:1px solid #e2e8f0"></div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="modal-btn modal-btn-primary" onclick="copyResponseReport()">复制报告</button>
+        <button class="modal-btn modal-btn-warning" onclick="exportResponseReportPDF()">打印/导出PDF</button>
+        <button class="modal-btn" onclick="clearSessionAndClose()">确认结束响应</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -376,11 +689,34 @@ body{display:flex;height:100vh;font-family:'Microsoft YaHei',system-ui;overflow:
       <div class="form-group"><label>选择值班人员</label></div>
       <div id="staff-picker" style="max-height:200px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:12px"></div>
       <div style="font-size:12px;color:#6b7280;margin-bottom:8px">或手动填写：</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
         <div class="form-group"><label>姓名</label><input id="assign-name" type="text" placeholder="执行人姓名"></div>
         <div class="form-group"><label>电话</label><input id="assign-phone" type="text" placeholder="手机号码"></div>
+        <div class="form-group"><label>微信号</label><input id="assign-wechat" type="text" placeholder="微信号(选填)"></div>
       </div>
       <button class="modal-btn modal-btn-primary" onclick="confirmAssign()" style="width:100%">确认指派并通知</button>
+    </div>
+  </div>
+</div>
+
+<!-- 微信通知发送弹窗 -->
+<div class="modal-overlay" id="modal-wechat-notify" style="z-index:10003">
+  <div class="modal-box" style="width:440px">
+    <div class="modal-header"><h3>发送微信通知</h3><button class="modal-close" onclick="closeModal('modal-wechat-notify')">&times;</button></div>
+    <div class="modal-body">
+      <div style="background:#f0fdf4;border-left:4px solid #22c55e;padding:12px 14px;border-radius:4px;margin-bottom:14px">
+        <div style="font-size:13px;color:#15803d;font-weight:600;margin-bottom:4px">任务已指派成功</div>
+        <div style="font-size:12px;color:#166534" id="wechat-notify-info"></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">通知内容（可编辑）</label>
+        <textarea id="wechat-notify-text" style="width:100%;height:140px;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;resize:vertical;font-family:inherit;line-height:1.5"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button onclick="copyWechatNotify()" style="padding:10px 0;border:1px solid #d1d5db;background:#fff;border-radius:8px;font-size:13px;cursor:pointer;font-weight:600;color:#374151;transition:all 0.15s" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='#fff'">复制通知内容</button>
+        <button onclick="openWechatToSend()" style="padding:10px 0;border:none;background:#07c160;color:#fff;border-radius:8px;font-size:13px;cursor:pointer;font-weight:600;transition:all 0.15s" onmouseover="this.style.background='#06ae56'" onmouseout="this.style.background='#07c160'">复制并打开微信</button>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:#9ca3af;text-align:center">复制通知内容后，在微信中粘贴发送给对方即可</div>
     </div>
   </div>
 </div>
@@ -471,14 +807,143 @@ body{display:flex;height:100vh;font-family:'Microsoft YaHei',system-ui;overflow:
   </div>
 </div>
 
+<!-- ========== 模态框：视频监控管理 ========== -->
+<div class="modal-overlay" id="modal-camera">
+  <div class="modal-box" style="width:700px">
+    <div class="modal-header"><h3>视频监控管理</h3><button class="modal-close" onclick="closeModal('modal-camera')">&times;</button></div>
+    <div class="modal-body">
+      <div id="cam-stats" style="font-size:13px;color:#6b7280;margin-bottom:12px">加载中...</div>
+      <!-- 筛选栏 -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <select id="cam-filter-city" onchange="loadCameraList()" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">
+          <option value="">全部城市</option>
+        </select>
+        <select id="cam-filter-type" onchange="loadCameraList()" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">
+          <option value="">全部类型</option>
+          <option value="scenic">景区</option>
+          <option value="water">水利</option>
+          <option value="traffic">交通</option>
+          <option value="flood">内涝</option>
+          <option value="public">社会公益</option>
+        </select>
+      </div>
+      <!-- 摄像头列表 -->
+      <div id="cam-list" style="max-height:280px;overflow-y:auto;margin-bottom:14px">
+        <div style="text-align:center;color:#94a3b8;padding:20px">加载中...</div>
+      </div>
+      <!-- 添加摄像头表单 -->
+      <div style="border:1px solid #e5e7eb;border-radius:8px;padding:14px;background:#f8fafc">
+        <div style="font-weight:600;font-size:13px;margin-bottom:10px">添加摄像头</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="form-group"><label>名称</label><input id="cam-name" type="text" placeholder="如：XX路口交通监控"></div>
+          <div class="form-group"><label>城市</label><input id="cam-city" type="text" placeholder="如：广州"></div>
+          <div class="form-group"><label>类型</label>
+            <select id="cam-type"><option value="traffic">交通</option><option value="water">水利</option><option value="flood">内涝</option><option value="other">其他</option></select>
+          </div>
+          <div class="form-group"><label>协议</label>
+            <select id="cam-protocol"><option value="hls">HLS (.m3u8)</option><option value="mp4">MP4</option><option value="flv">FLV</option></select>
+          </div>
+          <div class="form-group"><label>纬度</label><input id="cam-lat" type="number" step="0.0001" placeholder="23.1291"></div>
+          <div class="form-group"><label>经度</label><input id="cam-lng" type="number" step="0.0001" placeholder="113.2644"></div>
+          <div class="form-group" style="grid-column:span 2"><label>视频流地址</label><input id="cam-url" type="text" placeholder="https://...m3u8"></div>
+          <div class="form-group"><label>来源部门</label><input id="cam-source" type="text" placeholder="选填，如：广州交管"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button class="modal-btn modal-btn-primary" onclick="saveCamera()">保存摄像头</button>
+          <button class="modal-btn modal-btn-outline" onclick="pickCameraFromMap()">从地图选点</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 模态框：应急力量与资源管理 ========== -->
+<div class="modal-overlay" id="modal-resources">
+  <div class="modal-box" style="width:850px;max-height:90vh">
+    <div class="modal-header">
+      <h3>应急力量与资源配置</h3>
+      <button class="modal-close" onclick="closeModal('modal-resources')">&times;</button>
+    </div>
+    <div class="modal-body" style="overflow-y:auto;max-height:calc(90vh - 60px)">
+      <!-- 区域筛选 -->
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+        <span style="font-size:13px;color:#475569;font-weight:600">所属区域：</span>
+        <span id="res-region-label" style="font-size:13px;color:#0277bd">
+          <span id="res-region-text">全部区域</span>
+        </span>
+        <button class="modal-btn modal-btn-outline" onclick="resUseCurrentRegion()" style="font-size:12px;padding:4px 10px">使用当前选区</button>
+        <button class="modal-btn" onclick="resClearRegion()" style="font-size:12px;padding:4px 10px">清除筛选</button>
+      </div>
+
+      <!-- Tab 切换 -->
+      <div style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:14px" id="res-tabs">
+        <div class="res-tab active" data-type="personnel" onclick="switchResTab('personnel')">人员队伍</div>
+        <div class="res-tab" data-type="materials" onclick="switchResTab('materials')">物资装备</div>
+        <div class="res-tab" data-type="facilities" onclick="switchResTab('facilities')">场所设施</div>
+        <div class="res-tab" data-type="vehicles" onclick="switchResTab('vehicles')">车辆运力</div>
+      </div>
+
+      <!-- 统计概览 -->
+      <div id="res-stats" style="font-size:13px;color:#475569;margin-bottom:10px"></div>
+
+      <!-- 操作按钮 -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="modal-btn modal-btn-primary" onclick="resShowAddForm()">手动添加</button>
+        <label class="modal-btn modal-btn-warning" style="cursor:pointer;display:inline-flex;align-items:center">
+          一键导入文档
+          <input type="file" id="res-import-file" accept=".xlsx,.xls,.csv" onchange="resImportFile(this)" style="display:none">
+        </label>
+        <label class="modal-btn modal-btn-outline" style="cursor:pointer;display:inline-flex;align-items:center">
+          照片识别导入
+          <input type="file" id="res-photo-file" accept="image/*" onchange="resPhotoRecognize(this)" style="display:none">
+        </label>
+        <button class="modal-btn" onclick="resDownloadTemplate()">下载导入模板</button>
+      </div>
+
+      <!-- 导入结果提示 -->
+      <div id="res-import-result" style="display:none;padding:10px;border-radius:6px;margin-bottom:12px;font-size:13px"></div>
+
+      <!-- 资源列表 -->
+      <div id="res-list" style="max-height:320px;overflow-y:auto">
+        <div style="text-align:center;color:#94a3b8;padding:30px">点击上方分类查看资源</div>
+      </div>
+
+      <!-- 添加/编辑表单（默认隐藏） -->
+      <div id="res-add-form" style="display:none;border:1px solid #e5e7eb;border-radius:8px;padding:14px;background:#f8fafc;margin-top:14px">
+        <div style="font-weight:600;font-size:13px;margin-bottom:10px">添加资源 <span id="res-form-type-label"></span></div>
+        <div id="res-form-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="modal-btn modal-btn-primary" onclick="resSaveItem()">保存</button>
+          <button class="modal-btn" onclick="resHideAddForm()">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.res-tab{padding:8px 16px;font-size:13px;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.res-tab:hover{color:#0277bd}
+.res-tab.active{color:#0277bd;font-weight:600;border-bottom-color:#0277bd}
+.res-item{display:flex;align-items:center;padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;gap:10px}
+.res-item:hover{background:#f8fafc}
+.res-item .res-name{font-weight:600;color:#1e293b;min-width:100px}
+.res-item .res-detail{color:#64748b;flex:1}
+.res-item .res-region{color:#0277bd;font-size:12px;background:#e0f2fe;padding:1px 6px;border-radius:3px}
+.res-item .res-status{font-size:12px;padding:2px 8px;border-radius:3px}
+.res-item .res-del{color:#dc2626;cursor:pointer;font-size:12px;padding:2px 6px}
+.res-item .res-del:hover{background:#fef2f2;border-radius:3px}
+</style>
+
 <script>
 // ==================== 全局变量 ====================
 var API_BASE = window.location.origin;
 var cvs, ctx;
 var mapState = { centerLat: 23.1291, centerLng: 113.2644, zoom: 13 };
-var layers = { terrain: true, contour: true, lowland: true, radar: false, heatmap: false, water: false };
+var layers = { terrain: true, contour: true, lowland: true, radar: false, heatmap: false, water: false, camera: false, report: false, resources: false, regionBorder: false };
 var demData = null;
 var lastJudgeResult = null;
+var _sessionJudgeHistory = []; // 本次应急响应期间所有研判记录
 var _hazardData = [];
 var _riverPath = [];
 var _locatedPos = null;
@@ -604,7 +1069,7 @@ function _renderTiles() {
           ctx.drawImage(parent.img, parent.sx, parent.sy, parent.sw, parent.sh, x1, y1, x2-x1, y2-y1);
           count++;
         } else {
-          ctx.fillStyle = '#1e293b'; ctx.fillRect(x1, y1, x2-x1, y2-y1);
+          ctx.fillStyle = '#e8ecf1'; ctx.fillRect(x1, y1, x2-x1, y2-y1);
         }
       }
     }
@@ -849,6 +1314,49 @@ function onMapClick(e) {
   var mx = e.clientX - rect.left, my = e.clientY - rect.top;
   var pos = { lat: yToLat(my), lng: xToLng(mx) };
 
+  // 点击摄像头
+  if (layers.camera && _camerasCache && mapState.zoom >= 8) {
+    for (var i = 0; i < _camerasCache.length; i++) {
+      var cam = _camerasCache[i];
+      if (!cam.lat || !cam.lng) continue;
+      if (Math.abs(mx - lngToX(cam.lng)) < 16 && Math.abs(my - latToY(cam.lat)) < 16) {
+        openVideoPopup(cam, mx, my);
+        return;
+      }
+    }
+  }
+
+  // 点击灾情上报
+  if (layers.report && _reportsCache && mapState.zoom >= 8) {
+    for (var i = 0; i < _reportsCache.length; i++) {
+      var rpt = _reportsCache[i];
+      if (!rpt.lat || !rpt.lng) continue;
+      if (Math.abs(mx - lngToX(rpt.lng)) < 16 && Math.abs(my - latToY(rpt.lat)) < 16) {
+        _showReportPopup(rpt, mx, my);
+        return;
+      }
+    }
+  }
+
+  // 点击应急资源
+  if (layers.resources && _resourceMapData && _resourceMapData.length > 0) {
+    for (var i = 0; i < _resourceMapData.length; i++) {
+      var res = _resourceMapData[i];
+      if (Math.abs(mx - lngToX(res.lng)) < 16 && Math.abs(my - latToY(res.lat)) < 16) {
+        var cfg = _resTypeConfig[res._rtype] || {};
+        var info = '<b>' + (res.name || '未命名') + '</b>';
+        info += '<br><span style="color:' + (cfg.fill||'#666') + ';font-weight:600">' + (cfg.label||'') + '</span>';
+        if (res.type) info += ' \u00B7 ' + res.type;
+        if (res.status) info += '<br>状态：' + res.status;
+        if (res.detail) info += '<br>位置：' + res.detail;
+        if (res.capacity) info += '<br>数量/容量：' + res.capacity;
+        if (res.phone) info += '<br>联系：' + res.phone;
+        showMapPopup(mx, my, info);
+        return;
+      }
+    }
+  }
+
   // 点击风险点
   for (var i = 0; i < _hazardData.length; i++) {
     var h = _hazardData[i]; if (!h.lat || !h.lng) continue;
@@ -925,7 +1433,7 @@ function renderMap() {
 function _doRender() {
   if (!cvs || !ctx) return;
   var w = cvs.width, h = cvs.height;
-  ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#e8ecf1'; ctx.fillRect(0, 0, w, h);
   // 1. 底图瓦片（道路、建筑、地名）
   var tileCount = _renderTiles();
   // 拖拽中跳过重叠加层 → 流畅拖拽
@@ -946,6 +1454,14 @@ function _doRender() {
   _renderHazards();
   // 9. 水位站点标记
   if (layers.water) _renderWaterStations();
+  // 10. 视频监控标记
+  if (layers.camera) _renderCameras();
+  // 11. 灾情上报标记
+  if (layers.report) _renderReports();
+  // 12. 应急资源标记
+  if (layers.resources) _renderResources();
+  // 13. 行政区域边界
+  if (layers.regionBorder && _regionGeoJSON) _renderRegionBoundary();
   _renderLocationMarker();
   if (_drawnShape) _renderDrawnShape();
   if (_drawMode && ((_drawStart && _drawCurrent) || _polygonPoints.length > 0)) _renderDrawPreview();
@@ -1094,22 +1610,131 @@ function _renderLowland() {
 }
 
 // ==================== 风险点标记 ====================
+function _getHazardColor(h) {
+  if (h.level === '重大') return {fill:'#dc2626', ring:'rgba(220,38,38,0.3)', text:'#fca5a5'};
+  if (h.level === '较大') return {fill:'#f59e0b', ring:'rgba(245,158,11,0.25)', text:'#fcd34d'};
+  return {fill:'#3b82f6', ring:'rgba(59,130,246,0.2)', text:'#93c5fd'};
+}
 function _renderHazards() {
+  var typeIcons = {'隧道':'T','河道':'~','易涝点':'W','地下空间':'U','危房':'!','边坡':'S','桥下':'B','桥梁':'B','人员密集':'P'};
   _hazardData.forEach(function(h) {
     if (!h.lat || !h.lng) return;
     var x = lngToX(h.lng), y = latToY(h.lat);
-    if (x < -20 || x > cvs.width+20 || y < -20 || y > cvs.height+20) return;
-    // 外圈
-    ctx.beginPath(); ctx.arc(x, y, 11, 0, Math.PI*2);
-    ctx.fillStyle = h.level==='重大' ? 'rgba(220,38,38,0.25)' : 'rgba(245,158,11,0.25)'; ctx.fill();
+    if (x < -30 || x > cvs.width+30 || y < -30 || y > cvs.height+30) return;
+    var c = _getHazardColor(h);
+    // 脉冲外圈（重大级别更大）
+    var outerR = h.level === '重大' ? 15 : 11;
+    ctx.beginPath(); ctx.arc(x, y, outerR, 0, Math.PI*2);
+    ctx.fillStyle = c.ring; ctx.fill();
     // 内点
-    ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2);
-    ctx.fillStyle = h.level==='重大' ? '#dc2626' : '#f59e0b'; ctx.fill();
+    var innerR = h.level === '重大' ? 7 : 5;
+    ctx.beginPath(); ctx.arc(x, y, innerR, 0, Math.PI*2);
+    ctx.fillStyle = c.fill; ctx.fill();
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
-    // 名称
+    // 类型图标
+    if (mapState.zoom >= 12) {
+      var icon = typeIcons[h.type] || '?';
+      ctx.font = 'bold 9px "Microsoft YaHei"'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(icon, x, y); ctx.textBaseline = 'alphabetic';
+    }
+    // 名称标签
     if (mapState.zoom >= 11) {
-      ctx.font = '11px "Microsoft YaHei"'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
-      ctx.fillText(h.name, x, y - 15); ctx.textAlign = 'start';
+      var label = h.name;
+      if (h.ai_risk_score) label += '(' + h.ai_risk_score + ')';
+      ctx.font = '11px "Microsoft YaHei"';
+      var tw = ctx.measureText(label).width;
+      // 标签背景
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillRect(x - tw/2 - 3, y - 28, tw + 6, 15);
+      ctx.fillStyle = c.text; ctx.textAlign = 'center';
+      ctx.fillText(label, x, y - 16); ctx.textAlign = 'start';
+    }
+  });
+}
+
+// ==================== 应急资源地图标注 ====================
+var _resourceMapData = [];
+var _resTypeConfig = {
+  personnel:  {icon:'P', label:'人员', fill:'#7c3aed', ring:'rgba(124,58,237,0.25)'},
+  materials:  {icon:'M', label:'物资', fill:'#0d9488', ring:'rgba(13,148,136,0.25)'},
+  facilities: {icon:'F', label:'设施', fill:'#2563eb', ring:'rgba(37,99,235,0.25)'},
+  vehicles:   {icon:'V', label:'车辆', fill:'#ea580c', ring:'rgba(234,88,12,0.25)'}
+};
+
+function loadResourcesOnMap() {
+  var types = ['personnel','materials','facilities','vehicles'];
+  var loaded = 0, all = [];
+  types.forEach(function(t) {
+    fetch(API_BASE + '/api/resources/' + t, {headers: authHeaders()})
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        var items = data.items || [];
+        items.forEach(function(item) {
+          var lat = parseFloat(item.lat), lng = parseFloat(item.lng);
+          if (lat && lng && !isNaN(lat) && !isNaN(lng) && lat > -90 && lat < 90 && lng > -180 && lng < 180) {
+            all.push({
+              _rtype: t,
+              id: item.id,
+              name: item.name || item.plate_number || '',
+              type: item.type || item.category || '',
+              lat: lat, lng: lng,
+              status: item.status || '',
+              detail: item.location || item.address || '',
+              phone: item.phone || item.driver_phone || item.manager_phone || '',
+              capacity: item.capacity || item.quantity || ''
+            });
+          }
+        });
+      })
+      .catch(function(){})
+      .finally(function() {
+        loaded++;
+        if (loaded === types.length) {
+          _resourceMapData = all;
+          renderMap();
+          if (all.length > 0) showToast('已加载 ' + all.length + ' 个有坐标的应急资源');
+          else showToast('暂无带坐标的应急资源数据，请在资源管理中录入经纬度');
+        }
+      });
+  });
+}
+
+function _renderResources() {
+  if (!_resourceMapData || _resourceMapData.length === 0) return;
+  _resourceMapData.forEach(function(r) {
+    var x = lngToX(r.lng), y = latToY(r.lat);
+    if (x < -30 || x > cvs.width+30 || y < -30 || y > cvs.height+30) return;
+    var cfg = _resTypeConfig[r._rtype] || _resTypeConfig.facilities;
+    // 外圈
+    ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI*2);
+    ctx.fillStyle = cfg.ring; ctx.fill();
+    // 方形底座
+    var s = 9;
+    ctx.fillStyle = cfg.fill;
+    ctx.beginPath();
+    ctx.moveTo(x, y + s + 4);
+    ctx.lineTo(x - s, y - 2);
+    ctx.lineTo(x - s, y - s);
+    ctx.lineTo(x + s, y - s);
+    ctx.lineTo(x + s, y - 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    // 图标字母
+    ctx.font = 'bold 10px "Microsoft YaHei"'; ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(cfg.icon, x, y - 4);
+    ctx.textBaseline = 'alphabetic';
+    // 标签（缩放>=12）
+    if (mapState.zoom >= 12 && r.name) {
+      var label = r.name;
+      ctx.font = '11px "Microsoft YaHei"';
+      var tw = ctx.measureText(label).width;
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(x - tw/2 - 3, y - s - 18, tw + 6, 15);
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+      ctx.fillText(label, x, y - s - 6);
+      ctx.textAlign = 'start';
     }
   });
 }
@@ -1290,6 +1915,89 @@ function _renderWaterStations() {
   });
 }
 
+// ==================== 视频监控标记 ====================
+var _camerasCache = null;
+var _cameraLastLoad = 0;
+function _renderCameras() {
+  // 每60秒从后端加载一次
+  if (!_camerasCache || Date.now() - _cameraLastLoad > 60000) {
+    _cameraLastLoad = Date.now();
+    fetch(API_BASE + '/api/cameras', {headers:authHeaders()})
+      .then(function(r){return r.json()})
+      .then(function(data) {
+        _camerasCache = data.cameras || [];
+        renderMap();
+      })
+      .catch(function(){});
+    if (!_camerasCache) return;
+  }
+  var cams = _camerasCache;
+  if (!cams || !cams.length) return;
+  var typeColors = {traffic:'#3b82f6', water:'#06b6d4', flood:'#f59e0b', scenic:'#10b981', public:'#8b5cf6', other:'#6b7280'};
+
+  // zoom < 8 时聚合为城市气泡
+  if (mapState.zoom < 8) {
+    var clusters = {};
+    cams.forEach(function(c) {
+      var key = c.city || '未知';
+      if (!clusters[key]) clusters[key] = {lat:0, lng:0, count:0, city:key};
+      clusters[key].lat += c.lat;
+      clusters[key].lng += c.lng;
+      clusters[key].count++;
+    });
+    Object.keys(clusters).forEach(function(key) {
+      var cl = clusters[key];
+      cl.lat /= cl.count;
+      cl.lng /= cl.count;
+      var x = lngToX(cl.lng), y = latToY(cl.lat);
+      if (x < -30 || x > cvs.width+30 || y < -30 || y > cvs.height+30) return;
+      var r = Math.max(16, Math.min(30, 12 + cl.count * 2));
+      // 外圈
+      ctx.beginPath(); ctx.arc(x, y, r+3, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(59,130,246,0.2)'; ctx.fill();
+      // 内圈
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2);
+      ctx.fillStyle = '#3b82f6'; ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+      // 数字
+      ctx.font = 'bold ' + Math.max(11, r-4) + 'px "Microsoft YaHei"';
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(cl.count, x, y);
+      // 城市名
+      ctx.font = '11px "Microsoft YaHei"'; ctx.fillStyle = '#3b82f6';
+      ctx.fillText(cl.city, x, y + r + 12);
+      ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+    });
+    return;
+  }
+
+  // zoom >= 8 时绘制独立摄像头图标
+  cams.forEach(function(c) {
+    if (!c.lat || !c.lng) return;
+    var x = lngToX(c.lng), y = latToY(c.lat);
+    if (x < -20 || x > cvs.width+20 || y < -20 || y > cvs.height+20) return;
+    var color = c.status === 'offline' ? '#94a3b8' : (typeColors[c.type] || typeColors.other);
+    // 摄像头图标：矩形机身 + 三角镜头
+    ctx.save();
+    // 底座圆形
+    ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI*2);
+    ctx.fillStyle = color; ctx.globalAlpha = 0.9; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    // 摄像头符号（简化）
+    ctx.fillStyle = '#fff'; ctx.globalAlpha = 1;
+    ctx.fillRect(x-4, y-3, 6, 6);
+    ctx.beginPath(); ctx.moveTo(x+2, y-2); ctx.lineTo(x+6, y-4); ctx.lineTo(x+6, y+4); ctx.lineTo(x+2, y+2); ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    // 名称
+    if (mapState.zoom >= 12) {
+      ctx.font = '11px "Microsoft YaHei"'; ctx.fillStyle = color; ctx.textAlign = 'center';
+      ctx.fillText(c.name, x, y + 16);
+      ctx.textAlign = 'start';
+    }
+  });
+}
+
 // ==================== 绘制区域选择 ====================
 function _renderDrawnShape() {
   ctx.globalAlpha = 0.25; ctx.fillStyle = '#2563eb'; ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 2;
@@ -1336,6 +2044,10 @@ function _renderDrawPreview() {
 function startDraw(type) {
   _drawMode = type; _drawStart = null; _drawCurrent = null; _polygonPoints = [];
   _drawnShape = null;
+  // 手动圈选 → 清除行政区域选择
+  if (_regionSelected.province) {
+    clearRegion();
+  }
   cvs.style.cursor = 'crosshair';
   showToast(type==='polygon' ? '单击添加顶点，双击完成圈选' : '按住鼠标拖拽绘制' + (type==='rectangle'?'矩形':'圆形'));
   renderMap();
@@ -1451,7 +2163,13 @@ function onAreaSelected() {
 function loadAndFilterHazards() {
   var bounds = getShapeBounds(_drawnShape);
   var boundsParam = bounds ? '&sw_lat=' + bounds.swLat + '&sw_lng=' + bounds.swLng + '&ne_lat=' + bounds.neLat + '&ne_lng=' + bounds.neLng : '';
-  fetch(API_BASE + '/api/hazards?filter=area' + boundsParam, {headers:authHeaders()})
+  // 传递当前区域名和中心坐标，让后端匹配真实风险点
+  var center = _drawnShape ? getShapeCenter(_drawnShape) : (_locatedPos || {lat: mapState.centerLat, lng: mapState.centerLng});
+  var regionName = _detectRegionName();
+  if (!regionName && center) regionName = getLocalDistrictName(center.lat, center.lng) || '';
+  var regionParam = regionName ? '&region=' + encodeURIComponent(regionName) : '';
+  regionParam += center ? '&center_lat=' + center.lat + '&center_lng=' + center.lng : '';
+  fetch(API_BASE + '/api/hazards?filter=area' + boundsParam + regionParam, {headers:authHeaders()})
     .then(function(r){return r.json()})
     .then(function(data) {
       var hazards = data.hazards || [];
@@ -1461,18 +2179,7 @@ function loadAndFilterHazards() {
         return pointInShape(h.lat, h.lng, _drawnShape);
       });
       _hazardData = filtered;
-      // 更新风险点统计
-      var stats = {};
-      filtered.forEach(function(h) { var t = h.type || ''; stats[t] = (stats[t] || 0) + 1; });
-      var el = document.getElementById('hazard-stats');
-      if (el) {
-        el.innerHTML = '<div class="item">易涝点：' + ((stats['易涝点']||0) + (stats['桥下']||0)) + '个</div>'
-          + '<div class="item">危房：' + (stats['危房']||0) + '处</div>'
-          + '<div class="item">地下空间：' + (stats['地下空间']||0) + '个</div>'
-          + '<div class="item">河道：' + (stats['河道']||0) + '段</div>'
-          + '<div class="item">隧道：' + (stats['隧道']||0) + '处</div>'
-          + '<div class="item" style="color:#60a5fa;font-weight:bold">区域内合计：' + filtered.length + '处</div>';
-      }
+      _updateHazardStatsUI(filtered, data);
       renderMap();
       showToast('已定位到选定区域，发现 ' + filtered.length + ' 个风险点');
     })
@@ -1595,7 +2302,188 @@ function toggleLayer(layer) {
   document.getElementById('sw-' + layer).classList.toggle('active');
   if (layer === 'radar') { if (layers.radar) _startRadarAnim(); else { clearInterval(_radarTimer); _radarTimer = null; } }
   if (layer === 'water' && layers.water) { _waterStationsCache = null; _waterLastLoad = 0; }
+  if (layer === 'camera' && layers.camera) { _camerasCache = null; _cameraLastLoad = 0; }
+  if (layer === 'report' && layers.report) { _reportsCache = null; _reportLastLoad = 0; loadReportList(); }
+  if (layer === 'resources' && layers.resources) { loadResourcesOnMap(); }
+  if (layer === 'regionBorder' && layers.regionBorder && _regionGeoJSON) { /* 已有数据直接渲染 */ }
   renderMap();
+}
+
+// ==================== 视频弹窗播放 ====================
+var _hlsInstance = null;
+var _flvPlayer = null;
+var _typeLabels = {traffic:'交通', water:'水利', flood:'内涝', scenic:'景区', public:'社会公益', other:'其他'};
+function openVideoPopup(cam, px, py) {
+  closeVideoPopup();
+  var popup = document.getElementById('video-popup');
+  var mapDiv = document.getElementById('map');
+  var video = document.getElementById('video-player');
+  var errorDiv = document.getElementById('vp-error');
+  // 设置信息
+  document.getElementById('vp-title').textContent = cam.name;
+  document.getElementById('vp-source').textContent = cam.source || '公共监控';
+  document.getElementById('vp-city-type').textContent = (cam.city || '') + ' · ' + (_typeLabels[cam.type] || '其他');
+  document.getElementById('vp-status').style.background = cam.status === 'offline' ? '#94a3b8' : '#10b981';
+  // 定位弹窗
+  var popW = 420, popH = 310;
+  var left = Math.min(Math.max(px - popW/2, 10), mapDiv.clientWidth - popW - 10);
+  var top = Math.min(Math.max(py - popH - 20, 10), mapDiv.clientHeight - popH - 10);
+  popup.style.left = left + 'px';
+  popup.style.top = top + 'px';
+  popup.style.display = 'block';
+  video.style.display = 'block';
+  errorDiv.style.display = 'none';
+  // 播放视频
+  var url = cam.stream_url;
+  var protocol = cam.protocol || 'hls';
+  if (protocol === 'flv' && typeof flvjs !== 'undefined' && flvjs.isSupported()) {
+    _flvPlayer = flvjs.createPlayer({type: 'flv', url: url, isLive: true});
+    _flvPlayer.attachMediaElement(video);
+    _flvPlayer.load();
+    _flvPlayer.play().catch(function(){});
+    _flvPlayer.on(flvjs.Events.ERROR, function() {
+      video.style.display='none'; errorDiv.style.display='block';
+    });
+  } else if (protocol === 'hls' && typeof Hls !== 'undefined' && Hls.isSupported()) {
+    _hlsInstance = new Hls({maxBufferLength: 10, maxMaxBufferLength: 20});
+    _hlsInstance.loadSource(url);
+    _hlsInstance.attachMedia(video);
+    _hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() { video.play().catch(function(){}); });
+    _hlsInstance.on(Hls.Events.ERROR, function(ev, data) {
+      if (data.fatal) { video.style.display='none'; errorDiv.style.display='block'; }
+    });
+  } else if (protocol === 'hls' && video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = url;
+    video.play().catch(function(){});
+  } else {
+    video.src = url;
+    video.play().catch(function(){ video.style.display='none'; errorDiv.style.display='block'; });
+  }
+  video.onerror = function() { video.style.display='none'; errorDiv.style.display='block'; };
+}
+function closeVideoPopup() {
+  var popup = document.getElementById('video-popup');
+  var video = document.getElementById('video-player');
+  popup.style.display = 'none';
+  if (_hlsInstance) { _hlsInstance.destroy(); _hlsInstance = null; }
+  if (_flvPlayer) { _flvPlayer.pause(); _flvPlayer.unload(); _flvPlayer.detachMediaElement(); _flvPlayer.destroy(); _flvPlayer = null; }
+  video.pause();
+  video.removeAttribute('src');
+  video.load();
+  video.onerror = null;
+}
+
+// ==================== 视频监控管理面板 ====================
+function openCameraPanel() {
+  openModal('modal-camera');
+  loadCameraCities();
+  loadCameraList();
+}
+function loadCameraCities() {
+  fetch(API_BASE + '/api/cameras', {headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      var cities = {};
+      (data.cameras||[]).forEach(function(c){ if(c.city) cities[c.city]=1; });
+      var sel = document.getElementById('cam-filter-city');
+      var val = sel.value;
+      sel.innerHTML = '<option value="">全部城市</option>';
+      Object.keys(cities).sort().forEach(function(c){
+        sel.innerHTML += '<option value="'+c+'">'+c+'</option>';
+      });
+      sel.value = val;
+    }).catch(function(){});
+}
+function loadCameraList() {
+  var city = document.getElementById('cam-filter-city').value;
+  var type = document.getElementById('cam-filter-type').value;
+  var url = API_BASE + '/api/cameras?';
+  if (city) url += 'city=' + encodeURIComponent(city) + '&';
+  if (type) url += 'type=' + encodeURIComponent(type) + '&';
+  fetch(url, {headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      var cams = data.cameras || [];
+      var cities = {};
+      cams.forEach(function(c){ if(c.city) cities[c.city]=1; });
+      document.getElementById('cam-stats').textContent = '共 ' + cams.length + ' 个监控点，覆盖 ' + Object.keys(cities).length + ' 个城市';
+      var html = '';
+      if (!cams.length) {
+        html = '<div style="text-align:center;color:#94a3b8;padding:20px">暂无数据</div>';
+      } else {
+        cams.forEach(function(c) {
+          var tl = _typeLabels[c.type] || '其他';
+          var sc = c.status==='online'?'#10b981':'#94a3b8';
+          html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid #e5e7eb;border-radius:6px;margin:6px 0">';
+          html += '<div style="flex:1;min-width:0">';
+          html += '<div style="font-weight:600;font-size:13px;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">';
+          html += '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+sc+';margin-right:6px"></span>' + c.name + '</div>';
+          html += '<div style="font-size:11px;color:#6b7280;margin-top:2px">' + (c.city||'') + ' · ' + tl + ' · ' + (c.source||'未知来源') + '</div>';
+          html += '</div>';
+          html += '<div style="display:flex;gap:4px;flex-shrink:0">';
+          html += '<button class="modal-btn modal-btn-outline" style="padding:4px 8px;font-size:11px" onclick="flyToCamera('+c.lat+','+c.lng+')">定位</button>';
+          html += '<button class="modal-btn modal-btn-danger" style="padding:4px 8px;font-size:11px" onclick="deleteCamera(\''+c.id+'\')">删除</button>';
+          html += '</div></div>';
+        });
+      }
+      document.getElementById('cam-list').innerHTML = html;
+    }).catch(function(){
+      document.getElementById('cam-list').innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px">加载失败</div>';
+    });
+}
+function flyToCamera(lat, lng) {
+  closeModal('modal-camera');
+  mapState.centerLat = lat;
+  mapState.centerLng = lng;
+  if (mapState.zoom < 13) mapState.zoom = 13;
+  if (!layers.camera) { layers.camera = true; document.getElementById('sw-camera').classList.add('active'); _camerasCache = null; _cameraLastLoad = 0; }
+  renderMap();
+  debouncedFetchDEM();
+}
+function saveCamera() {
+  var name = document.getElementById('cam-name').value.trim();
+  var city = document.getElementById('cam-city').value.trim();
+  var type = document.getElementById('cam-type').value;
+  var protocol = document.getElementById('cam-protocol').value;
+  var lat = parseFloat(document.getElementById('cam-lat').value);
+  var lng = parseFloat(document.getElementById('cam-lng').value);
+  var streamUrl = document.getElementById('cam-url').value.trim();
+  var source = document.getElementById('cam-source').value.trim();
+  if (!name || isNaN(lat) || isNaN(lng) || !streamUrl) { alert('请填写名称、坐标和视频流地址'); return; }
+  fetch(API_BASE + '/api/cameras', {
+    method: 'POST', headers: Object.assign({'Content-Type':'application/json'}, authHeaders()),
+    body: JSON.stringify({name:name, city:city, type:type, protocol:protocol, lat:lat, lng:lng, stream_url:streamUrl, source:source})
+  }).then(function(r){return r.json()}).then(function(d) {
+    if (d.error) { alert(d.error); return; }
+    ['cam-name','cam-city','cam-lat','cam-lng','cam-url','cam-source'].forEach(function(id){ document.getElementById(id).value=''; });
+    _camerasCache = null; _cameraLastLoad = 0;
+    loadCameraCities();
+    loadCameraList();
+    renderMap();
+  }).catch(function(){ alert('保存失败'); });
+}
+function deleteCamera(id) {
+  if (!confirm('确定删除该摄像头？')) return;
+  fetch(API_BASE + '/api/cameras/' + id, {method:'DELETE', headers:authHeaders()})
+    .then(function(r){return r.json()}).then(function() {
+      _camerasCache = null; _cameraLastLoad = 0;
+      loadCameraList();
+      renderMap();
+    }).catch(function(){ alert('删除失败'); });
+}
+function pickCameraFromMap() {
+  closeModal('modal-camera');
+  alert('请在地图上点击选择摄像头位置');
+  cvs.style.cursor = 'crosshair';
+  cvs.addEventListener('click', function _onPickCamClick(e) {
+    cvs.style.cursor = 'grab';
+    cvs.removeEventListener('click', _onPickCamClick);
+    var rect = cvs.getBoundingClientRect();
+    var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    document.getElementById('cam-lat').value = yToLat(my).toFixed(4);
+    document.getElementById('cam-lng').value = xToLng(mx).toFixed(4);
+    openModal('modal-camera');
+  }, {once: true});
 }
 
 // ==================== 移动端面板切换 ====================
@@ -1744,7 +2632,11 @@ function startAIAnalysis() {
 
   // 如果尚未加载风险点数据，先自动加载再研判
   if (!_hazardData || _hazardData.length === 0) {
-    fetch(API_BASE + '/api/hazards', {headers:authHeaders()})
+    var _rn = _detectRegionName();
+    var _ct = _locatedPos || {lat: mapState.centerLat, lng: mapState.centerLng};
+    var _hp = '?center_lat=' + _ct.lat + '&center_lng=' + _ct.lng;
+    if (_rn) _hp += '&region=' + encodeURIComponent(_rn);
+    fetch(API_BASE + '/api/hazards' + _hp, {headers:authHeaders()})
       .then(function(r){return r.json()})
       .then(function(data) {
         _hazardData = data.hazards || [];
@@ -1782,8 +2674,29 @@ function _doStartAIAnalysis() {
       },
       center: { lat: center.lat, lng: center.lng }
     };
-    // 传圈选区域
-    if (_drawnShape) payload.area = _drawnShape;
+    // 传圈选区域（优先用行政区域，其次手绘圈选）
+    if (_regionBbox && _regionSelected.province) {
+      // 使用行政区域边界作为研判范围
+      payload.area = {
+        type: 'rectangle',
+        swLat: _regionBbox.sw_lat,
+        swLng: _regionBbox.sw_lng,
+        neLat: _regionBbox.ne_lat,
+        neLng: _regionBbox.ne_lng
+      };
+      // 用区域中心覆盖地图中心
+      if (_regionCenter) {
+        payload.center = { lat: _regionCenter.lat, lng: _regionCenter.lng };
+      }
+      // 传递行政区域名称
+      var regionParts = [];
+      ['province', 'city', 'district', 'town', 'village'].forEach(function(lv) {
+        if (_regionSelected[lv] && _regionSelected[lv].name !== '直辖市') regionParts.push(_regionSelected[lv].name);
+      });
+      payload.region_name = regionParts.join('');
+    } else if (_drawnShape) {
+      payload.area = _drawnShape;
+    }
     // 传真实风险点数据
     if (_hazardData && _hazardData.length > 0) payload.hazards = _hazardData;
     // 传潮汐数据
@@ -1806,7 +2719,11 @@ function _doStartAIAnalysis() {
         clearTimeout(_judgeTimeout);
         document.getElementById('loading').style.display = 'none';
         if (result.error) { showToast('研判失败: ' + result.error); return; }
-        lastJudgeResult = result; renderJudgeResult(result); showToast('智能研判完成');
+        lastJudgeResult = result;
+        _sessionJudgeHistory.push(result);
+        var countEl = document.getElementById('session-judge-count');
+        if (countEl) countEl.textContent = _sessionJudgeHistory.length;
+        renderJudgeResult(result); showToast('智能研判完成');
       })
       .catch(function(e) {
         clearTimeout(_judgeTimeout);
@@ -1836,7 +2753,8 @@ function renderJudgeResult(result) {
   var level = ri['等级'] || '未知', rc = 'low';
   if (level.indexOf('极高')>=0) rc='high'; else if (level.indexOf('高')>=0||level.indexOf('中')>=0) rc='mid';
   var rEl = document.getElementById('risk-level'); rEl.className = 'risk ' + rc;
-  rEl.innerHTML = '<div style="font-size:20px;margin-bottom:4px">风险等级：'+level+'（'+(ri['得分']||'--')+'）</div><div style="font-size:13px;opacity:0.9">'+(ri['响应等级']||'')+' | '+(result['研判时间']||'')+'</div>';
+  var regionTag = result['研判区域'] ? '<div style="font-size:12px;opacity:0.85;margin-bottom:4px">\u{1F4CD} '+result['研判区域']+'</div>' : '';
+  rEl.innerHTML = regionTag+'<div style="font-size:20px;margin-bottom:4px">风险等级：'+level+'（'+(ri['得分']||'--')+'）</div><div style="font-size:13px;opacity:0.9">'+(ri['响应等级']||'')+' | '+(result['研判时间']||'')+'</div>';
 
   // 风险因子 + 风险类型
   var factors = ri['风险因子'] || [];
@@ -1946,6 +2864,140 @@ function renderJudgeResult(result) {
   } else {
     resCard.style.display = 'none';
   }
+
+  // ========== 高级分析（付费功能）渲染 ==========
+  renderPremiumAnalysis(result['_premium']);
+}
+
+function renderPremiumAnalysis(premium) {
+  var section = document.getElementById('premium-section');
+  if (!premium || typeof premium !== 'object') { section.style.display = 'none'; return; }
+  section.style.display = '';
+  var isPro = true; // 测试阶段全部开放
+
+  // 1. 风险趋势预测
+  var trendCard = document.getElementById('premium-trend-card');
+  var trend = premium['risk_trend'];
+  if (trend && trend.points && trend.points.length > 0) {
+    trendCard.style.display = '';
+    if (!isPro) trendCard.classList.add('locked'); else trendCard.classList.remove('locked');
+    document.getElementById('premium-trend-desc').textContent = trend.desc || '';
+    var chartEl = document.getElementById('premium-trend-chart');
+    var maxScore = Math.max.apply(null, trend.points.map(function(p){return p.score}));
+    maxScore = Math.max(maxScore, 10);
+    chartEl.innerHTML = trend.points.map(function(p) {
+      var h = Math.max(4, Math.round(p.score / maxScore * 80));
+      return '<div class="trend-bar-wrap">'
+        + '<div class="trend-score" style="color:'+p.color+'">'+p.score+'</div>'
+        + '<div class="trend-bar" style="height:'+h+'px;background:'+p.color+'"></div>'
+        + '<div class="trend-label">'+p.label+'</div></div>';
+    }).join('');
+    var summaryEl = document.getElementById('premium-trend-summary');
+    var parts = [];
+    if (trend.trend_desc) parts.push(trend.trend_desc);
+    if (trend.peak_time && trend.peak_score) parts.push('峰值: ' + trend.peak_time + ' (' + trend.peak_score + '分)');
+    summaryEl.innerHTML = parts.join(' | ');
+  } else {
+    trendCard.style.display = 'none';
+  }
+
+  // 2. 分级响应方案
+  var respCard = document.getElementById('premium-response-card');
+  var resp = premium['response_plan'];
+  if (resp && resp.departments && resp.departments.length > 0) {
+    respCard.style.display = '';
+    if (!isPro) respCard.classList.add('locked'); else respCard.classList.remove('locked');
+    document.getElementById('premium-response-level').innerHTML = '当前响应等级: <strong style="color:#1e40af">' + (resp.current_level || '--') + '</strong>';
+    var thtml = '<table class="dept-table"><thead><tr><th>部门</th><th>职责任务</th><th>优先级</th></tr></thead><tbody>';
+    resp.departments.forEach(function(d) {
+      var pc = 'p-normal';
+      if (d.priority === '立即') pc = 'p-critical';
+      else if (d.priority && d.priority.indexOf('分钟') >= 0) pc = 'p-immediate';
+      else if (d.priority && d.priority.indexOf('小时') >= 0) pc = 'p-soon';
+      thtml += '<tr><td style="font-weight:600;white-space:nowrap">' + d.name + '</td><td>' + d.duty + '</td>'
+        + '<td><span class="priority-badge ' + pc + '">' + d.priority + '</span></td></tr>';
+    });
+    thtml += '</tbody></table>';
+    if (resp.upgrade_condition) thtml += '<div class="upgrade-box up">升级条件: ' + resp.upgrade_condition + '</div>';
+    if (resp.downgrade_condition) thtml += '<div class="upgrade-box down">降级条件: ' + resp.downgrade_condition + '</div>';
+    document.getElementById('premium-response-body').innerHTML = thtml;
+  } else {
+    respCard.style.display = 'none';
+  }
+
+  // 3. 应急处置时间轴
+  var tlCard = document.getElementById('premium-timeline-card');
+  var tl = premium['timeline'];
+  if (tl && tl.actions && tl.actions.length > 0) {
+    tlCard.style.display = '';
+    if (!isPro) tlCard.classList.add('locked'); else tlCard.classList.remove('locked');
+    document.getElementById('premium-timeline-desc').textContent = tl.desc || '';
+    document.getElementById('premium-timeline-body').innerHTML = tl.actions.map(function(a) {
+      var tc = 't-normal';
+      if (a.urgency === 'critical') tc = 't-critical';
+      else if (a.urgency === 'high') tc = 't-high';
+      return '<div class="timeline-item ' + tc + '">'
+        + '<span class="timeline-time">' + a.time + '</span>'
+        + '<span class="timeline-dept">[' + a.department + ']</span>'
+        + '<div class="timeline-action">' + a.action + '</div></div>';
+    }).join('');
+  } else {
+    tlCard.style.display = 'none';
+  }
+
+  // 4. 复合灾害分析
+  var cpCard = document.getElementById('premium-compound-card');
+  var cp = premium['compound_risk'];
+  if (cp && cp.risks && cp.risks.length > 0) {
+    cpCard.style.display = '';
+    if (!isPro) cpCard.classList.add('locked'); else cpCard.classList.remove('locked');
+    document.getElementById('premium-compound-desc').textContent = cp.desc || '';
+    document.getElementById('premium-compound-body').innerHTML = cp.risks.map(function(r) {
+      var cc = 'c-low';
+      if (r.probability === '高' || r.probability === '极高') cc = 'c-high';
+      else if (r.probability === '中') cc = 'c-mid';
+      return '<div class="compound-item ' + cc + '">'
+        + '<div class="compound-type">' + r.type + '</div>'
+        + '<div class="compound-result">' + r.result + '</div>'
+        + '<div class="compound-badges">'
+        + '<span style="background:' + (cc==='c-high'?'#fef2f2;color:#dc2626':cc==='c-mid'?'#fffbeb;color:#a16207':'#eff6ff;color:#3b82f6') + '">概率: ' + r.probability + '</span>'
+        + '<span style="background:#f5f3ff;color:#6d28d9">严重度: ' + r.severity + '</span></div>'
+        + '<div class="compound-detail">' + r.detail + '</div></div>';
+    }).join('');
+  } else {
+    cpCard.style.display = 'none';
+  }
+
+  // 5. 人员转移方案
+  var evacCard = document.getElementById('premium-evac-card');
+  var evac = premium['evacuation'];
+  if (evac && evac.areas && evac.areas.length > 0) {
+    evacCard.style.display = '';
+    if (!isPro) evacCard.classList.add('locked'); else evacCard.classList.remove('locked');
+    document.getElementById('premium-evac-desc').textContent = evac.desc || '';
+    var ehtml = evac.areas.map(function(a) {
+      var isUrgent = a.urgency && (a.urgency.indexOf('立即') >= 0 || a.urgency.indexOf('强制') >= 0 || a.urgency.indexOf('紧急') >= 0);
+      return '<div class="evac-area ' + (isUrgent ? 'urgent' : 'prepare') + '">'
+        + '<div class="evac-point">' + a.point + ' <span style="font-size:12px;color:#6b7280">(' + a.type + ')</span></div>'
+        + '<div class="evac-pop">转移对象: ' + a.population + ' | 紧迫度: <strong style="color:' + (isUrgent ? '#dc2626' : '#d97706') + '">' + a.urgency + '</strong></div>'
+        + '<div class="evac-method">转移方式: ' + a.method + '</div>'
+        + '<div style="font-size:12px;color:#6b7280;margin-top:2px">安置地点: ' + a.destination + '</div></div>';
+    }).join('');
+    if (evac.estimated_people) {
+      ehtml += '<div class="evac-summary">预估转移人数: <strong>' + evac.estimated_people + '</strong> 人'
+        + (evac.night_warning ? ' | ' + evac.night_warning : '') + '</div>';
+    }
+    if (evac.key_points && evac.key_points.length > 0) {
+      ehtml += '<div class="evac-key-points"><strong>关键要点:</strong><br>' + evac.key_points.map(function(p,i){return (i+1) + '. ' + p}).join('<br>') + '</div>';
+    }
+    document.getElementById('premium-evac-body').innerHTML = ehtml;
+  } else {
+    evacCard.style.display = 'none';
+  }
+}
+
+function showPremiumUpgrade() {
+  showToast('请联系管理员开通高级版');
 }
 
 // ==================== 简报/保存/风险 ====================
@@ -1967,20 +3019,259 @@ function saveHistory() {
     .catch(function(){ showToast('保存失败'); });
 }
 
+function _detectRegionName() {
+  // 优先从已选区域读取
+  var areaEl = document.getElementById('current-area');
+  var name = (areaEl ? areaEl.textContent : '').replace('--', '').trim();
+  // 始终使用当前地图实际中心坐标（不使用缓存的_locatedPos，避免锁死在旧位置）
+  var center = {lat: mapState.centerLat, lng: mapState.centerLng};
+  // 如果名称是纯英文（如Nominatim返回的Guangzhou），用本地中文区名替代
+  if (name && /^[A-Za-z\s]+$/.test(name)) {
+    var localName = getLocalDistrictName(center.lat, center.lng);
+    if (localName) name = localName;
+  }
+  // 如果没选过区域，用地图中心坐标自动识别
+  if (!name) {
+    name = getLocalDistrictName(center.lat, center.lng) || '';
+  }
+  return name;
+}
+
 function showHazards() {
-  fetch(API_BASE + '/api/hazards', {headers:authHeaders()})
+  var regionName = _detectRegionName();
+  var center = {lat: mapState.centerLat, lng: mapState.centerLng};
+  var b = getViewBounds();
+  var params = '?center_lat=' + center.lat + '&center_lng=' + center.lng;
+  params += '&sw_lat=' + b.swLat + '&sw_lng=' + b.swLng + '&ne_lat=' + b.neLat + '&ne_lng=' + b.neLng;
+  if (regionName) params += '&region=' + encodeURIComponent(regionName);
+  fetch(API_BASE + '/api/hazards' + params, {headers:authHeaders()})
     .then(function(r){return r.json()})
     .then(function(data) {
-      var hazards = data.hazards || [], stats = data['统计'] || {};
-      var el = document.getElementById('hazard-stats');
-      if (el) {
-        el.innerHTML = '<div class="item">易涝点：'+(stats['易涝点']||0)+'个</div><div class="item">危房：'+(stats['危房']||0)+'处</div><div class="item">地下空间：'+(stats['地下空间']||0)+'个</div><div class="item">河道：'+(stats['河道']||0)+'段</div><div class="item">隧道：'+(stats['隧道']||0)+'处</div><div class="item" style="color:#60a5fa;font-weight:bold">合计：'+(stats['总计']||hazards.length)+'处</div>';
-      }
+      var hazards = data.hazards || [];
       _hazardData = hazards;
+      _updateHazardStatsUI(hazards, data);
+      _fitMapToHazards(hazards);
       showToast('已标注 ' + hazards.length + ' 个风险点');
       renderMap();
     })
     .catch(function(){ showToast('获取风险点失败'); });
+}
+
+function _fitMapToHazards(hazards) {
+  if (!hazards || hazards.length === 0) return;
+  var pts = hazards.filter(function(h){ return h.lat && h.lng; });
+  if (pts.length === 0) return;
+  // 检查是否都在当前可视范围内
+  var b = getViewBounds();
+  var allVisible = pts.every(function(h){
+    return h.lat >= b.swLat && h.lat <= b.neLat && h.lng >= b.swLng && h.lng <= b.neLng;
+  });
+  if (allVisible) return; // 已经可见，不需要移动
+  // 计算包围盒
+  var minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+  pts.forEach(function(h){
+    if (h.lat < minLat) minLat = h.lat;
+    if (h.lat > maxLat) maxLat = h.lat;
+    if (h.lng < minLng) minLng = h.lng;
+    if (h.lng > maxLng) maxLng = h.lng;
+  });
+  // 移动到风险点中心
+  mapState.centerLat = (minLat + maxLat) / 2;
+  mapState.centerLng = (minLng + maxLng) / 2;
+  // 计算合适的缩放级别
+  var latSpan = maxLat - minLat + 0.01; // 加点边距
+  var lngSpan = maxLng - minLng + 0.01;
+  var latZoom = Math.log2(180 / latSpan) + 1;
+  var lngZoom = Math.log2(360 / lngSpan) + 1;
+  var fitZoom = Math.min(latZoom, lngZoom, 15);
+  if (fitZoom < mapState.zoom) mapState.zoom = Math.max(Math.floor(fitZoom), 10);
+}
+
+function _updateHazardStatsUI(hazards, data) {
+  var stats = data && data['统计'] ? data['统计'] : {};
+  if (!stats['总计']) {
+    hazards.forEach(function(h) { var t = h.type || ''; stats[t] = (stats[t] || 0) + 1; });
+    stats['总计'] = hazards.length;
+    stats['易涝点'] = (stats['易涝点']||0) + (stats['桥下']||0);
+  }
+  var el = document.getElementById('hazard-stats');
+  if (el) {
+    var parts = [];
+    if (stats['易涝点']) parts.push('<div class="item">易涝点：'+stats['易涝点']+'个</div>');
+    if (stats['危房']) parts.push('<div class="item">危房：'+stats['危房']+'处</div>');
+    if (stats['地下空间']) parts.push('<div class="item">地下空间：'+stats['地下空间']+'个</div>');
+    if (stats['河道']) parts.push('<div class="item">河道：'+stats['河道']+'段</div>');
+    if (stats['隧道']) parts.push('<div class="item">隧道：'+stats['隧道']+'处</div>');
+    if (stats['边坡']) parts.push('<div class="item">边坡：'+stats['边坡']+'处</div>');
+    if (stats['桥梁']) parts.push('<div class="item">桥梁：'+stats['桥梁']+'处</div>');
+    if (stats['人员密集']) parts.push('<div class="item">人员密集：'+stats['人员密集']+'处</div>');
+    parts.push('<div class="item" style="color:#60a5fa;font-weight:bold">合计：'+(stats['总计']||hazards.length)+'处</div>');
+    el.innerHTML = parts.join('');
+  }
+  var summaryEl = document.getElementById('hazard-summary');
+  if (summaryEl && data && data.summary) {
+    summaryEl.textContent = data.summary;
+    summaryEl.style.display = 'block';
+  }
+}
+
+// ==================== 右侧风险识别列表 ====================
+function _getHazardTypeInfo(type) {
+  var map = {
+    '易涝点': {cls:'flood',color:'#2563eb',icon:'\u6C34'},
+    '桥下':   {cls:'flood',color:'#2563eb',icon:'\u6865'},
+    '危房':   {cls:'building',color:'#d97706',icon:'\u623F'},
+    '地下空间':{cls:'underground',color:'#7c3aed',icon:'\u5730'},
+    '河道':   {cls:'river',color:'#059669',icon:'\u6CB3'},
+    '隧道':   {cls:'tunnel',color:'#db2777',icon:'\u96A7'},
+    '边坡':   {cls:'slope',color:'#ea580c',icon:'\u5761'},
+    '桥梁':   {cls:'flood',color:'#2563eb',icon:'\u6865'},
+    '人员密集':{cls:'building',color:'#d97706',icon:'\u4EBA'}
+  };
+  return map[type] || {cls:'other',color:'#64748b',icon:'\u2022'};
+}
+
+function renderHazardList(hazards, regionName) {
+  var panel = document.getElementById('hazard-list-panel');
+  var body = document.getElementById('hazard-list-body');
+  var tags = document.getElementById('hazard-list-tags');
+  var countEl = document.getElementById('hazard-list-count');
+  if (!panel || !body) return;
+
+  if (!hazards || hazards.length === 0) {
+    panel.style.display = 'none';
+    return;
+  }
+  panel.style.display = '';
+  countEl.textContent = regionName ? regionName + ' \u00B7 ' + hazards.length + '\u5904' : hazards.length + '\u5904';
+
+  // 类型统计标签
+  var typeCount = {};
+  hazards.forEach(function(h) { var t = h.type || '其他'; typeCount[t] = (typeCount[t]||0) + 1; });
+  var tagHtml = '';
+  for (var t in typeCount) {
+    var info = _getHazardTypeInfo(t);
+    tagHtml += '<span class="hl-tag '+info.cls+'">'+t+' '+typeCount[t]+'</span>';
+  }
+  tags.innerHTML = tagHtml;
+
+  // 列表项
+  var html = '';
+  hazards.forEach(function(h, idx) {
+    var info = _getHazardTypeInfo(h.type || '');
+    var riskColor = '#64748b';
+    var riskLabel = h.risk_level || '';
+    if (riskLabel.indexOf('\u9AD8')>=0) riskColor = '#dc2626';
+    else if (riskLabel.indexOf('\u4E2D')>=0) riskColor = '#ea580c';
+    else if (riskLabel.indexOf('\u4F4E')>=0) riskColor = '#059669';
+
+    html += '<div class="hazard-list-item" onclick="locateHazard('+idx+')" title="\u70B9\u51FB\u5B9A\u4F4D\u5230\u5730\u56FE">';
+    html += '<div class="hl-name"><span class="hl-type" style="background:'+info.color+'">'+info.icon+' '+(h.type||'\u98CE\u9669\u70B9')+'</span> '+(h.name||'\u672A\u547D\u540D\u70B9\u4F4D')+'</div>';
+    if (riskLabel) html += '<div style="font-size:11px;color:'+riskColor+';font-weight:600">\u98CE\u9669\u7B49\u7EA7\uFF1A'+riskLabel+'</div>';
+    if (h.reason) html += '<div class="hl-desc">'+h.reason+'</div>';
+    var metaParts = [];
+    if (h.distance_km !== undefined) metaParts.push('\u8DDD\u79BB '+h.distance_km+'km');
+    if (h.lat && h.lng) metaParts.push(Number(h.lat).toFixed(4)+', '+Number(h.lng).toFixed(4));
+    if (metaParts.length) html += '<div class="hl-meta">'+metaParts.join(' \u00B7 ')+'</div>';
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+
+function locateHazard(idx) {
+  if (!_hazardData || !_hazardData[idx]) return;
+  var h = _hazardData[idx];
+  if (!h.lat || !h.lng) return;
+  mapState.centerLat = h.lat;
+  mapState.centerLng = h.lng;
+  if (mapState.zoom < 14) mapState.zoom = 14;
+  renderMap();
+  // 在地图中心偏上方弹出信息框
+  var px = lngToX(h.lng);
+  var py = latToY(h.lat);
+  showMapPopup(px, py, '<b>'+(h.name||'\u98CE\u9669\u70B9')+'</b><br><span style="color:#64748b;font-size:12px">'+(h.type||'')+' \u00B7 '+(h.risk_level||'')+'</span>'+(h.reason ? '<br><span style="font-size:12px;color:#475569">'+h.reason+'</span>' : ''));
+}
+
+function aiAnalyzeHazards(forceRefresh) {
+  var regionName = '';
+  var center, viewRadiusKm;
+
+  // ===== 严格使用选定的行政区域或圈选区域，不分析区域以外的范围 =====
+  if (_regionBbox && _regionSelected.province) {
+    // 使用行政区域
+    center = _regionCenter || {lat: (_regionBbox.sw_lat + _regionBbox.ne_lat) / 2, lng: (_regionBbox.sw_lng + _regionBbox.ne_lng) / 2};
+    var dLat = Math.abs(_regionBbox.ne_lat - _regionBbox.sw_lat) * 111;
+    var dLng = Math.abs(_regionBbox.ne_lng - _regionBbox.sw_lng) * 111 * Math.cos(center.lat * Math.PI / 180);
+    viewRadiusKm = Math.max(dLat, dLng) / 2;
+    // 拼接行政区域名称
+    var regionParts = [];
+    ['province', 'city', 'district', 'town', 'village'].forEach(function(lv) {
+      if (_regionSelected[lv] && _regionSelected[lv].name && _regionSelected[lv].name !== '直辖市') regionParts.push(_regionSelected[lv].name);
+    });
+    regionName = regionParts.join('') || _detectRegionName();
+  } else if (_drawnShape) {
+    // 使用手绘圈选区域
+    center = getShapeCenter(_drawnShape);
+    if (!center) { showToast('圈选区域无效，请重新绘制'); return; }
+    var bounds = getShapeBounds(_drawnShape);
+    if (bounds) {
+      var dLat = Math.abs(bounds.neLat - bounds.swLat) * 111;
+      var dLng = Math.abs(bounds.neLng - bounds.swLng) * 111 * Math.cos(center.lat * Math.PI / 180);
+      viewRadiusKm = Math.max(dLat, dLng) / 2;
+    } else {
+      viewRadiusKm = 5;
+    }
+    regionName = _detectRegionName() || getLocalDistrictName(center.lat, center.lng) || '选定区域';
+  } else {
+    // 未选择任何区域，提示用户
+    showToast('请先选择行政区域或使用区域圈选工具圈定分析范围');
+    return;
+  }
+
+  // 限制在合理范围：0.5km - 15km
+  viewRadiusKm = Math.max(0.5, Math.min(viewRadiusKm, 15));
+  viewRadiusKm = Math.round(viewRadiusKm * 10) / 10;
+  showToast('AI正在分析' + regionName + '（半径' + viewRadiusKm + 'km）风险点...');
+  var summaryEl = document.getElementById('hazard-summary');
+  if (summaryEl) { summaryEl.textContent = 'AI分析中（范围' + viewRadiusKm + 'km）...'; summaryEl.style.display = 'block'; }
+  fetch(API_BASE + '/api/hazards/ai-analyze', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({region: regionName, center_lat: center.lat, center_lng: center.lng, radius_km: viewRadiusKm, force_refresh: !!forceRefresh})
+  })
+  .then(function(r){
+    if (!r.ok) return r.text().then(function(t){ throw new Error('HTTP ' + r.status + ': ' + t.substring(0, 100)); });
+    return r.json();
+  })
+  .then(function(data) {
+    if (data.error) { showToast('分析失败：' + data.error); return; }
+    var hazards = data.hazards || [];
+    // 前端二次过滤：严格只保留选定区域内的风险点
+    if (_drawnShape) {
+      hazards = hazards.filter(function(h) {
+        return h.lat && h.lng && pointInShape(h.lat, h.lng, _drawnShape);
+      });
+    } else if (_regionBbox) {
+      hazards = hazards.filter(function(h) {
+        return h.lat && h.lng &&
+          h.lat >= _regionBbox.sw_lat && h.lat <= _regionBbox.ne_lat &&
+          h.lng >= _regionBbox.sw_lng && h.lng <= _regionBbox.ne_lng;
+      });
+    }
+    _hazardData = hazards;
+    _updateHazardStatsUI(hazards, data);
+    renderHazardList(hazards, regionName);
+    _fitMapToHazards(hazards);
+    // 自动开启热力图
+    layers.heatmap = true;
+    var heatBtn = document.querySelector('[onclick*="toggleLayer"][onclick*="heatmap"]');
+    if (heatBtn) heatBtn.classList.add('active');
+    renderMap();
+    var aiTag = data.ai_enhanced ? '（AI+真实地理数据）' : '（知识库）';
+    var osmInfo = data.osm_features_count ? '，基于'+data.osm_features_count+'个真实地理要素' : '';
+    showToast('AI识别完成' + aiTag + '：发现 ' + hazards.length + ' 个风险点' + osmInfo);
+  })
+  .catch(function(e){ console.error('AI分析错误:', e); showToast('AI分析请求失败：' + (e.message||e)); if(summaryEl) summaryEl.style.display='none'; });
 }
 
 // ==================== Toast & 时钟 ====================
@@ -2001,6 +3292,324 @@ setInterval(function(){
   });
 }, 1000);
 
+// ==================== 应急力量与资源管理 ====================
+var _resCurrentType = 'personnel';
+var _resRegionCode = '';
+var _resRegionName = '';
+var _resSubtypes = null;
+
+var _resFormFields = {
+  personnel: [
+    {key:'name',label:'姓名',required:true}, {key:'type',label:'类型',picker:true},
+    {key:'team',label:'队伍',picker:true}, {key:'phone',label:'联系电话',required:true},
+    {key:'skills',label:'技能(逗号分隔)'}, {key:'status',label:'状态',options:['待命','在岗','休假','外派']},
+    {key:'location',label:'所在位置'},
+    {key:'lat',label:'纬度',type:'number',placeholder:'如 23.1300'}, {key:'lng',label:'经度',type:'number',placeholder:'如 113.2600'}
+  ],
+  materials: [
+    {key:'name',label:'物资名称',required:true}, {key:'category',label:'类别',picker:true},
+    {key:'quantity',label:'数量',required:true,type:'number'}, {key:'unit',label:'单位'},
+    {key:'location',label:'存放位置'},
+    {key:'lat',label:'纬度',type:'number',placeholder:'如 23.1300'}, {key:'lng',label:'经度',type:'number',placeholder:'如 113.2600'},
+    {key:'status',label:'状态',options:['可用','使用中','维修中','报废']},
+    {key:'specs',label:'规格说明'}, {key:'manager',label:'管理员'}, {key:'manager_phone',label:'联系电话'}
+  ],
+  facilities: [
+    {key:'name',label:'设施名称',required:true}, {key:'type',label:'类型',picker:true},
+    {key:'capacity',label:'容纳人数',type:'number'}, {key:'address',label:'详细地址',required:true},
+    {key:'lat',label:'纬度',type:'number',placeholder:'如 23.1300'}, {key:'lng',label:'经度',type:'number',placeholder:'如 113.2600'},
+    {key:'contact',label:'负责人'}, {key:'phone',label:'联系电话'},
+    {key:'status',label:'状态',options:['备用','使用中','维护中','关闭']}
+  ],
+  vehicles: [
+    {key:'plate_number',label:'车牌号',required:true}, {key:'type',label:'车辆类型',picker:true},
+    {key:'model',label:'车辆型号'}, {key:'driver',label:'驾驶员'},
+    {key:'driver_phone',label:'联系电话'}, {key:'status',label:'状态',options:['可用','出勤中','维修中','报废']},
+    {key:'location',label:'存放位置'},
+    {key:'lat',label:'纬度',type:'number',placeholder:'如 23.1300'}, {key:'lng',label:'经度',type:'number',placeholder:'如 113.2600'}
+  ]
+};
+
+function openResourcePanel() {
+  openModal('modal-resources');
+  // 加载子类型选项
+  if (!_resSubtypes) {
+    fetch(API_BASE + '/api/resources/subtypes', {headers:authHeaders()})
+      .then(function(r){return r.json()})
+      .then(function(data){ _resSubtypes = data; })
+      .catch(function(){});
+  }
+  loadResourceList();
+}
+
+function switchResTab(type) {
+  _resCurrentType = type;
+  document.querySelectorAll('.res-tab').forEach(function(t){
+    t.classList.toggle('active', t.getAttribute('data-type') === type);
+  });
+  resHideAddForm();
+  loadResourceList();
+}
+
+function resUseCurrentRegion() {
+  if (_regionSelected.district) {
+    _resRegionCode = _regionSelected.district.code;
+    var parts = [];
+    ['province','city','district','town'].forEach(function(k){
+      if (_regionSelected[k] && _regionSelected[k].name !== '直辖市') parts.push(_regionSelected[k].name);
+    });
+    _resRegionName = parts.join('');
+  } else if (_regionSelected.city) {
+    _resRegionCode = _regionSelected.city.code;
+    _resRegionName = (_regionSelected.province ? _regionSelected.province.name : '') + _regionSelected.city.name;
+  } else if (_regionSelected.province) {
+    _resRegionCode = _regionSelected.province.code;
+    _resRegionName = _regionSelected.province.name;
+  } else {
+    showToast('请先在左侧选择行政区域');
+    return;
+  }
+  document.getElementById('res-region-text').textContent = _resRegionName;
+  loadResourceList();
+}
+
+function resClearRegion() {
+  _resRegionCode = '';
+  _resRegionName = '';
+  document.getElementById('res-region-text').textContent = '全部区域';
+  loadResourceList();
+}
+
+function loadResourceList() {
+  var url = API_BASE + '/api/resources/' + _resCurrentType;
+  if (_resRegionCode) url += '?region_code=' + _resRegionCode;
+  fetch(url, {headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      var items = data.items || [];
+      var stats = data.statistics || {};
+      // 统计
+      var statParts = [];
+      for (var k in stats) { statParts.push(k + '：' + stats[k]); }
+      document.getElementById('res-stats').textContent = statParts.join(' | ') || '暂无统计';
+
+      // 列表
+      var el = document.getElementById('res-list');
+      if (items.length === 0) {
+        el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:30px">暂无资源数据，请通过"一键导入文档"或"手动添加"录入</div>';
+        return;
+      }
+      var html = '';
+      items.forEach(function(item) {
+        var name = item.name || item.plate_number || '--';
+        var detail = _resItemDetail(item);
+        var region = item.region_name || '';
+        var statusColor = (item.status === '可用' || item.status === '在岗' || item.status === '待命' || item.status === '备用') ? '#16a34a' : '#94a3b8';
+        html += '<div class="res-item">';
+        html += '<span class="res-name">' + name + '</span>';
+        html += '<span class="res-detail">' + detail + '</span>';
+        if (region) html += '<span class="res-region">' + region + '</span>';
+        if (item.status) html += '<span class="res-status" style="background:' + statusColor + '1a;color:' + statusColor + '">' + item.status + '</span>';
+        html += '<span class="res-del" onclick="resDeleteItem(\'' + item.id + '\')">删除</span>';
+        html += '</div>';
+      });
+      el.innerHTML = html;
+      // 自动刷新地图上的资源标注
+      if (layers.resources) loadResourcesOnMap();
+    })
+    .catch(function(){ document.getElementById('res-list').innerHTML = '<div style="text-align:center;color:#dc2626;padding:20px">加载失败</div>'; });
+}
+
+function _resItemDetail(item) {
+  var parts = [];
+  if (item.type) parts.push(item.type);
+  if (item.team) parts.push(item.team);
+  if (item.category) parts.push(item.category);
+  if (item.quantity) parts.push(item.quantity + (item.unit || ''));
+  if (item.location || item.address) parts.push(item.location || item.address);
+  if (item.phone || item.driver_phone || item.manager_phone) parts.push(item.phone || item.driver_phone || item.manager_phone);
+  if (item.capacity) parts.push('容纳' + item.capacity + '人');
+  if (item.model) parts.push(item.model);
+  return parts.slice(0, 4).join(' | ');
+}
+
+function resDeleteItem(id) {
+  if (!confirm('确认删除此资源？')) return;
+  fetch(API_BASE + '/api/resources/' + _resCurrentType + '/' + id, {method:'DELETE', headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data) { showToast(data.message || '已删除'); loadResourceList(); })
+    .catch(function(){ showToast('删除失败'); });
+}
+
+function resShowAddForm() {
+  var fields = _resFormFields[_resCurrentType] || [];
+  var typeLabels = {personnel:'人员队伍',materials:'物资装备',facilities:'场所设施',vehicles:'车辆运力'};
+  document.getElementById('res-form-type-label').textContent = '- ' + (typeLabels[_resCurrentType] || '');
+  var html = '';
+  fields.forEach(function(f) {
+    var req = f.required ? ' *' : '';
+    if (f.options) {
+      html += '<div class="form-group"><label>' + f.label + req + '</label><select id="res-f-' + f.key + '">';
+      html += '<option value="">请选择</option>';
+      f.options.forEach(function(o){ html += '<option value="' + o + '">' + o + '</option>'; });
+      html += '</select></div>';
+    } else if (f.picker && _resSubtypes && _resSubtypes[_resCurrentType]) {
+      var subKey = f.key === 'type' ? 'types' : (f.key === 'team' ? 'teams' : (f.key === 'category' ? 'categories' : 'types'));
+      var opts = _resSubtypes[_resCurrentType][subKey] || [];
+      html += '<div class="form-group"><label>' + f.label + req + '</label><select id="res-f-' + f.key + '">';
+      html += '<option value="">请选择</option>';
+      opts.forEach(function(o){ html += '<option value="' + o + '">' + o + '</option>'; });
+      html += '</select></div>';
+    } else {
+      var inputType = f.type || 'text';
+      var ph = f.placeholder || ('\u8BF7\u8F93\u5165' + f.label);
+      html += '<div class="form-group"><label>' + f.label + req + '</label><input id="res-f-' + f.key + '" type="' + inputType + '" placeholder="' + ph + '"';
+      if (inputType === 'number') html += ' step="any"';
+      html += '></div>';
+    }
+  });
+  // 添加"使用地图中心坐标"按钮
+  html += '<div class="form-group"><button type="button" onclick="resUseMapCenter()" style="background:#0288d1;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;width:100%">\u2316 \u4F7F\u7528\u5F53\u524D\u5730\u56FE\u4E2D\u5FC3\u5750\u6807</button></div>';
+  document.getElementById('res-form-fields').innerHTML = html;
+  document.getElementById('res-add-form').style.display = '';
+}
+
+function resHideAddForm() {
+  document.getElementById('res-add-form').style.display = 'none';
+}
+
+function resUseMapCenter() {
+  var latEl = document.getElementById('res-f-lat');
+  var lngEl = document.getElementById('res-f-lng');
+  if (latEl) latEl.value = mapState.centerLat.toFixed(6);
+  if (lngEl) lngEl.value = mapState.centerLng.toFixed(6);
+  showToast('\u5DF2\u586B\u5165\u5730\u56FE\u4E2D\u5FC3\u5750\u6807: ' + mapState.centerLat.toFixed(4) + ', ' + mapState.centerLng.toFixed(4));
+}
+
+function resSaveItem() {
+  var fields = _resFormFields[_resCurrentType] || [];
+  var data = {};
+  var missing = [];
+  fields.forEach(function(f) {
+    var el = document.getElementById('res-f-' + f.key);
+    if (el) data[f.key] = el.value.trim();
+    if (f.required && !data[f.key]) missing.push(f.label);
+  });
+  if (missing.length > 0) { showToast('请填写：' + missing.join('、')); return; }
+
+  // 附加区域信息
+  if (_resRegionCode) {
+    data.region_code = _resRegionCode;
+    data.region_name = _resRegionName;
+  } else if (_regionSelected.district) {
+    data.region_code = _regionSelected.district.code;
+    var parts = [];
+    ['province','city','district','town'].forEach(function(k){
+      if (_regionSelected[k] && _regionSelected[k].name !== '直辖市') parts.push(_regionSelected[k].name);
+    });
+    data.region_name = parts.join('');
+  }
+
+  fetch(API_BASE + '/api/resources/' + _resCurrentType, {method:'POST', headers:authHeaders(), body:JSON.stringify(data)})
+    .then(function(r){return r.json()})
+    .then(function(resp) {
+      if (resp.error) { showToast('添加失败: ' + resp.error); return; }
+      showToast('添加成功');
+      resHideAddForm();
+      loadResourceList();
+    })
+    .catch(function(){ showToast('添加失败'); });
+}
+
+function resImportFile(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  var formData = new FormData();
+  formData.append('file', file);
+  showToast('正在导入...');
+  fetch(API_BASE + '/api/resources/import/' + _resCurrentType, {method:'POST', body:formData})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      var el = document.getElementById('res-import-result');
+      if (data.imported !== undefined) {
+        el.style.display = '';
+        el.style.background = '#f0fdf4';
+        el.style.color = '#166534';
+        var msg = '导入成功 ' + data.imported + ' 条';
+        if (data.failed > 0) msg += '，失败 ' + data.failed + ' 条';
+        el.textContent = msg;
+        loadResourceList();
+      } else if (data.error) {
+        el.style.display = '';
+        el.style.background = '#fef2f2';
+        el.style.color = '#dc2626';
+        el.textContent = '导入失败：' + data.error;
+      }
+      setTimeout(function(){ el.style.display = 'none'; }, 5000);
+    })
+    .catch(function(){ showToast('导入失败'); });
+  input.value = '';
+}
+
+function resPhotoRecognize(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  var formData = new FormData();
+  formData.append('file', file);
+  formData.append('resource_type', _resCurrentType);
+  formData.append('file_type', 'image');
+  showToast('AI识别中...');
+  fetch(API_BASE + '/api/resources/ai-recognize', {method:'POST', body:formData})
+    .then(function(r){return r.json()})
+    .then(function(data) {
+      if (data.error) { showToast('识别失败: ' + data.error); return; }
+      if (data.mode === 'batch_import') {
+        var r = data.result;
+        showToast('文档导入成功 ' + (r.imported || 0) + ' 条');
+        loadResourceList();
+        return;
+      }
+      // 单条识别结果 → 填充表单
+      if (data.fields) {
+        resShowAddForm();
+        var fields = data.fields;
+        for (var k in fields) {
+          var el = document.getElementById('res-f-' + k);
+          if (el && fields[k]) el.value = fields[k];
+        }
+        showToast('AI已识别并填入表单，请确认后保存');
+      } else if (data.mode === 'multi') {
+        showToast('识别到 ' + data.count + ' 条记录');
+        // 批量添加
+        var items = data.items || [];
+        var addCount = 0;
+        var chain = Promise.resolve();
+        items.forEach(function(item) {
+          chain = chain.then(function() {
+            return fetch(API_BASE + '/api/resources/' + _resCurrentType, {method:'POST', headers:authHeaders(), body:JSON.stringify(item.fields)})
+              .then(function(r){return r.json()})
+              .then(function(resp){ if (!resp.error) addCount++; });
+          });
+        });
+        chain.then(function(){
+          showToast('已添加 ' + addCount + ' 条资源');
+          loadResourceList();
+        });
+      }
+    })
+    .catch(function(e){ showToast('识别失败: ' + (e.message || '网络错误')); });
+  input.value = '';
+}
+
+function resDownloadTemplate() {
+  var url = API_BASE + '/api/resources/template/' + _resCurrentType;
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = _resCurrentType + '_template.xlsx';
+  a.click();
+  showToast('模板已开始下载');
+}
+
 // ==================== 页面加载 ====================
 window.onload = function() {
   initUserBar();
@@ -2008,6 +3617,8 @@ window.onload = function() {
   refreshWeather();
   setInterval(refreshWeather, 300000);
   initSSE();
+  initRegionSelector();
+  loadReportList();
 };
 
 // ==================== 模态框通用 ====================
@@ -2094,7 +3705,7 @@ function exportPDF() {
   html += 'th{background:#f1f5f9;font-weight:600}.section{margin-top:20px}.section h3{color:#1e40af;border-left:4px solid #2563eb;padding-left:10px}';
   html += '.leader-box{background:#fef3c7;border-left:4px solid #f59e0b;padding:12px;border-radius:6px;color:#92400e;margin-top:12px}';
   html += '@media print{body{padding:20px}}</style></head><body>';
-  html += '<h1>三防形势智能研判报告</h1>';
+  html += '<h1>三防应急处置指挥决策辅助系统研判报告</h1>';
   html += '<div class="meta">研判时间: '+(r['研判时间']||new Date().toLocaleString())+'</div>';
 
   var rc = 'low'; var lvl = ri['等级']||'';
@@ -2118,7 +3729,7 @@ function exportPDF() {
     html += '</ol></div>';
   }
   if (leader) { html += '<div class="section"><h3>领导汇报参考</h3><div class="leader-box">'+leader+'</div></div>'; }
-  html += '<div style="margin-top:30px;text-align:center;color:#94a3b8;font-size:12px">--- 三防形势智能研判与指挥辅助系统 自动生成 ---</div>';
+  html += '<div style="margin-top:30px;text-align:center;color:#94a3b8;font-size:12px">--- 三防应急处置指挥决策辅助系统 自动生成 ---</div>';
   html += '</body></html>';
 
   var blob = new Blob([html], {type:'text/html;charset=utf-8'});
@@ -2127,6 +3738,85 @@ function exportPDF() {
   if (win) { setTimeout(function(){ win.print(); }, 800); }
   else { var a=document.createElement('a'); a.href=url; a.download='三防研判报告_'+new Date().toISOString().slice(0,10)+'.html'; a.click(); }
   showToast('报告已生成，可通过浏览器打印为PDF');
+}
+
+// ==================== 应急响应总结报告 ====================
+var _responseReportText = '';
+
+function generateResponseReport() {
+  if (_sessionJudgeHistory.length === 0) {
+    showToast('本次会话尚未进行研判，无法生成报告');
+    return;
+  }
+
+  document.getElementById('loading').style.display = 'block';
+
+  // 收集区域名称
+  var regionName = '';
+  var regionParts = [];
+  ['province', 'city', 'district', 'town'].forEach(function(lv) {
+    if (_regionSelected[lv] && _regionSelected[lv].name !== '直辖市') regionParts.push(_regionSelected[lv].name);
+  });
+  if (regionParts.length > 0) regionName = regionParts.join('');
+
+  var payload = {
+    records: _sessionJudgeHistory,
+    region_name: regionName
+  };
+
+  fetch(API_BASE + '/api/ai/response-report', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(payload)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    document.getElementById('loading').style.display = 'none';
+    if (data.error) { showToast('生成失败: ' + data.error); return; }
+    _responseReportText = data.report;
+    document.getElementById('response-report-content').textContent = data.report;
+    openModal('modal-response-report');
+  })
+  .catch(function(e) {
+    document.getElementById('loading').style.display = 'none';
+    showToast('生成报告失败: ' + (e.message || '网络错误'));
+  });
+}
+
+function copyResponseReport() {
+  if (!_responseReportText) { showToast('暂无报告内容'); return; }
+  navigator.clipboard.writeText(_responseReportText).then(function() {
+    showToast('报告已复制到剪贴板');
+  }).catch(function() {
+    var ta = document.createElement('textarea'); ta.value = _responseReportText;
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('报告已复制到剪贴板');
+  });
+}
+
+function exportResponseReportPDF() {
+  if (!_responseReportText) { showToast('暂无报告内容'); return; }
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>应急响应总结报告</title><style>';
+  html += 'body{font-family:"Microsoft YaHei",sans-serif;padding:40px;color:#1e293b;max-width:800px;margin:0 auto;line-height:1.8}';
+  html += 'pre{white-space:pre-wrap;word-wrap:break-word;font-family:"Microsoft YaHei",monospace;font-size:14px}';
+  html += '@media print{body{padding:20px}}</style></head><body>';
+  html += '<pre>' + _responseReportText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>';
+  html += '</body></html>';
+
+  var blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var win = window.open(url, '_blank');
+  if (win) { setTimeout(function(){ win.print(); }, 800); }
+  else { var a=document.createElement('a'); a.href=url; a.download='应急响应总结报告_'+new Date().toISOString().slice(0,10)+'.html'; a.click(); }
+  showToast('报告已生成，可通过浏览器打印为PDF');
+}
+
+function clearSessionAndClose() {
+  _sessionJudgeHistory = [];
+  var countEl = document.getElementById('session-judge-count');
+  if (countEl) countEl.textContent = '0';
+  closeModal('modal-response-report');
+  showToast('响应已结束，研判记录已清空');
 }
 
 // ==================== 任务派单 ====================
@@ -2199,11 +3889,15 @@ function _escHtml(s) { return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')
 
 function openAssignModal(taskId, title, desc, priority) {
   _currentAssignTaskId = taskId;
+  _currentAssignTaskTitle = title;
+  _currentAssignTaskDesc = desc;
+  _currentAssignTaskPriority = priority;
   var priLabel = {urgent:'紧急',high:'重要',normal:'普通'}[priority]||priority;
   document.getElementById('assign-title').textContent = '指派任务 ' + taskId;
   document.getElementById('assign-task-info').innerHTML = '<b>'+title+'</b><br><span style="color:#6b7280">'+priLabel+' | '+desc+'</span>';
   document.getElementById('assign-name').value = '';
   document.getElementById('assign-phone').value = '';
+  document.getElementById('assign-wechat').value = '';
   loadStaffPicker();
   openModal('modal-assign');
 }
@@ -2244,18 +3938,78 @@ function pickStaff(sid, name, phone) {
 function confirmAssign() {
   var name = document.getElementById('assign-name').value.trim();
   var phone = document.getElementById('assign-phone').value.trim();
+  var wechat = document.getElementById('assign-wechat').value.trim();
   if (!name) { showToast('请选择或填写执行人'); return; }
   var staffId = document.getElementById('assign-name').dataset.staffId || '';
-  var payload = { staff_id: staffId, staff_name: name, staff_phone: phone };
+  var payload = { staff_id: staffId, staff_name: name, staff_phone: phone, staff_wechat: wechat };
   fetch(API_BASE + '/api/tasks/' + _currentAssignTaskId + '/assign', {method:'POST', headers:authHeaders(), body:JSON.stringify(payload)})
     .then(function(r){return r.json()})
     .then(function(data) {
       if (data.error) { showToast('指派失败: '+data.error); return; }
-      showToast(data.message || '已指派');
       closeModal('modal-assign');
       loadTasks();
+      // 生成微信通知并弹出
+      _showWechatNotifyPanel(name, phone, wechat, data.notify_text || '');
     })
     .catch(function(e){ showToast('指派失败: '+e.message); });
+}
+
+var _currentAssignTaskTitle = '', _currentAssignTaskDesc = '', _currentAssignTaskPriority = '';
+
+function _showWechatNotifyPanel(name, phone, wechat, serverText) {
+  var priLabel = {urgent:'紧急',high:'重要',normal:'普通'}[_currentAssignTaskPriority]||'普通';
+  var contactInfo = name;
+  if (phone) contactInfo += ' ' + phone;
+  if (wechat) contactInfo += ' (微信:'+wechat+')';
+  document.getElementById('wechat-notify-info').innerHTML = '已指派给 <b>'+contactInfo+'</b>';
+  var notifyText = serverText || _buildNotifyText(name, priLabel);
+  document.getElementById('wechat-notify-text').value = notifyText;
+  openModal('modal-wechat-notify');
+}
+
+function _buildNotifyText(name, priLabel) {
+  var now = new Date();
+  var timeStr = now.getFullYear()+'-'+(now.getMonth()+1).toString().padStart(2,'0')+'-'+now.getDate().toString().padStart(2,'0')+' '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  var text = '【三防任务通知】\n';
+  text += '━━━━━━━━━━━━\n';
+  text += '任务: ' + (_currentAssignTaskTitle||'') + '\n';
+  text += '优先级: ' + priLabel + '\n';
+  if (_currentAssignTaskDesc) text += '内容: ' + _currentAssignTaskDesc + '\n';
+  text += '负责人: ' + name + '\n';
+  text += '指派时间: ' + timeStr + '\n';
+  text += '━━━━━━━━━━━━\n';
+  text += '请尽快查看并处理，完成后请回复反馈。';
+  return text;
+}
+
+function copyWechatNotify() {
+  var text = document.getElementById('wechat-notify-text').value;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function(){
+      showToast('已复制通知内容');
+    });
+  } else {
+    var ta = document.getElementById('wechat-notify-text');
+    ta.select();
+    document.execCommand('copy');
+    showToast('已复制通知内容');
+  }
+}
+
+function openWechatToSend() {
+  var text = document.getElementById('wechat-notify-text').value;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function(){
+      showToast('已复制，正在打开微信...');
+    });
+  } else {
+    var ta = document.getElementById('wechat-notify-text');
+    ta.select();
+    document.execCommand('copy');
+  }
+  setTimeout(function(){
+    window.location.href = 'weixin://';
+  }, 300);
 }
 
 function batchAssignTasks() {
@@ -2335,6 +4089,9 @@ function openTaskDetail(taskId) {
     }
     if(t.status==='in_progress'){
       html+='<button class="modal-btn modal-btn-success" onclick="submitFeedback(\''+t.id+'\')">提交反馈/完成</button>';
+    }
+    if(t.status!=='pending' && t.assigned_name){
+      html+='<button class="modal-btn" style="background:#07c160;color:#fff;border:none" onclick="_currentAssignTaskTitle=\''+_escHtml(t.title)+'\';_currentAssignTaskDesc=\''+_escHtml(t.description||'')+'\';_currentAssignTaskPriority=\''+t.priority+'\';_showWechatNotifyPanel(\''+_escHtml(t.assigned_name)+'\',\''+_escHtml(t.assigned_phone||'')+'\',\'\',\'\')">微信通知</button>';
     }
     html+='<button class="modal-btn modal-btn-outline" onclick="closeModal(\'modal-task-detail\')">关闭</button>';
     html+='</div>';
@@ -2550,8 +4307,856 @@ function initSSE() {
     _sseSource.addEventListener('collab', function(e) {
       try { var d = JSON.parse(e.data); showToast('[协同] ' + (d.message||d.user||'')); } catch(x){}
     });
+    _sseSource.addEventListener('disaster_report', function(e) {
+      try {
+        var d = JSON.parse(e.data);
+        var _sevColors = {low:'#3b82f6',medium:'#f59e0b',high:'#ef4444',critical:'#dc2626'};
+        showToast('[灾情上报] ' + (d.title||'') + ' - ' + (d.user||'匿名'));
+        if (layers.report) { _reportsCache = null; _reportLastLoad = 0; renderMap(); }
+        loadReportList();
+      } catch(x){}
+    });
     _sseSource.onerror = function() { setTimeout(function(){ if(_sseSource) _sseSource.close(); initSSE(); }, 10000); };
   } catch(e) { console.warn('SSE初始化失败:', e); }
+}
+
+// ==================== 灾情上报图层 ====================
+var _reportsCache = null;
+var _reportLastLoad = 0;
+var _reportTypeLabels = {flood:'积水内涝', landslide:'山体滑坡', wind:'大风倒树', road:'道路损毁', rescue:'人员被困', other:'其他'};
+var _reportSevLabels = {low:'轻微', medium:'中等', high:'严重', critical:'危急'};
+var _reportSevColors = {low:'#3b82f6', medium:'#f59e0b', high:'#ef4444', critical:'#dc2626'};
+var _reportTypeIcons = {flood:'\u{1F4A7}', landslide:'\u{26F0}', wind:'\u{1F32A}', road:'\u{1F6A7}', rescue:'\u{1F198}', other:'\u{26A0}'};
+
+function _renderReports() {
+  if (!_reportsCache || Date.now() - _reportLastLoad > 30000) {
+    _reportLastLoad = Date.now();
+    fetch(API_BASE + '/api/reports?hours=24', {headers:authHeaders()})
+    .then(function(r){return r.json()})
+    .then(function(data){
+      _reportsCache = data.reports || [];
+      renderMap();
+    }).catch(function(){});
+    if (!_reportsCache) return;
+  }
+  var reports = _reportsCache;
+  if (reports.length === 0) return;
+  for (var i = 0; i < reports.length; i++) {
+    var rpt = reports[i];
+    if (!rpt.lat || !rpt.lng) continue;
+    var px = lngToX(rpt.lng), py = latToY(rpt.lat);
+    if (px < -20 || px > cvs.width + 20 || py < -20 || py > cvs.height + 20) continue;
+    var sev = rpt.severity || 'medium';
+    var color = _reportSevColors[sev] || '#f59e0b';
+    // 绘制脉冲圆环（严重/危急）
+    if (sev === 'high' || sev === 'critical') {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(px, py, 18, 0, Math.PI * 2);
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = 0.3;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.restore();
+    }
+    // 绘制标记点
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(px, py, 10, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.85;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+    // 图标文字
+    ctx.save();
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(_reportTypeIcons[rpt.type] || '\u{26A0}', px, py);
+    ctx.restore();
+    // 多人确认标记
+    if (rpt.upvotes > 0) {
+      ctx.save();
+      ctx.font = 'bold 9px sans-serif';
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.textAlign = 'center';
+      ctx.strokeText('+' + rpt.upvotes, px + 12, py - 10);
+      ctx.fillText('+' + rpt.upvotes, px + 12, py - 10);
+      ctx.restore();
+    }
+    // 标题（放大时显示）
+    if (mapState.zoom >= 12) {
+      ctx.save();
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#263238';
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 3;
+      var label = rpt.title.length > 8 ? rpt.title.substring(0,8) + '..' : rpt.title;
+      ctx.strokeText(label, px, py + 20);
+      ctx.fillText(label, px, py + 20);
+      ctx.restore();
+    }
+  }
+}
+
+function _showReportPopup(rpt, px, py) {
+  var sev = rpt.severity || 'medium';
+  var color = _reportSevColors[sev] || '#f59e0b';
+  var mediaHtml = '';
+  var mediaList = rpt.media || [];
+  if (typeof mediaList === 'string') { try { mediaList = JSON.parse(mediaList); } catch(e) { mediaList = []; } }
+  if (mediaList.length > 0) {
+    mediaHtml = '<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">';
+    for (var i = 0; i < Math.min(mediaList.length, 4); i++) {
+      var m = mediaList[i];
+      if (m.type === 'video') {
+        mediaHtml += '<video src="' + m.url + '" style="width:80px;height:60px;object-fit:cover;border-radius:4px;cursor:pointer" onclick="window.open(this.src)" muted></video>';
+      } else {
+        mediaHtml += '<img src="' + m.url + '" style="width:80px;height:60px;object-fit:cover;border-radius:4px;cursor:pointer" onclick="window.open(this.src)">';
+      }
+    }
+    mediaHtml += '</div>';
+  }
+  var html = '<div style="border-left:3px solid ' + color + ';padding-left:8px">'
+    + '<b>' + rpt.title + '</b>'
+    + '<div style="margin:4px 0"><span style="background:' + color + ';color:#fff;padding:1px 6px;border-radius:3px;font-size:11px">'
+    + (_reportSevLabels[sev]||sev) + '</span> '
+    + '<span style="color:#64748b;font-size:11px">' + (_reportTypeLabels[rpt.type]||rpt.type) + '</span></div>'
+    + (rpt.description ? '<div style="color:#475569;font-size:12px;margin:4px 0">' + rpt.description.substring(0,100) + '</div>' : '')
+    + (rpt.location ? '<div style="color:#94a3b8;font-size:11px">\u{1F4CD} ' + rpt.location + '</div>' : '')
+    + '<div style="color:#94a3b8;font-size:11px">\u{1F464} ' + (rpt.user_name||'匿名') + ' \u{1F552} ' + (rpt.created_at||'') + '</div>'
+    + (rpt.upvotes > 0 ? '<div style="color:#10b981;font-size:11px">\u{1F44D} ' + rpt.upvotes + '人确认</div>' : '')
+    + mediaHtml
+    + '</div>';
+  showMapPopup(px, py, html);
+}
+
+// ==================== 灾情列表加载与展示 ====================
+var _reportListData = [];
+var _reportListFilter = 'all';
+
+function loadReportList() {
+  fetch(API_BASE + '/api/reports?hours=24', {headers:authHeaders()})
+  .then(function(r){return r.json()})
+  .then(function(data){
+    _reportListData = data.reports || [];
+    var card = document.getElementById('report-list-card');
+    if (_reportListData.length > 0) {
+      card.style.display = '';
+      // 同时刷新地图缓存
+      _reportsCache = _reportListData;
+      _reportLastLoad = Date.now();
+    } else {
+      card.style.display = 'none';
+    }
+    renderReportList();
+    // 自动开启灾情图层
+    if (_reportListData.length > 0 && !layers.report) {
+      layers.report = true;
+      var sw = document.getElementById('sw-report');
+      if (sw) sw.classList.add('active');
+      renderMap();
+    }
+  }).catch(function(e){ console.warn('[灾情列表] 加载失败:', e); });
+}
+
+function renderReportList() {
+  var body = document.getElementById('report-list-body');
+  var countEl = document.getElementById('report-list-count');
+  if (!body) return;
+
+  var filtered = _reportListData;
+  if (_reportListFilter === 'critical') {
+    filtered = filtered.filter(function(r){ return r.severity === 'critical'; });
+  } else if (_reportListFilter === 'high') {
+    filtered = filtered.filter(function(r){ return r.severity === 'high' || r.severity === 'critical'; });
+  } else if (_reportListFilter === 'pending') {
+    filtered = filtered.filter(function(r){ return r.status === 'pending'; });
+  }
+
+  if (countEl) countEl.textContent = filtered.length + '/' + _reportListData.length + '条';
+
+  if (filtered.length === 0) {
+    body.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.4);padding:16px;font-size:12px">暂无灾情上报数据</div>';
+    return;
+  }
+
+  body.innerHTML = filtered.map(function(rpt) {
+    var sev = rpt.severity || 'medium';
+    var sevLabel = _reportSevLabels[sev] || sev;
+    var sevColor = _reportSevColors[sev] || '#f59e0b';
+    var typeIcon = _reportTypeIcons[rpt.type] || '\u26A0';
+    var typeLabel = _reportTypeLabels[rpt.type] || rpt.type || '';
+    var time = rpt.created_at || '';
+    if (time.length > 16) time = time.substring(5, 16);
+    var mediaList = rpt.media || [];
+    if (typeof mediaList === 'string') { try { mediaList = JSON.parse(mediaList); } catch(e) { mediaList = []; } }
+    var mediaHtml = '';
+    if (mediaList.length > 0) {
+      mediaHtml = '<div class="rpt-media-preview">';
+      for (var i = 0; i < Math.min(mediaList.length, 3); i++) {
+        var m = mediaList[i];
+        if (m.type !== 'video') {
+          mediaHtml += '<img src="' + m.url + '" alt="">';
+        }
+      }
+      mediaHtml += '</div>';
+    }
+    var statusTag = '';
+    if (rpt.status === 'verified') statusTag = '<span style="background:#059669;padding:1px 4px;border-radius:2px;font-size:9px;color:#fff">已核实</span>';
+    else if (rpt.status === 'processing') statusTag = '<span style="background:#2563eb;padding:1px 4px;border-radius:2px;font-size:9px;color:#fff">处理中</span>';
+    else if (rpt.status === 'resolved') statusTag = '<span style="background:#6b7280;padding:1px 4px;border-radius:2px;font-size:9px;color:#fff">已解决</span>';
+
+    return '<div class="rpt-item sev-' + sev + '" onclick="locateReport(\'' + rpt.id + '\')">'
+      + '<div class="rpt-title">' + typeIcon + ' ' + (rpt.title || '未命名') + ' ' + statusTag + '</div>'
+      + '<div class="rpt-meta">'
+      + '<span class="rpt-sev" style="background:' + sevColor + '">' + sevLabel + '</span>'
+      + '<span>' + typeLabel + '</span>'
+      + '<span>' + time + '</span>'
+      + (rpt.upvotes > 0 ? '<span style="color:#10b981">\u{1F44D}' + rpt.upvotes + '</span>' : '')
+      + '</div>'
+      + (rpt.location ? '<div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">\u{1F4CD} ' + rpt.location + '</div>' : '')
+      + mediaHtml
+      + '</div>';
+  }).join('');
+}
+
+function filterReportList(filter) {
+  _reportListFilter = filter;
+  var btns = document.querySelectorAll('.report-filter-btn');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].classList.toggle('active', btns[i].getAttribute('data-filter') === filter);
+  }
+  renderReportList();
+}
+
+function locateReport(reportId) {
+  var rpt = null;
+  for (var i = 0; i < _reportListData.length; i++) {
+    if (_reportListData[i].id === reportId) { rpt = _reportListData[i]; break; }
+  }
+  if (!rpt || !rpt.lat || !rpt.lng) return;
+  // 定位到该灾情点
+  mapState.centerLat = rpt.lat;
+  mapState.centerLng = rpt.lng;
+  if (mapState.zoom < 13) mapState.zoom = 14;
+  // 确保灾情图层开启
+  if (!layers.report) {
+    layers.report = true;
+    var sw = document.getElementById('sw-report');
+    if (sw) sw.classList.add('active');
+  }
+  renderMap();
+  // 延迟弹出详情
+  setTimeout(function() {
+    var px = lngToX(rpt.lng), py = latToY(rpt.lat);
+    _showReportPopup(rpt, px, py);
+  }, 300);
+}
+
+// ==================== 行政区域选择与边界渲染 ====================
+var _regionGeoJSON = null;  // 当前加载的GeoJSON边界数据
+var _regionSelected = { province: null, city: null, district: null, town: null, village: null };
+var _regionCenter = null;   // 当前选中区域中心 {lat, lng}
+var _regionBbox = null;     // 当前选中区域bbox
+var _regionShowBorder = false;
+
+// 初始化：加载省份列表
+function initRegionSelector() {
+  fetch(API_BASE + '/api/regions/provinces')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var sel = document.getElementById('sel-province');
+      (data.regions || []).forEach(function(p) {
+        var opt = document.createElement('option');
+        opt.value = p.code;
+        opt.textContent = p.name;
+        sel.appendChild(opt);
+      });
+    })
+    .catch(function(e) { console.warn('[区域] 加载省份失败:', e); });
+}
+
+function onRegionChange(level) {
+  var levels = ['province', 'city', 'district', 'town', 'village'];
+  var idx = levels.indexOf(level);
+  var sel = document.getElementById('sel-' + level);
+  var code = sel.value;
+  var name = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
+
+  // 保存当前选中
+  _regionSelected[level] = code ? { code: code, name: name } : null;
+
+  // 清空下级
+  for (var i = idx + 1; i < levels.length; i++) {
+    var child = document.getElementById('sel-' + levels[i]);
+    child.innerHTML = '<option value="">-- ' + _getPlaceholder(levels[i]) + ' --</option>';
+    child.disabled = true;
+    _regionSelected[levels[i]] = null;
+  }
+
+  if (!code) {
+    _updateRegionPath();
+    return;
+  }
+
+  // 选了行政区域 → 清除手动圈选
+  _drawnShape = null;
+  _drawMode = null;
+  _drawStart = null;
+  _drawCurrent = null;
+  _polygonPoints = [];
+
+  // 加载子级（乡镇以下无数据，不请求）
+  var nextLevel = levels[idx + 1];
+  if (nextLevel && code.length <= 6) {
+    var nextSel = document.getElementById('sel-' + nextLevel);
+    nextSel.innerHTML = '<option value="">加载中...</option>';
+    nextSel.disabled = true;
+
+    fetch(API_BASE + '/api/regions/children/' + code)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var regions = data.regions || [];
+        var isMunicipality = data.is_municipality;
+
+        // 直辖市特殊处理：跳过市级，区县直接填到district下拉
+        if (isMunicipality && level === 'province') {
+          // 禁用市级下拉，显示"直辖市"
+          var citySel = document.getElementById('sel-city');
+          citySel.innerHTML = '<option value="municipality">直辖市</option>';
+          citySel.disabled = true;
+          _regionSelected['city'] = { code: 'municipality', name: '直辖市' };
+
+          // 区县填到district下拉
+          var distSel = document.getElementById('sel-district');
+          distSel.innerHTML = '<option value="">-- 选择县/区 --</option>';
+          var pc = data.parent_center;
+          if (regions.length > 0) {
+            regions.forEach(function(r) {
+              var opt = document.createElement('option');
+              opt.value = r.code;
+              opt.textContent = r.name;
+              if (r.center) {
+                opt.dataset.lng = r.center[0];
+                opt.dataset.lat = r.center[1];
+              } else if (pc) {
+                opt.dataset.lng = pc[0];
+                opt.dataset.lat = pc[1];
+                opt.dataset.parentCenter = '1';
+              }
+              distSel.appendChild(opt);
+            });
+            distSel.disabled = false;
+          } else {
+            distSel.innerHTML = '<option value="">（无下级数据）</option>';
+          }
+        } else {
+          // 普通省份/地级市/区县 → 正常填充下一级
+          nextSel.innerHTML = '<option value="">-- ' + _getPlaceholder(nextLevel) + ' --</option>';
+          // 保存父级中心（用于乡镇定位）
+          var pc = data.parent_center;
+          if (regions.length > 0) {
+            regions.forEach(function(r) {
+              var opt = document.createElement('option');
+              opt.value = r.code;
+              opt.textContent = r.name;
+              if (r.center) {
+                opt.dataset.lng = r.center[0];
+                opt.dataset.lat = r.center[1];
+              } else if (pc) {
+                // 乡镇无自身坐标时用父级中心
+                opt.dataset.lng = pc[0];
+                opt.dataset.lat = pc[1];
+                opt.dataset.parentCenter = '1';
+              }
+              nextSel.appendChild(opt);
+            });
+            nextSel.disabled = false;
+          } else {
+            nextSel.innerHTML = '<option value="">（无下级数据）</option>';
+          }
+        }
+      })
+      .catch(function(e) {
+        console.warn('[区域] 加载子级失败:', e);
+        nextSel.innerHTML = '<option value="">（加载失败）</option>';
+      });
+  }
+
+  // 获取选中区域的边界和中心点
+  if (code.length <= 6 && code !== 'municipality') {
+    // 省/市/区 → 加载边界
+    _loadRegionBoundary(code);
+  } else if (code.length > 6) {
+    // 乡镇/街道 → 调用地理编码精确定位
+    var regionParts = [];
+    ['province', 'city', 'district', 'town', 'village'].forEach(function(lv) {
+      if (_regionSelected[lv] && _regionSelected[lv].name !== '直辖市') regionParts.push(_regionSelected[lv].name);
+    });
+    // 构建地理编码查询：街道名+市名（Photon对此格式效果最好）
+    var cityName = '';
+    if (_regionSelected.city && _regionSelected.city.name !== '直辖市') {
+      cityName = _regionSelected.city.name;
+    } else if (_regionSelected.province) {
+      cityName = _regionSelected.province.name;
+    }
+    var geocodeQuery = name + ' ' + cityName;
+    fetch(API_BASE + '/api/regions/geocode?q=' + encodeURIComponent(geocodeQuery))
+      .then(function(r) { return r.json(); })
+      .then(function(geo) {
+        if (geo && geo.lat && geo.lng) {
+          _regionCenter = { lat: geo.lat, lng: geo.lng };
+          // 用geocode返回的bbox或构造小范围bbox
+          var bb = geo.bbox;
+          if (bb) {
+            _regionBbox = { sw_lat: bb.sw_lat, sw_lng: bb.sw_lng, ne_lat: bb.ne_lat, ne_lng: bb.ne_lng };
+          } else {
+            var d = 0.015;
+            _regionBbox = { sw_lat: geo.lat - d, sw_lng: geo.lng - d, ne_lat: geo.lat + d, ne_lng: geo.lng + d };
+          }
+          // 生成矩形边界GeoJSON，复用边界渲染
+          _regionGeoJSON = {
+            type: 'FeatureCollection',
+            features: [{
+              type: 'Feature',
+              properties: { name: name, approximate: true },
+              geometry: {
+                type: 'Polygon',
+                coordinates: [[
+                  [_regionBbox.sw_lng, _regionBbox.sw_lat],
+                  [_regionBbox.ne_lng, _regionBbox.sw_lat],
+                  [_regionBbox.ne_lng, _regionBbox.ne_lat],
+                  [_regionBbox.sw_lng, _regionBbox.ne_lat],
+                  [_regionBbox.sw_lng, _regionBbox.sw_lat]
+                ]]
+              }
+            }]
+          };
+          if (!layers.regionBorder) {
+            layers.regionBorder = true;
+            document.getElementById('sw-regionBorder').classList.add('active');
+          }
+          mapState.centerLat = geo.lat;
+          mapState.centerLng = geo.lng;
+          mapState.zoom = 15;
+          document.getElementById('area-info').innerHTML = '已选' + name + ' | ' + regionParts.join(' ');
+          debouncedFetchDEM();
+          renderMap();
+        } else {
+          // geocode失败，回退到父级中心
+          var selOpt = sel.options[sel.selectedIndex];
+          var optLat = selOpt ? parseFloat(selOpt.dataset.lat) : NaN;
+          var optLng = selOpt ? parseFloat(selOpt.dataset.lng) : NaN;
+          if (!isNaN(optLat) && !isNaN(optLng)) {
+            _regionCenter = { lat: optLat, lng: optLng };
+            mapState.centerLat = optLat;
+            mapState.centerLng = optLng;
+            mapState.zoom = 14;
+            document.getElementById('area-info').innerHTML = '已选' + name + ' | ' + regionParts.join(' ');
+            debouncedFetchDEM();
+            renderMap();
+          }
+        }
+      })
+      .catch(function() {
+        // 网络失败回退
+        var selOpt = sel.options[sel.selectedIndex];
+        var optLat = selOpt ? parseFloat(selOpt.dataset.lat) : NaN;
+        var optLng = selOpt ? parseFloat(selOpt.dataset.lng) : NaN;
+        if (!isNaN(optLat) && !isNaN(optLng)) {
+          _regionCenter = { lat: optLat, lng: optLng };
+          mapState.centerLat = optLat;
+          mapState.centerLng = optLng;
+          mapState.zoom = 14;
+          debouncedFetchDEM();
+          renderMap();
+        }
+      });
+  }
+  _updateRegionPath();
+}
+
+function _getPlaceholder(level) {
+  var map = { province: '选择省/直辖市', city: '选择市/州', district: '选择县/区', town: '选择乡镇/街道', village: '选择村/社区' };
+  return map[level] || '选择';
+}
+
+function _loadRegionBoundary(code) {
+  fetch(API_BASE + '/api/regions/boundary/' + code + '?full=0&simplify=1')
+    .then(function(r) { return r.json(); })
+    .then(function(geojson) {
+      if (geojson && geojson.features) {
+        _regionGeoJSON = geojson;
+        // 计算bbox
+        var allLngs = [], allLats = [];
+        geojson.features.forEach(function(f) {
+          _extractCoords(f.geometry, allLngs, allLats);
+          // 获取中心
+          var props = f.properties || {};
+          var center = props.center || props.centroid;
+          if (center) {
+            _regionCenter = { lat: center[1], lng: center[0] };
+          }
+        });
+        if (allLngs.length > 0) {
+          _regionBbox = {
+            sw_lat: Math.min.apply(null, allLats), sw_lng: Math.min.apply(null, allLngs),
+            ne_lat: Math.max.apply(null, allLats), ne_lng: Math.max.apply(null, allLngs)
+          };
+        }
+        // 同步更新圈选区域信息显示
+        var regionParts = [];
+        ['province', 'city', 'district', 'town', 'village'].forEach(function(lv) {
+          if (_regionSelected[lv] && _regionSelected[lv].name !== '直辖市') regionParts.push(_regionSelected[lv].name);
+        });
+        if (regionParts.length > 0 && _regionBbox) {
+          var dLat = _regionBbox.ne_lat - _regionBbox.sw_lat;
+          var dLng = _regionBbox.ne_lng - _regionBbox.sw_lng;
+          var cLat = (_regionBbox.sw_lat + _regionBbox.ne_lat) / 2;
+          var km2 = (dLat * 111) * (dLng * 111 * Math.cos(cLat * Math.PI / 180));
+          document.getElementById('area-info').innerHTML = '已选' + regionParts[regionParts.length - 1] + '约 ' + km2.toFixed(1) + ' km\u00b2 | ' + regionParts.join(' ');
+        }
+        // 如果边界图层已开启，自动刷新
+        if (layers.regionBorder) renderMap();
+      }
+    })
+    .catch(function(e) { console.warn('[区域] 边界数据加载失败:', e); });
+}
+
+function _extractCoords(geometry, lngs, lats) {
+  if (!geometry) return;
+  var type = geometry.type;
+  var coords = geometry.coordinates || [];
+  if (type === 'Polygon') {
+    coords.forEach(function(ring) { ring.forEach(function(c) { lngs.push(c[0]); lats.push(c[1]); }); });
+  } else if (type === 'MultiPolygon') {
+    coords.forEach(function(poly) { poly.forEach(function(ring) { ring.forEach(function(c) { lngs.push(c[0]); lats.push(c[1]); }); }); });
+  }
+}
+
+function _updateRegionPath() {
+  var parts = [];
+  ['province', 'city', 'district', 'town', 'village'].forEach(function(lv) {
+    if (_regionSelected[lv] && _regionSelected[lv].name !== '直辖市') parts.push(_regionSelected[lv].name);
+  });
+  var el = document.getElementById('region-path');
+  var txt = document.getElementById('region-path-text');
+  if (parts.length > 0) {
+    el.style.display = 'block';
+    txt.textContent = parts.join(' > ');
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function flyToRegion() {
+  if (_regionBbox) {
+    // 定位到行政区域 → 清除手动圈选
+    _drawnShape = null;
+    _drawMode = null;
+    _drawStart = null;
+    _drawCurrent = null;
+    _polygonPoints = [];
+
+    var cLat = (_regionBbox.sw_lat + _regionBbox.ne_lat) / 2;
+    var cLng = (_regionBbox.sw_lng + _regionBbox.ne_lng) / 2;
+    mapState.centerLat = cLat;
+    mapState.centerLng = cLng;
+
+    // 根据bbox大小自动计算zoom级别
+    var dLat = _regionBbox.ne_lat - _regionBbox.sw_lat;
+    var dLng = _regionBbox.ne_lng - _regionBbox.sw_lng;
+    var maxSpan = Math.max(dLat, dLng);
+    if (maxSpan > 15) mapState.zoom = 5;
+    else if (maxSpan > 8) mapState.zoom = 6;
+    else if (maxSpan > 4) mapState.zoom = 7;
+    else if (maxSpan > 2) mapState.zoom = 8;
+    else if (maxSpan > 1) mapState.zoom = 9;
+    else if (maxSpan > 0.5) mapState.zoom = 10;
+    else if (maxSpan > 0.2) mapState.zoom = 11;
+    else if (maxSpan > 0.1) mapState.zoom = 12;
+    else if (maxSpan > 0.05) mapState.zoom = 13;
+    else mapState.zoom = 14;
+
+    // 自动开启边界图层
+    if (!layers.regionBorder) {
+      layers.regionBorder = true;
+      document.getElementById('sw-regionBorder').classList.add('active');
+    }
+    // 同步area-info显示
+    var regionParts = [];
+    ['province', 'city', 'district', 'town', 'village'].forEach(function(lv) {
+      if (_regionSelected[lv] && _regionSelected[lv].name !== '直辖市') regionParts.push(_regionSelected[lv].name);
+    });
+    if (regionParts.length > 0) {
+      var dLatA = _regionBbox.ne_lat - _regionBbox.sw_lat;
+      var dLngA = _regionBbox.ne_lng - _regionBbox.sw_lng;
+      var km2 = (dLatA * 111) * (dLngA * 111 * Math.cos(cLat * Math.PI / 180));
+      document.getElementById('area-info').innerHTML = '已选' + regionParts[regionParts.length - 1] + ' 约 ' + km2.toFixed(1) + ' km\u00b2 | ' + regionParts.join(' ');
+    }
+    debouncedFetchDEM();
+    renderMap();
+  } else if (_regionCenter) {
+    // 定位到中心点 → 同样清除手动圈选
+    _drawnShape = null;
+    _drawMode = null;
+    _drawStart = null;
+    _drawCurrent = null;
+    _polygonPoints = [];
+    mapState.centerLat = _regionCenter.lat;
+    mapState.centerLng = _regionCenter.lng;
+    mapState.zoom = 12;
+    debouncedFetchDEM();
+    renderMap();
+  } else {
+    alert('请先选择一个行政区域');
+  }
+}
+
+function toggleRegionBoundary() {
+  if (!_regionGeoJSON) {
+    alert('请先选择行政区域');
+    return;
+  }
+  layers.regionBorder = !layers.regionBorder;
+  document.getElementById('sw-regionBorder').classList.toggle('active');
+  document.getElementById('btn-region-boundary').textContent = layers.regionBorder ? '隐藏边界' : '显示边界';
+  renderMap();
+}
+
+function clearRegion() {
+  _regionGeoJSON = null;
+  _regionSelected = { province: null, city: null, district: null, town: null, village: null };
+  _regionCenter = null;
+  _regionBbox = null;
+
+  ['province', 'city', 'district', 'town', 'village'].forEach(function(lv, i) {
+    var sel = document.getElementById('sel-' + lv);
+    if (i === 0) {
+      sel.selectedIndex = 0;
+    } else {
+      sel.innerHTML = '<option value="">-- ' + _getPlaceholder(lv) + ' --</option>';
+      sel.disabled = true;
+    }
+  });
+  document.getElementById('region-path').style.display = 'none';
+  document.getElementById('btn-region-boundary').textContent = '显示边界';
+  document.getElementById('area-info').textContent = '未选择区域';
+  if (layers.regionBorder) {
+    layers.regionBorder = false;
+    document.getElementById('sw-regionBorder').classList.remove('active');
+  }
+  renderMap();
+}
+
+// 渲染行政边界
+function _renderRegionBoundary() {
+  if (!_regionGeoJSON || !_regionGeoJSON.features) return;
+  var features = _regionGeoJSON.features;
+
+  features.forEach(function(feat, fi) {
+    var geom = feat.geometry;
+    if (!geom) return;
+    var props = feat.properties || {};
+    var name = props.name || '';
+    var isApprox = props.approximate;  // 大致范围标记
+    var polys = [];
+
+    if (geom.type === 'Polygon') {
+      polys = [geom.coordinates];
+    } else if (geom.type === 'MultiPolygon') {
+      polys = geom.coordinates;
+    }
+
+    // 绘制每个多边形
+    polys.forEach(function(poly) {
+      poly.forEach(function(ring, ri) {
+        if (ring.length < 3) return;
+        ctx.beginPath();
+        for (var i = 0; i < ring.length; i++) {
+          var px = lngToX(ring[i][0]);
+          var py = latToY(ring[i][1]);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+
+        if (ri === 0) {
+          if (isApprox) {
+            // 大致范围：橙色长虚线 + 淡橙填充
+            ctx.fillStyle = 'rgba(255, 152, 0, 0.06)';
+            ctx.fill();
+            ctx.strokeStyle = '#e65100';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([12, 8]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          } else {
+            // 精确边界：蓝色短虚线
+            ctx.fillStyle = 'rgba(2, 136, 209, 0.08)';
+            ctx.fill();
+            ctx.strokeStyle = '#0277bd';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 3]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        } else {
+          // 内环（岛屿空洞）：白色填充抵消
+          ctx.fillStyle = 'rgba(255,255,255,0.08)';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(2,136,209,0.4)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      });
+    });
+
+    // 标注名称（仅zoom >= 8时显示）
+    if (name && mapState.zoom >= 8) {
+      var center = props.center || props.centroid;
+      // 大致范围没有center属性，用bbox中心
+      if (!center && isApprox && _regionBbox) {
+        center = [(_regionBbox.sw_lng + _regionBbox.ne_lng) / 2, (_regionBbox.sw_lat + _regionBbox.ne_lat) / 2];
+      }
+      if (center) {
+        var tx = lngToX(center[0]);
+        var ty = latToY(center[1]);
+        if (isApprox) {
+          // 大致范围标注：橙色 + "(大致范围)"
+          ctx.font = 'bold 13px "Microsoft YaHei"';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = 'rgba(0,0,0,0.5)';
+          ctx.fillText(name, tx + 1, ty - 5);
+          ctx.fillStyle = '#e65100';
+          ctx.fillText(name, tx, ty - 6);
+          ctx.font = '11px "Microsoft YaHei"';
+          ctx.fillStyle = 'rgba(230,81,0,0.7)';
+          ctx.fillText('( 大致范围 )', tx, ty + 10);
+        } else {
+          ctx.font = 'bold 12px "Microsoft YaHei"';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = 'rgba(255,255,255,0.85)';
+          ctx.fillText(name, tx + 1, ty + 1);
+          ctx.fillStyle = '#01579b';
+          ctx.fillText(name, tx, ty);
+        }
+      }
+    }
+  });
+}
+
+// ==================== Web端二维码生成 ====================
+var _qrFullUrl = '';
+var _qrCanvas = null;
+var _cachedLanIP = '';
+
+function _getLanIP() {
+  if (_cachedLanIP) return _cachedLanIP;
+  // 同步请求后端获取局域网IP
+  try {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', API_BASE + '/api/lan-ip', false);
+    xhr.send();
+    if (xhr.status === 200) {
+      var data = JSON.parse(xhr.responseText);
+      if (data.ip) { _cachedLanIP = data.ip; return data.ip; }
+    }
+  } catch(e) {}
+  return location.hostname;
+}
+
+function generateWebQR() {
+  var region = document.getElementById('qr-region').value.trim();
+  var org = document.getElementById('qr-org').value.trim();
+  if (!region) { showToast('请输入区域名称'); return; }
+
+  var params = '?r=' + encodeURIComponent(region) + '&ch=qrcode';
+  if (org) params += '&org=' + encodeURIComponent(org);
+  // 用局域网IP替换localhost，确保手机扫码能访问
+  var origin = window.location.origin;
+  if (origin.indexOf('localhost') !== -1 || origin.indexOf('127.0.0.1') !== -1) {
+    origin = origin.replace(/localhost|127\.0\.0\.1/, _getLanIP());
+  }
+  _qrFullUrl = origin + '/report' + params;
+
+  showToast('正在生成二维码...');
+  var qrUrl = API_BASE + '/api/qrcode?url=' + encodeURIComponent(_qrFullUrl) + '&size=280';
+  var qrImg = new Image();
+  qrImg.crossOrigin = 'anonymous';
+  qrImg.onload = function() { _drawQRPoster(qrImg, region, org); };
+  qrImg.onerror = function() {
+    console.error('QR image load failed, url:', qrUrl);
+    showToast('二维码生成失败，请检查服务是否运行');
+  };
+  qrImg.src = qrUrl;
+}
+
+function _drawQRPoster(qrImg, region, org) {
+  var wrap = document.getElementById('qr-canvas-wrap');
+  if (!wrap) { showToast('页面结构异常，请刷新'); return; }
+
+  var canvas = document.createElement('canvas');
+  var W = 260, H = 380;
+  canvas.width = W; canvas.height = H;
+  canvas.style.cssText = 'display:block;margin:0 auto;border-radius:8px;border:2px solid rgba(77,208,225,0.3);background:#fff;max-width:100%';
+  var c = canvas.getContext('2d');
+
+  c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+  c.fillStyle = '#0277bd'; c.fillRect(0, 0, W, 56);
+  c.font = 'bold 16px "Microsoft YaHei",sans-serif';
+  c.fillStyle = '#fff'; c.textAlign = 'center';
+  c.fillText(region + ' 灾情上报', W/2, 25);
+  c.font = '11px "Microsoft YaHei",sans-serif';
+  c.fillStyle = '#e0f7fa';
+  c.fillText('扫码上报灾情 · 助力应急指挥', W/2, 45);
+  var qrSize = 180, qrX = (W - qrSize) / 2, qrY = 68;
+  c.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+  var botY = qrY + qrSize + 16;
+  c.font = 'bold 12px "Microsoft YaHei",sans-serif';
+  c.fillStyle = '#263238'; c.textAlign = 'center';
+  c.fillText('微信扫一扫 · 快速上报', W/2, botY);
+  if (org) { c.font = '10px "Microsoft YaHei",sans-serif'; c.fillStyle = '#78909c'; c.fillText(org, W/2, botY + 18); }
+  c.font = '9px "Microsoft YaHei",sans-serif'; c.fillStyle = '#b0bec5';
+  c.fillText('可截图/长按保存到相册', W/2, H - 8);
+
+  wrap.innerHTML = '';
+  wrap.appendChild(canvas);
+  _qrCanvas = canvas;
+
+  document.getElementById('qr-result').style.display = 'block';
+  document.getElementById('qr-link').textContent = _qrFullUrl;
+  showToast('二维码已生成，可下载或复制链接');
+}
+
+function downloadQRPoster() {
+  if (!_qrCanvas) return;
+  var a = document.createElement('a');
+  a.href = _qrCanvas.toDataURL('image/png');
+  a.download = 'disaster_report_qrcode.png';
+  a.click();
+}
+
+function copyQRLink() {
+  if (!_qrFullUrl) return;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(_qrFullUrl).then(function() { showToast('链接已复制到剪贴板'); });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = _qrFullUrl;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('链接已复制到剪贴板');
+  }
 }
 </script>
 

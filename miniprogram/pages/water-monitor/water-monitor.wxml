@@ -1,0 +1,27 @@
+<view class="container">
+  <view class="section-title">河道水位实时监测</view>
+  <view class="empty" wx:if="{{!loading && !stations.length}}">暂无水位站数据</view>
+  <view class="station-card" wx:for="{{stations}}" wx:key="index">
+    <view class="station-top">
+      <text class="station-name">{{item.name}}</text>
+      <text class="station-badge badge-{{item.statusClass}}">{{item.statusText}}</text>
+    </view>
+    <view class="station-level">
+      <text class="level-num">{{item.current_level}}</text>
+      <text class="level-unit">m</text>
+    </view>
+    <view class="bar-bg">
+      <view class="bar-fill bar-{{item.statusClass}}" style="width: {{item.percent}}%"></view>
+    </view>
+    <view class="threshold-row">
+      <text class="th-label">警戒: {{item.warning_level}}m</text>
+      <text class="th-label">危险: {{item.danger_level}}m</text>
+    </view>
+    <view class="station-info">
+      <text wx:if="{{item.river_name}}">河流: {{item.river_name}}</text>
+      <text wx:if="{{item.station_type}}"> · {{item.station_type}}</text>
+    </view>
+    <view class="station-time" wx:if="{{item.update_time}}">更新: {{item.update_time}}</view>
+  </view>
+  <button class="btn-refresh" bindtap="loadStations" loading="{{loading}}">刷新数据</button>
+</view>

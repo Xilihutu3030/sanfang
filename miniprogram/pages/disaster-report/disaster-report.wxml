@@ -1,0 +1,135 @@
+<view class="container">
+  <!-- Tab 切换 -->
+  <view class="tab-bar">
+    <view class="tab-item {{tab==='submit'?'active':''}}" bindtap="switchTab" data-tab="submit">上报灾情</view>
+    <view class="tab-item {{tab==='list'?'active':''}}" bindtap="switchTab" data-tab="list">上报列表</view>
+  </view>
+
+  <!-- ===== 上报表单 ===== -->
+  <view wx:if="{{tab==='submit'}}">
+    <view class="card">
+      <view class="section-title">灾情信息</view>
+
+      <view class="form-group">
+        <text class="label">灾情标题 *</text>
+        <input placeholder="如：XX路段严重积水约30cm" value="{{title}}" bindinput="onInput" data-f="title" />
+      </view>
+
+      <view class="form-row">
+        <view class="half form-group">
+          <text class="label">灾情类型</text>
+          <picker range="{{typeLabels}}" value="{{typeIdx}}" bindchange="onTypeChange">
+            <view class="picker-box">{{typeLabels[typeIdx]}}<text class="arrow">></text></view>
+          </picker>
+        </view>
+        <view class="half form-group">
+          <text class="label">严重程度</text>
+          <picker range="{{sevLabels}}" value="{{sevIdx}}" bindchange="onSevChange">
+            <view class="picker-box sev-{{sevIdx}}">{{sevLabels[sevIdx]}}<text class="arrow">></text></view>
+          </picker>
+        </view>
+      </view>
+
+      <view class="form-group">
+        <text class="label">详细描述</text>
+        <textarea placeholder="请描述现场情况，如积水深度、受影响范围、有无人员被困等" value="{{description}}" bindinput="onInput" data-f="description" maxlength="500" auto-height="true" />
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">位置信息</view>
+      <view class="loc-btns">
+        <button class="btn-loc" bindtap="getLocation">自动定位</button>
+        <button class="btn-loc btn-loc-pick" bindtap="pickLocation">地图选点</button>
+      </view>
+      <view wx:if="{{lat && lng}}" class="loc-info">
+        <text class="loc-coord">{{lat}}, {{lng}}</text>
+        <text wx:if="{{location}}" class="loc-addr">{{location}}</text>
+      </view>
+      <view wx:else class="loc-empty">请先定位或选择位置</view>
+
+      <view class="form-group" style="margin-top:16rpx">
+        <text class="label">详细地址（选填）</text>
+        <input placeholder="如：天河区XX路XX号附近" value="{{location}}" bindinput="onInput" data-f="location" />
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">现场照片/视频</view>
+      <view class="media-grid">
+        <view wx:for="{{mediaList}}" wx:key="localPath" class="media-item">
+          <image wx:if="{{item.type==='image'}}" src="{{item.localPath || item.url}}" mode="aspectFill" bindtap="previewImage" data-idx="{{index}}" />
+          <video wx:if="{{item.type==='video'}}" src="{{item.localPath}}" style="width:100%;height:100%" object-fit="cover" show-play-btn="{{false}}" />
+          <view class="media-del" bindtap="removeMedia" data-idx="{{index}}">x</view>
+          <view wx:if="{{item.type==='video'}}" class="media-badge">视频</view>
+        </view>
+        <view class="media-add" bindtap="chooseImage" wx:if="{{mediaList.length < 9}}">
+          <text class="add-icon">+</text>
+          <text class="add-text">拍照</text>
+        </view>
+        <view class="media-add media-add-video" bindtap="chooseVideo" wx:if="{{videoCount < 1}}">
+          <text class="add-icon">+</text>
+          <text class="add-text">视频</text>
+        </view>
+      </view>
+      <view class="media-tip">支持拍照或从相册选择，最多9张图片+1个视频(30秒内)</view>
+    </view>
+
+    <button class="btn-submit" bindtap="submitReport" disabled="{{submitting}}">
+      {{submitting ? '上报中...' : '提交灾情上报'}}
+    </button>
+  </view>
+
+  <!-- ===== 上报列表 ===== -->
+  <view wx:if="{{tab==='list'}}">
+    <view wx:if="{{stats}}" class="stats-bar">
+      <view class="stat-item">
+        <text class="stat-num">{{stats.total}}</text>
+        <text class="stat-label">总上报</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num stat-pending">{{stats.pending}}</text>
+        <text class="stat-label">待处理</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num stat-verified">{{stats.verified}}</text>
+        <text class="stat-label">已核实</text>
+      </view>
+    </view>
+
+    <view class="filter-bar">
+      <picker range="{{['全部','积水内涝','山体滑坡','大风倒树','道路损毁','人员被困','其他']}}" bindchange="onFilterType">
+        <view class="filter-btn">筛选类型 ></view>
+      </picker>
+    </view>
+
+    <view wx:if="{{reports.length === 0}}" class="empty">暂无灾情上报</view>
+
+    <view wx:for="{{reports}}" wx:key="id" class="report-item">
+      <view class="rpt-header">
+        <view class="rpt-sev sev-{{item.severity}}">{{item.severity==='low'?'轻微':item.severity==='medium'?'中等':item.severity==='high'?'严重':'危急'}}</view>
+        <view class="rpt-type">{{item.type==='flood'?'积水内涝':item.type==='landslide'?'山体滑坡':item.type==='wind'?'大风倒树':item.type==='road'?'道路损毁':item.type==='rescue'?'人员被困':'其他'}}</view>
+        <view class="rpt-time">{{item.created_at}}</view>
+      </view>
+      <view class="rpt-title">{{item.title}}</view>
+      <view wx:if="{{item.description}}" class="rpt-desc">{{item.description}}</view>
+      <view wx:if="{{item.location}}" class="rpt-loc">{{item.location}}</view>
+
+      <!-- 图片缩略图 -->
+      <view wx:if="{{item.media && item.media.length > 0}}" class="rpt-media">
+        <block wx:for="{{item.media}}" wx:for-item="m" wx:for-index="mi" wx:key="url">
+          <image wx:if="{{m.type==='image'}}" src="{{m.url}}" mode="aspectFill" class="rpt-thumb"
+            bindtap="previewReportImage" data-rpt-idx="{{index}}" data-current="{{m.url}}" />
+        </block>
+      </view>
+
+      <view class="rpt-footer">
+        <text class="rpt-user">{{item.user_name || '匿名'}}</text>
+        <view class="rpt-actions">
+          <view wx:if="{{item.upvotes > 0}}" class="rpt-upvotes">{{item.upvotes}}人确认</view>
+          <button class="btn-upvote" size="mini" bindtap="upvoteReport" data-id="{{item.id}}">确认</button>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

@@ -48,6 +48,50 @@
     </view>
   </view>
 
+  <!-- 行政区域选择 -->
+  <view class="card">
+    <view class="card-title">
+      <text class="card-title-icon">📍</text>
+      <text>行政区域</text>
+      <view class="region-clear" wx:if="{{regionPath}}" bindtap="clearRegion">清除</view>
+    </view>
+    <!-- 级联选择器 -->
+    <view class="region-selectors">
+      <picker mode="selector" range="{{provinceList}}" range-key="name" value="{{provinceIdx}}" bindchange="onProvinceChange">
+        <view class="region-pick {{provinceIdx >= 0 ? 'region-pick-active' : ''}}">
+          {{provinceIdx >= 0 ? provinceList[provinceIdx].name : '选择省/直辖市'}}
+          <text class="region-arrow">▾</text>
+        </view>
+      </picker>
+      <picker mode="selector" range="{{cityList}}" range-key="name" value="{{cityIdx}}" bindchange="onCityChange" disabled="{{!cityList.length || _isMunicipality}}">
+        <view class="region-pick {{cityIdx >= 0 ? 'region-pick-active' : ''}} {{(!cityList.length || _isMunicipality) ? 'region-pick-disabled' : ''}}">
+          {{_isMunicipality ? '直辖市' : (cityIdx >= 0 ? cityList[cityIdx].name : '选择市/州')}}
+          <text class="region-arrow">▾</text>
+        </view>
+      </picker>
+      <picker mode="selector" range="{{districtList}}" range-key="name" value="{{districtIdx}}" bindchange="onDistrictChange" disabled="{{!districtList.length}}">
+        <view class="region-pick {{districtIdx >= 0 ? 'region-pick-active' : ''}} {{!districtList.length ? 'region-pick-disabled' : ''}}">
+          {{districtIdx >= 0 ? districtList[districtIdx].name : '选择区/县'}}
+          <text class="region-arrow">▾</text>
+        </view>
+      </picker>
+      <picker mode="selector" range="{{townList}}" range-key="name" value="{{townIdx}}" bindchange="onTownChange" disabled="{{!townList.length}}">
+        <view class="region-pick {{townIdx >= 0 ? 'region-pick-active' : ''}} {{!townList.length ? 'region-pick-disabled' : ''}}">
+          {{townIdx >= 0 ? townList[townIdx].name : '选择乡镇/街道'}}
+          <text class="region-arrow">▾</text>
+        </view>
+      </picker>
+    </view>
+    <!-- 选中路径 -->
+    <view class="region-info" wx:if="{{regionPath}}">
+      <text class="region-path-text">{{regionPath}}</text>
+      <view class="region-btns">
+        <view class="region-btn" bindtap="flyToRegion">定位</view>
+        <view class="region-btn {{showRegionBorder ? 'region-btn-active' : ''}}" bindtap="toggleRegionBorder">边界</view>
+      </view>
+    </view>
+  </view>
+
   <!-- 地图圈选区域 -->
   <view class="card" style="padding: 0; overflow: hidden;">
     <!-- 操作工具栏 -->
@@ -141,18 +185,25 @@
 
   <!-- 隐患点列表 -->
   <view class="card">
-    <view class="card-title">
-      <text class="card-title-icon">⚠️</text>
-      <text>隐患点概览</text>
+    <view class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+      <view>
+        <text class="card-title-icon">⚠️</text>
+        <text>隐患点概览</text>
+      </view>
+      <view class="btn btn-sm" style="font-size:12px;padding:4px 12px;margin:0" bindtap="aiAnalyzeHazards">AI智能识别</view>
     </view>
     <view class="hazard-list">
       <view class="hazard-item" wx:for="{{hazards}}" wx:key="name">
-        <view class="hazard-name">{{item.name}}</view>
-        <view class="hazard-info">
-          <text class="tag {{item.level === '高风险' ? 'tag-red' : 'tag-orange'}}">{{item.level}}</text>
-          <text class="hazard-type">{{item.type}}</text>
-          <text class="hazard-elev">{{item.elevation}}m</text>
+        <view class="hazard-name">
+          {{item.name}}
+          <text wx:if="{{item.ai_risk_score}}" style="color:#dc2626;font-size:11px;margin-left:4px">({{item.ai_risk_score}}分)</text>
         </view>
+        <view class="hazard-info">
+          <text class="tag {{item.level === '重大' ? 'tag-red' : (item.level === '较大' ? 'tag-orange' : 'tag-blue')}}">{{item.level}}</text>
+          <text class="hazard-type">{{item.type}}</text>
+          <text class="hazard-elev">{{item.elevation || '--'}}m</text>
+        </view>
+        <view wx:if="{{item.description}}" class="hazard-desc" style="font-size:11px;color:#94a3b8;margin-top:4px;line-height:1.4">{{item.description}}</view>
       </view>
     </view>
   </view>
@@ -161,5 +212,6 @@
   <button class="btn btn-primary btn-large" bindtap="startJudge" disabled="{{judging}}">
     {{judging ? '研判中...' : '开始智能研判'}}
   </button>
-  <text class="judge-hint" wx:if="{{polyPoints.length < 3}}">提示：圈选区域后研判结果更精准</text>
+  <text class="judge-hint" wx:if="{{polyPoints.length < 3 && !regionPath}}">提示：选择行政区域或圈选区域后研判结果更精准</text>
+  <text class="judge-hint" wx:if="{{regionPath}}">将以「{{regionPath}}」为研判区域</text>
 </view>

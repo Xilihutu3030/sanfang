@@ -1,0 +1,93 @@
+<view class="container">
+  <!-- 操作栏 -->
+  <view class="action-bar">
+    <button class="btn-gen" bindtap="generateTasks">从研判生成</button>
+    <button class="btn-batch" bindtap="batchAssign">批量分配</button>
+  </view>
+
+  <!-- 状态筛选 -->
+  <view class="filter-bar">
+    <view class="filter-item {{filter===''?'active':''}}" bindtap="setFilter" data-v="">全部</view>
+    <view class="filter-item {{filter==='pending'?'active':''}}" bindtap="setFilter" data-v="pending">待分配</view>
+    <view class="filter-item {{filter==='in_progress'?'active':''}}" bindtap="setFilter" data-v="in_progress">执行中</view>
+    <view class="filter-item {{filter==='completed'?'active':''}}" bindtap="setFilter" data-v="completed">已完成</view>
+  </view>
+
+  <!-- 统计 -->
+  <view class="stats-row" wx:if="{{stats}}">
+    <view class="stat"><text class="stat-n">{{stats.pending||0}}</text><text class="stat-l">待分配</text></view>
+    <view class="stat"><text class="stat-n">{{stats.in_progress||0}}</text><text class="stat-l">执行中</text></view>
+    <view class="stat"><text class="stat-n">{{stats.completed||0}}</text><text class="stat-l">已完成</text></view>
+    <view class="stat"><text class="stat-n">{{stats.total||0}}</text><text class="stat-l">总计</text></view>
+  </view>
+
+  <!-- 任务列表 -->
+  <view class="empty" wx:if="{{!loading && !tasks.length}}">暂无任务，可通过研判结果自动生成</view>
+  <view class="task-item" wx:for="{{tasks}}" wx:key="id" bindtap="openDetail" data-id="{{item.id}}">
+    <view class="task-top">
+      <text class="badge badge-{{item.priority || 'normal'}}">{{item.priority==='urgent'?'紧急':item.priority==='high'?'重要':'普通'}}</text>
+      <text class="task-title">{{item.title}}</text>
+    </view>
+    <view class="task-meta">{{item.type || '通用'}} · {{item.created_at || ''}}</view>
+    <view class="task-meta" wx:if="{{item.staff_name}}">负责人: {{item.staff_name}} {{item.staff_phone||''}}</view>
+    <view class="task-bottom">
+      <text class="status status-{{item.status}}">{{item.status==='pending'?'待分配':item.status==='in_progress'?'执行中':'已完成'}}</text>
+      <view class="task-actions">
+        <button wx:if="{{item.status==='pending'}}" class="btn-sm btn-assign" catchtap="openAssign" data-idx="{{index}}">分配</button>
+        <button wx:if="{{item.status==='in_progress'}}" class="btn-sm btn-feedback" catchtap="submitFeedback" data-id="{{item.id}}">反馈</button>
+        <button wx:if="{{item.status!=='pending'}}" class="btn-sm btn-wechat" catchtap="shareToWechat" data-idx="{{index}}" style="background:#07c160;color:#fff">微信通知</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 分配弹窗 -->
+  <view class="modal-mask" wx:if="{{showAssign}}" bindtap="closeAssign">
+    <view class="modal-box" catchtap="">
+      <view class="modal-title">分配任务</view>
+      <view class="modal-info">{{assignTask.title}}</view>
+      <view class="staff-section" wx:if="{{staffList.length}}">
+        <view class="staff-title">在岗人员 (点击选择)</view>
+        <view class="staff-item {{assignStaffId===item.id?'selected':''}}" wx:for="{{staffList}}" wx:key="id" bindtap="pickStaff" data-idx="{{index}}">
+          <text class="staff-name">{{item.name}}</text>
+          <text class="staff-role">{{item.role||''}} {{item.phone||''}}</text>
+        </view>
+      </view>
+      <view class="form-group">
+        <text class="label">或手动输入姓名</text>
+        <input value="{{assignName}}" bindinput="onAssignInput" data-f="assignName" placeholder="姓名" />
+      </view>
+      <view class="form-group">
+        <text class="label">联系电话</text>
+        <input value="{{assignPhone}}" bindinput="onAssignInput" data-f="assignPhone" placeholder="电话" />
+      </view>
+      <view class="form-group">
+        <text class="label">微信号(选填)</text>
+        <input value="{{assignWechat}}" bindinput="onAssignInput" data-f="assignWechat" placeholder="微信号" />
+      </view>
+      <button class="btn-confirm" bindtap="confirmAssign">确认分配</button>
+      <button class="btn-forward" open-type="share" wx:if="{{lastAssignedTask}}" style="margin-top:10rpx;background:#07c160;color:#fff;border-radius:16rpx;font-size:28rpx">转发微信通知给TA</button>
+    </view>
+  </view>
+
+  <!-- 详情弹窗 -->
+  <view class="modal-mask" wx:if="{{showDetail}}" bindtap="closeDetail">
+    <view class="modal-box modal-detail" catchtap="">
+      <view class="modal-title">任务详情</view>
+      <view class="detail-row"><text class="dl">标题</text><text class="dv">{{detailTask.title}}</text></view>
+      <view class="detail-row"><text class="dl">优先级</text><text class="dv">{{detailTask.priority||'普通'}}</text></view>
+      <view class="detail-row"><text class="dl">类型</text><text class="dv">{{detailTask.type||'--'}}</text></view>
+      <view class="detail-row"><text class="dl">状态</text><text class="dv">{{detailTask.status||'--'}}</text></view>
+      <view class="detail-row"><text class="dl">负责人</text><text class="dv">{{detailTask.staff_name||'未分配'}}</text></view>
+      <view class="detail-row"><text class="dl">描述</text><text class="dv">{{detailTask.description||'--'}}</text></view>
+      <view class="detail-row" wx:if="{{detailTask.feedback}}"><text class="dl">反馈</text><text class="dv">{{detailTask.feedback}}</text></view>
+      <view class="log-section" wx:if="{{detailLogs.length}}">
+        <view class="staff-title">操作日志</view>
+        <view class="log-item" wx:for="{{detailLogs}}" wx:key="index">
+          <text class="log-time">{{item.time}}</text>
+          <text class="log-action">{{item.action}} {{item.detail||''}}</text>
+        </view>
+      </view>
+      <button class="btn-close" bindtap="closeDetail">关闭</button>
+    </view>
+  </view>
+</view>

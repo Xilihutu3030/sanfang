@@ -1,0 +1,56 @@
+<view class="container">
+  <view class="section-title">单场景推演</view>
+  <view class="card">
+    <view class="form-group">
+      <text class="label">24h累计降雨(mm)</text>
+      <input type="digit" value="{{rain24}}" bindinput="onInput" data-field="rain24" placeholder="0~500" />
+    </view>
+    <view class="form-group">
+      <text class="label">1h降雨(mm)</text>
+      <input type="digit" value="{{rain1}}" bindinput="onInput" data-field="rain1" placeholder="0~200" />
+    </view>
+    <view class="form-group">
+      <text class="label">预警等级</text>
+      <picker range="{{warningLevels}}" range-key="name" value="{{warningIdx}}" bindchange="onWarningChange">
+        <view class="picker-box">{{warningLevels[warningIdx].name}} <text class="arrow">▼</text></view>
+      </picker>
+    </view>
+    <view class="form-group">
+      <text class="label">6h预报</text>
+      <input value="{{forecast}}" bindinput="onInput" data-field="forecast" placeholder="如：中到大雨" />
+    </view>
+    <button class="btn-primary" bindtap="runSingle" loading="{{loading}}">开始推演</button>
+  </view>
+
+  <view class="result-card {{riskClass}}" wx:if="{{singleResult}}">
+    <view class="risk-title">{{singleResult.risk_level}}</view>
+    <view class="risk-score">风险评分: {{singleResult.score}}</view>
+    <view class="risk-detail" wx:if="{{singleResult.response_level}}">响应等级: {{singleResult.response_level}}</view>
+    <view class="risk-detail" wx:if="{{singleResult.suggestions}}">
+      <view wx:for="{{singleResult.suggestions}}" wx:key="index" class="suggestion-item">{{item}}</view>
+    </view>
+  </view>
+
+  <view class="divider"></view>
+
+  <view class="section-title">多场景对比</view>
+  <view class="card">
+    <view class="desc">自动对比蓝/黄/橙/红四级预警场景下的风险情况</view>
+    <button class="btn-warning" bindtap="runMulti" loading="{{multiLoading}}">一键多场景对比</button>
+  </view>
+
+  <view class="multi-results" wx:if="{{multiResults.length}}">
+    <view class="multi-item" wx:for="{{multiResults}}" wx:key="index">
+      <view class="multi-header" style="background: {{item.color}}">
+        <text class="multi-label">{{item.label}}</text>
+        <text class="multi-risk">{{item.risk_level || '--'}}</text>
+      </view>
+      <view class="multi-body">
+        <view class="bar-wrap">
+          <view class="bar-fill" style="width: {{item.score || 0}}%; background: {{item.color}}"></view>
+        </view>
+        <text class="multi-score">{{item.score || 0}}分</text>
+      </view>
+    </view>
+  </view>
+</view>

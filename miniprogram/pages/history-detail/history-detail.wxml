@@ -1,3 +1,91 @@
 <view class="container">
-  <text>历史详情（复用结果页）</text>
+  <!-- 保存时间 -->
+  <view class="time-bar" wx:if="{{saveTime}}">
+    <text class="time-label">记录时间</text>
+    <text class="time-value">{{saveTime}}</text>
+  </view>
+
+  <!-- 风险等级 -->
+  <view class="risk-badge {{riskClass}}">
+    <text class="risk-level-text">{{riskInfo['等级'] || '--'}}</text>
+    <text class="risk-sub-text">{{riskInfo['响应等级'] || ''}} | 得分: {{riskInfo['得分'] || '--'}}</text>
+  </view>
+
+  <!-- 主要风险类型 -->
+  <view class="card" wx:if="{{mainRisks.length}}">
+    <view class="card-title">
+      <text class="card-title-icon">🎯</text>
+      <text>主要风险类型</text>
+    </view>
+    <view class="risk-tags">
+      <text class="tag tag-red" wx:for="{{mainRisks}}" wx:key="*this">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- Top5危险点位 -->
+  <view class="card" wx:if="{{top5.length}}">
+    <view class="card-title">
+      <text class="card-title-icon">🚨</text>
+      <text>Top5 最危险点位</text>
+    </view>
+    <view class="top5-item" wx:for="{{top5}}" wx:key="排名">
+      <view class="top5-rank rank-{{item['排名']}}">{{item['排名']}}</view>
+      <view class="top5-content">
+        <text class="top5-name">{{item['名称']}}</text>
+        <text class="top5-info">{{item['类型']}} | {{item['风险分']}}分</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 淹没预判 -->
+  <view class="card">
+    <view class="card-title">
+      <text class="card-title-icon">🌊</text>
+      <text>淹没预判</text>
+    </view>
+    <view class="flood-grid">
+      <view class="flood-item">
+        <text class="flood-label">淹没面积</text>
+        <text class="flood-value">{{flood['可能淹没面积'] || '--'}}</text>
+      </view>
+      <view class="flood-item">
+        <text class="flood-label">积水深度</text>
+        <text class="flood-value">{{flood['最大积水深度'] || '--'}}</text>
+      </view>
+      <view class="flood-item">
+        <text class="flood-label">持续时间</text>
+        <text class="flood-value">{{flood['灾害持续时间'] || '--'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 指挥建议 -->
+  <view class="card" wx:if="{{suggestions.length}}">
+    <view class="card-title">
+      <text class="card-title-icon">📢</text>
+      <text>指挥建议</text>
+    </view>
+    <view class="suggestion-item" wx:for="{{suggestions}}" wx:key="index">
+      <text class="suggestion-num">{{index + 1}}</text>
+      <text class="suggestion-text">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 领导汇报 -->
+  <view class="card leader-card" wx:if="{{leaderReport}}" bindtap="copyLeaderReport">
+    <view class="card-title">
+      <text class="card-title-icon">📝</text>
+      <text>领导汇报话术</text>
+      <text class="copy-hint">点击复制</text>
+    </view>
+    <view class="leader-text">{{leaderReport}}</view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-row">
+    <button class="btn btn-success" style="flex:1;" bindtap="copyReport">复制简报</button>
+    <button class="btn btn-primary" style="flex:1;" open-type="share">分享</button>
+  </view>
+  <button class="btn btn-chat" bindtap="goChat">AI智能对话 - 追问研判详情</button>
+  <button class="btn btn-danger-outline" bindtap="deleteRecord" wx:if="{{recordId}}">删除此记录</button>
 </view>

@@ -250,3 +250,88 @@
   margin-top: 12rpx;
   margin-bottom: 24rpx;
 }
+
+/* ==================== 行政区域选择 ==================== */
+.region-selectors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+
+.region-pick {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12rpx 20rpx;
+  border-radius: 12rpx;
+  font-size: 24rpx;
+  background: #f1f5f9;
+  color: #94a3b8;
+  border: 2rpx solid #e2e8f0;
+  min-width: 200rpx;
+}
+
+.region-pick-active {
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #93c5fd;
+  font-weight: 500;
+}
+
+.region-pick-disabled {
+  opacity: 0.4;
+}
+
+.region-arrow {
+  font-size: 20rpx;
+  margin-left: 8rpx;
+  color: #94a3b8;
+}
+
+.region-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16rpx;
+  padding: 12rpx 16rpx;
+  background: #f0fdf4;
+  border-radius: 12rpx;
+  border: 2rpx solid #bbf7d0;
+}
+
+.region-path-text {
+  font-size: 24rpx;
+  color: #15803d;
+  font-weight: 500;
+  flex: 1;
+}
+
+.region-btns {
+  display: flex;
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+
+.region-btn {
+  padding: 8rpx 20rpx;
+  border-radius: 24rpx;
+  font-size: 22rpx;
+  background: #ffffff;
+  color: #2563eb;
+  border: 2rpx solid #93c5fd;
+}
+
+.region-btn-active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.region-clear {
+  margin-left: auto;
+  font-size: 22rpx;
+  color: #dc2626;
+  padding: 4rpx 16rpx;
+  background: #fef2f2;
+  border-radius: 16rpx;
+}

@@ -1,0 +1,22 @@
+<view class="container">
+  <view class="section-title">历史灾情对比</view>
+  <view class="card">
+    <view class="desc">根据当前降雨条件搜索相似历史灾情记录，对比分析风险趋势</view>
+    <button class="btn-primary" bindtap="searchSimilar" loading="{{loading}}">搜索相似历史记录</button>
+  </view>
+
+  <view class="result-area" wx:if="{{searched}}">
+    <view class="empty" wx:if="{{!records.length}}">暂无匹配的历史记录，请多保存研判结果以积累历史数据</view>
+    <view class="record-item" wx:for="{{records}}" wx:key="index">
+      <view class="record-left">
+        <view class="record-time">{{item.timeShort}}</view>
+        <view class="record-rain">24h雨量: {{item.rain_24h || '--'}}mm</view>
+        <view class="record-risk">风险等级: {{item.risk_level || '--'}}</view>
+      </view>
+      <view class="record-right">
+        <text class="sim-score">{{item.similarity}}%</text>
+        <text class="sim-label">相似度</text>
+      </view>
+    </view>
+  </view>
+</view>

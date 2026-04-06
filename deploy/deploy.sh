@@ -216,7 +216,7 @@ certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --email "admin@$DOMAI
 info "[8/8] 配置系统服务..."
 cat > /etc/systemd/system/sanfang.service << SVCEOF
 [Unit]
-Description=三防形势智能研判与指挥辅助系统
+Description=三防应急处置指挥决策辅助系统
 After=network.target
 
 [Service]

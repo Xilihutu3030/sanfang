@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-三防形势智能研判与指挥辅助系统 - 统一后端服务
+三防应急处置指挥决策辅助系统 - 统一后端服务
 整合：气象爬虫 + 地形分析 + 智能研判 + 前端服务
 """
 
@@ -12,10 +12,27 @@ import uuid
 from datetime import datetime
 
 # Windows GBK控制台无法输出emoji，强制UTF-8
-if sys.stdout.encoding != 'utf-8':
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-if sys.stderr.encoding != 'utf-8':
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+try:
+    if sys.stdout and sys.stdout.encoding != 'utf-8':
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if sys.stderr and sys.stderr.encoding != 'utf-8':
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+except Exception:
+    pass
+
+
+def _safe_log(msg):
+    """Windows安全日志输出，避免中文/emoji字符导致OSError"""
+    text = str(msg)
+    try:
+        with open('server_log.txt', 'a', encoding='utf-8') as f:
+            f.write(text + '\n')
+    except Exception:
+        pass
+    try:
+        print(text)
+    except Exception:
+        pass
 
 from flask import Flask, jsonify, request, send_from_directory, g
 from flask_cors import CORS
@@ -29,17 +46,18 @@ except ImportError:
 
 from crawler import crawl_all_weather, TARGET_AREA
 from terrain import get_elevation, analyze_terrain_risk, get_area_elevation_stats, generate_dem_grid
-from ai_judge import ai_comprehensive_judge, ai_comprehensive_judge_v2, generate_report
+from ai_judge import ai_comprehensive_judge, ai_comprehensive_judge_v2, generate_report, generate_response_report, analyze_local_hazards
 from tide import get_full_marine_report, get_marine_data, predict_tide
 from weather_api import get_realtime_weather
 from resources_handler import (
-    RESOURCE_TYPES, list_resources, get_resource, add_resource,
+    RESOURCE_TYPES, RESOURCE_SUBTYPES, list_resources, get_resource, add_resource,
     update_resource, delete_resource, import_from_excel, import_from_csv,
-    generate_template, get_all_statistics,
+    generate_template, get_all_statistics, get_subtypes,
 )
 from auth import init_db, register_auth_routes, auth_required, optional_auth, premium_required, get_db
 from premium_features import premium, init_premium_tables, check_alert_rules
 from yuezhengyi import yzy
+from regions import regions
 
 app = Flask(__name__, static_folder=None)
 CORS(app)
@@ -49,8 +67,11 @@ CORS(app)
 def handle_500(e):
     import traceback
     err_msg = traceback.format_exc()
-    with open('error_log.txt', 'a', encoding='utf-8') as f:
-        f.write('\n--- %s ---\n%s\n' % (datetime.now(), err_msg))
+    try:
+        with open('error_log.txt', 'a', encoding='utf-8') as f:
+            f.write('\n--- %s ---\n%s\n' % (datetime.now(), err_msg))
+    except Exception:
+        pass
     return jsonify({"error": str(e), "trace": err_msg}), 500
 
 # 初始化数据库和认证路由
@@ -59,12 +80,18 @@ init_premium_tables()
 register_auth_routes(app)
 app.register_blueprint(premium)
 app.register_blueprint(yzy)
+app.register_blueprint(regions)
 
 # ==================== 全局数据缓存 ====================
 weather_cache = {
     "update_time": None,
     "data": None
 }
+
+# AI风险点分析缓存（按区域名缓存，避免重复调用AI）
+# 格式: {cache_key: {"result": {...}, "time": timestamp}}
+_hazard_analysis_cache = {}
+_HAZARD_CACHE_TTL = 1800  # 缓存有效期30分钟
 
 # 默认风险点数据（可后续对接数据库）
 DEFAULT_HAZARDS = [
@@ -112,9 +139,32 @@ def favicon_ico():
 def static_files(filename):
     return send_from_directory('static', filename)
 
+@app.route('/uploads/<path:filename>')
+def uploaded_files(filename):
+    return send_from_directory('uploads', filename)
+
 @app.route('/login')
 def login_page():
     return send_from_directory('.', 'login.html')
+
+@app.route('/report')
+def report_page():
+    return send_from_directory('.', 'report.html')
+
+
+@app.route('/api/lan-ip')
+def api_lan_ip():
+    """获取服务器局域网IP，用于生成手机可访问的二维码"""
+    import socket
+    ip = '127.0.0.1'
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+        s.close()
+    except Exception:
+        pass
+    return jsonify({"ip": ip})
 
 
 # ==================== 气象数据 API ====================
@@ -326,14 +376,14 @@ def api_ai_judge():
             t.start()
             t.join(timeout=15)
             if t.is_alive() or result_container[0] is None:
-                print("[智能研判] LLM超时或失败，降级为规则引擎")
+                _safe_log("[智能研判] LLM超时或失败，降级为规则引擎")
                 result = ai_comprehensive_judge(weather, terrain, hazards)
                 result["_fallback"] = True
                 result["_fallback_reason"] = str(exc_container[0]) if exc_container[0] else "LLM调用超时(15s)"
             else:
                 result = result_container[0]
         except Exception as e:
-            print(f"[智能研判] 异常: {e}，降级为规则引擎")
+            _safe_log(f"[智能研判] 异常: {e}，降级为规则引擎")
             result = ai_comprehensive_judge(weather, terrain, hazards)
     else:
         result = ai_comprehensive_judge(weather, terrain, hazards)
@@ -341,6 +391,13 @@ def api_ai_judge():
     # 7. 生成简报
     report_text = generate_report(result)
     result["简报文本"] = report_text
+
+    # 7.5 注入行政区域名称
+    region_name = data.get('region_name', '')
+    if region_name:
+        result["研判区域"] = region_name
+        # 在简报文本前加入区域信息
+        result["简报文本"] = f"研判区域：{region_name}\n{report_text}"
 
     # 8. 有风险时匹配附近可调度资源
     risk_level = result.get("1_综合风险等级", {}).get("等级", "")
@@ -350,7 +407,61 @@ def api_ai_judge():
             if resources:
                 result["7_可调度资源"] = resources
         except Exception as e:
-            print(f"[资源匹配] 异常: {e}")
+            _safe_log(f"[资源匹配] 异常: {e}")
+
+    # 9. 注入市民灾情上报情报
+    try:
+        from premium_features import get_db as _pf_get_db
+        import math as _math
+        _db = _pf_get_db()
+        _rows = _db.execute(
+            "SELECT * FROM disaster_reports WHERE created_at >= datetime('now','localtime','-6 hours') "
+            "ORDER BY created_at DESC LIMIT 50"
+        ).fetchall()
+        _db.close()
+        if _rows:
+            _center_lat = center.get('lat', 23.13)
+            _center_lng = center.get('lng', 113.27)
+            _nearby = []
+            _type_labels = {
+                'flood': '积水内涝', 'landslide': '山体滑坡', 'wind': '大风倒树',
+                'road': '道路损毁', 'rescue': '人员被困', 'other': '其他'
+            }
+            _sev_labels = {'low': '轻微', 'medium': '中等', 'high': '严重', 'critical': '危急'}
+            for _r in _rows:
+                _d = dict(_r)
+                _dlat = _math.radians(_d['lat'] - _center_lat)
+                _dlng = _math.radians(_d['lng'] - _center_lng)
+                _a = _math.sin(_dlat/2)**2 + _math.cos(_math.radians(_center_lat)) * _math.cos(_math.radians(_d['lat'])) * _math.sin(_dlng/2)**2
+                _dist = 6371 * 2 * _math.asin(_math.sqrt(_a))
+                if _dist <= 50:
+                    _nearby.append({
+                        "标题": _d['title'],
+                        "类型": _type_labels.get(_d['type'], _d['type']),
+                        "严重程度": _sev_labels.get(_d['severity'], _d['severity']),
+                        "位置": _d.get('location', '') or f"({_d['lat']:.4f},{_d['lng']:.4f})",
+                        "描述": (_d.get('description', '') or '')[:100],
+                        "确认人数": _d.get('upvotes', 0),
+                        "距离km": round(_dist, 1),
+                        "时间": _d.get('created_at', ''),
+                    })
+            if _nearby:
+                result["8_市民灾情上报"] = {
+                    "近6小时上报数": len(_nearby),
+                    "详情": _nearby[:10],
+                    "说明": "以下为附近50km内市民通过小程序上报的实地灾情，可作为研判参考"
+                }
+                # 将上报信息追加到指挥建议
+                _critical = [n for n in _nearby if n['严重程度'] in ('严重', '危急')]
+                if _critical:
+                    suggestions = result.get("5_指挥建议", [])
+                    suggestions.append(
+                        f"市民上报: 附近有{len(_critical)}条严重/危急灾情上报，"
+                        f"包括: {', '.join(c['标题'] for c in _critical[:3])}，建议优先核实处置"
+                    )
+                    result["5_指挥建议"] = suggestions
+    except Exception as e:
+        _safe_log(f"[灾情上报] 注入研判异常: {e}")
 
     return jsonify(result)
 
@@ -363,6 +474,23 @@ def api_generate_report():
         return jsonify({"error": "缺少研判数据"}), 400
 
     report = generate_report(data)
+    return jsonify({"report": report})
+
+
+@app.route('/api/ai/response-report', methods=['POST'])
+def api_generate_response_report():
+    """生成应急响应总结报告 - 综合所有研判记录"""
+    data = request.json
+    if not data:
+        return jsonify({"error": "缺少数据"}), 400
+
+    judge_records = data.get("records", [])
+    region_name = data.get("region_name", "")
+
+    if not judge_records:
+        return jsonify({"error": "无研判记录"}), 400
+
+    report = generate_response_report(judge_records, region_name)
     return jsonify({"report": report})
 
 
@@ -438,7 +566,7 @@ def api_ai_chat():
             history=session["history"],
         )
     except Exception as e:
-        print(f"[AI对话] 异常: {e}")
+        _safe_log(f"[AI对话] 异常: {e}")
         return jsonify({
             "error": "AI助手暂时无法响应",
             "detail": str(e),
@@ -530,7 +658,7 @@ def _match_nearby_resources(center, area=None):
         if nearby_fac:
             result['facilities'] = {'label': '场所设施', 'items': nearby_fac[:8]}
     except Exception as e:
-        print(f"[资源匹配] facilities异常: {e}")
+        _safe_log(f"[资源匹配] facilities异常: {e}")
 
     # --- 人员队伍（无坐标，按状态过滤）---
     try:
@@ -551,7 +679,7 @@ def _match_nearby_resources(center, area=None):
         if avail:
             result['personnel'] = {'label': '人员队伍', 'items': avail[:10]}
     except Exception as e:
-        print(f"[资源匹配] personnel异常: {e}")
+        _safe_log(f"[资源匹配] personnel异常: {e}")
 
     # --- 物资装备（无坐标，按状态过滤）---
     try:
@@ -573,7 +701,7 @@ def _match_nearby_resources(center, area=None):
         if avail:
             result['materials'] = {'label': '物资装备', 'items': avail[:10]}
     except Exception as e:
-        print(f"[资源匹配] materials异常: {e}")
+        _safe_log(f"[资源匹配] materials异常: {e}")
 
     # --- 车辆运力（无坐标，按状态过滤）---
     try:
@@ -594,7 +722,7 @@ def _match_nearby_resources(center, area=None):
         if avail:
             result['vehicles'] = {'label': '车辆运力', 'items': avail[:10]}
     except Exception as e:
-        print(f"[资源匹配] vehicles异常: {e}")
+        _safe_log(f"[资源匹配] vehicles异常: {e}")
 
     return result if result else None
 
@@ -699,7 +827,7 @@ def _build_terrain_input(terrain_override=None, center=None):
             "是否沿河": min_elev < 40,
         }
     except Exception as e:
-        print(f"[WARN] terrain input build failed: {e}")
+        _safe_log(f"[WARN] terrain input build failed: {e}")
 
     return {
         "最低高程": 28,
@@ -758,7 +886,7 @@ def _generate_local_hazards(lat, lng, terrain):
     # 如果地理编码全部失败，直接使用DEFAULT_HAZARDS（已有真实广州地名）
     valid_names = [n for n in nearby_names if n]
     if len(valid_names) == 0:
-        print("[风险点生成] Nominatim全部失败，使用默认广州风险点数据")
+        _safe_log("[风险点生成] Nominatim全部失败，使用默认广州风险点数据")
         return DEFAULT_HAZARDS
 
     hazards = []
@@ -820,7 +948,7 @@ def _get_nearby_place_names(lat, lng):
             except Exception:
                 names.append("")
     except Exception as e:
-        print(f"[地名查询] 失败: {e}")
+        _safe_log(f"[地名查询] 失败: {e}")
     while len(names) < 8:
         names.append("")
     return names
@@ -830,17 +958,43 @@ def _get_nearby_place_names(lat, lng):
 @app.route('/api/hazards', methods=['GET'])
 @optional_auth
 def get_hazards():
-    """获取风险点列表，支持按区域bounds过滤"""
+    """获取风险点列表，支持按区域bounds过滤和区域名称智能匹配"""
     try:
-        hazards = DEFAULT_HAZARDS
+        hazards = []
+
+        # 优先使用区域名称从AI分析缓存/知识库获取真实风险点
+        region = request.args.get('region', '')
+        center_lat = request.args.get('center_lat', type=float)
+        center_lng = request.args.get('center_lng', type=float)
+
+        if region or (center_lat and center_lng):
+            cache_key = region or f"{center_lat:.2f},{center_lng:.2f}"
+            if cache_key in _hazard_analysis_cache:
+                cached = _hazard_analysis_cache[cache_key]
+                hazards = cached.get("hazards", [])
+
+            if not hazards:
+                # 从知识库快速获取（不调用AI，保证速度）
+                from ai_judge import _find_region_hazards
+                hazards = _find_region_hazards(region, center_lat, center_lng)
+
+        # 如果用户登录，合并自定义风险点
         if g.user_id:
-            db = get_db()
-            rows = db.execute(
-                "SELECT * FROM hazards ORDER BY created_at DESC"
-            ).fetchall()
-            db.close()
-            if rows:
-                hazards = [dict(r) for r in rows]
+            try:
+                db = get_db()
+                rows = db.execute(
+                    "SELECT * FROM hazards ORDER BY created_at DESC"
+                ).fetchall()
+                db.close()
+                if rows:
+                    custom = [dict(r) for r in rows]
+                    hazards = hazards + custom
+            except Exception:
+                pass
+
+        # 无区域匹配时使用默认数据
+        if not hazards:
+            hazards = DEFAULT_HAZARDS
 
         # 按区域bounds过滤
         sw_lat = request.args.get('sw_lat', type=float)
@@ -866,13 +1020,64 @@ def get_hazards():
                 "地下空间": type_count.get("地下空间", 0),
                 "河道": type_count.get("河道", 0),
                 "隧道": type_count.get("隧道", 0),
+                "边坡": type_count.get("边坡", 0),
                 "总计": len(hazards)
-            }
+            },
+            "region": region,
         })
     except Exception as e:
         import traceback
-        traceback.print_exc()
+        _safe_log(traceback.format_exc())
         return jsonify({"error": str(e), "hazards": DEFAULT_HAZARDS, "统计": {"总计": len(DEFAULT_HAZARDS)}}), 200
+
+
+@app.route('/api/hazards/ai-analyze', methods=['POST'])
+@optional_auth
+def ai_analyze_hazards():
+    """AI智能分析区域风险点"""
+    try:
+        import time as _time
+        data = request.get_json(force=True)
+        region_name = data.get('region', '')
+        center_lat = data.get('center_lat', 23.13)
+        center_lng = data.get('center_lng', 113.26)
+        radius_km = data.get('radius_km', 10)
+        force_refresh = data.get('force_refresh', False)
+
+        if not region_name:
+            return jsonify({"error": "请提供区域名称(region)"}), 400
+
+        # 检查缓存（按坐标+半径缓存，不同位置不共享）
+        cache_key = f"{region_name}_{center_lat:.3f}_{center_lng:.3f}_{radius_km:.1f}"
+        if not force_refresh and cache_key in _hazard_analysis_cache:
+            entry = _hazard_analysis_cache[cache_key]
+            if _time.time() - entry.get("time", 0) < _HAZARD_CACHE_TTL:
+                result = entry["result"].copy()
+                result["from_cache"] = True
+                return jsonify(result)
+            else:
+                del _hazard_analysis_cache[cache_key]
+
+        # 尝试获取AI客户端
+        client = None
+        try:
+            from qwen_client import QwenClient
+            client = QwenClient()
+        except Exception as e:
+            _safe_log(f"[AI风险分析] AI客户端初始化失败（将使用知识库兜底）: {e}")
+
+        result = analyze_local_hazards(region_name, center_lat, center_lng, radius_km, client)
+        result["from_cache"] = False
+
+        # 缓存结果（带时间戳）
+        if result.get("hazards"):
+            _hazard_analysis_cache[cache_key] = {"result": result, "time": _time.time()}
+
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        _safe_log(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
 
 
 # ==================== 历史记录 API ====================
@@ -938,6 +1143,29 @@ def save_history():
     return jsonify({"message": "保存成功", "total": len(history)})
 
 
+@app.route('/api/history/<record_id>', methods=['DELETE'])
+@optional_auth
+def delete_history(record_id):
+    """删除研判记录"""
+    if g.user_id:
+        db = get_db()
+        db.execute("DELETE FROM judge_history WHERE id=? AND user_id=?", (record_id, g.user_id))
+        db.commit()
+        db.close()
+        return jsonify({"message": "删除成功"})
+
+    # 未登录 -> 兼容旧文件存储
+    try:
+        with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
+            history = json.load(f)
+        history = [h for h in history if h.get('id') != record_id]
+        with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
+            json.dump(history, f, ensure_ascii=False, indent=2)
+    except FileNotFoundError:
+        pass
+    return jsonify({"message": "删除成功"})
+
+
 # ==================== 应急资源管理 API ====================
 
 def _validate_resource_type(rtype):
@@ -949,7 +1177,14 @@ def _validate_resource_type(rtype):
 @app.route('/api/resources/statistics', methods=['GET'])
 def api_resources_statistics():
     """资源总览统计"""
-    return jsonify(get_all_statistics())
+    region_code = request.args.get('region_code', '')
+    return jsonify(get_all_statistics(region_code or None))
+
+
+@app.route('/api/resources/subtypes', methods=['GET'])
+def api_resources_subtypes():
+    """获取资源子类型选项"""
+    return jsonify(get_subtypes())
 
 
 @app.route('/api/resources/<rtype>', methods=['GET'])
@@ -957,7 +1192,8 @@ def api_list_resources(rtype):
     """获取某类资源列表"""
     if not _validate_resource_type(rtype):
         return jsonify({"error": f"无效资源类型: {rtype}"}), 400
-    return jsonify(list_resources(rtype))
+    region_code = request.args.get('region_code', '')
+    return jsonify(list_resources(rtype, region_code or None))
 
 
 @app.route('/api/resources/<rtype>', methods=['POST'])
@@ -1037,11 +1273,111 @@ def api_download_template(rtype):
     return resp
 
 
+@app.route('/api/resources/ai-recognize', methods=['POST'])
+def api_ai_recognize_resource():
+    """AI识别资源信息（从照片/文档中提取）"""
+    if 'file' not in request.files:
+        return jsonify({"error": "未上传文件"}), 400
+
+    file = request.files['file']
+    resource_type = request.form.get('resource_type', 'materials')
+    file_type = request.form.get('file_type', 'image')
+
+    if not _validate_resource_type(resource_type):
+        return jsonify({"error": f"无效资源类型: {resource_type}"}), 400
+
+    filename = file.filename.lower() if file.filename else ""
+
+    # 如果是 Excel/CSV 文档，直接走导入流程
+    if filename.endswith(('.xlsx', '.xls', '.csv')):
+        try:
+            if filename.endswith('.csv'):
+                result = import_from_csv(resource_type, file)
+            else:
+                result = import_from_excel(resource_type, file)
+            return jsonify({"mode": "batch_import", "result": result})
+        except Exception as e:
+            return jsonify({"error": f"文档导入失败: {str(e)}"}), 500
+
+    # 图片识别 - 尝试用 Qwen 视觉模型
+    try:
+        import base64
+        file_content = file.read()
+        b64 = base64.b64encode(file_content).decode('utf-8')
+
+        # 获取目标字段
+        cfg = RESOURCE_TYPES[resource_type]
+        field_labels = cfg["excel_columns"]
+        fields_desc = "、".join(field_labels)
+
+        try:
+            from qwen_client import QwenClient
+            client = QwenClient()
+
+            prompt = (
+                f"请从这张图片中识别应急资源信息。需要提取以下字段：{fields_desc}。\n"
+                f"资源类型：{cfg['label']}\n"
+                f"请以JSON格式返回，字段用中文名称作为key。如果某个字段无法识别，值设为空字符串。"
+                f"只返回JSON，不要其他文字。如果图片中有多条记录，返回JSON数组。"
+            )
+
+            # 调用视觉模型
+            messages = [
+                {"role": "user", "content": [
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
+                    {"type": "text", "text": prompt}
+                ]}
+            ]
+
+            resp_text = client._call_api(messages, temperature=0.1, max_tokens=2000)
+
+            # 解析返回的JSON
+            import re
+            json_match = re.search(r'[\[\{].*[\]\}]', resp_text, re.DOTALL)
+            if json_match:
+                parsed = json.loads(json_match.group())
+                if isinstance(parsed, dict):
+                    parsed = [parsed]
+
+                # 转换字段名
+                from resources_handler import FIELD_MAP
+                field_map = FIELD_MAP.get(resource_type, {})
+                results = []
+                for item in parsed:
+                    converted = {}
+                    confidence = {}
+                    for cn_name, value in item.items():
+                        eng_key = field_map.get(cn_name, cn_name)
+                        if value and str(value).strip():
+                            converted[eng_key] = str(value).strip()
+                            confidence[eng_key] = 0.85
+                        else:
+                            converted[eng_key] = ""
+                            confidence[eng_key] = 0.0
+                    results.append({"fields": converted, "confidence": confidence})
+
+                if len(results) == 1:
+                    return jsonify(results[0])
+                return jsonify({"mode": "multi", "items": results, "count": len(results)})
+            else:
+                return jsonify({"error": "AI未能从图片中识别出结构化信息", "raw": resp_text[:500]}), 422
+
+        except ImportError:
+            # 没有 qwen_client，返回提示
+            return jsonify({"error": "AI视觉模型未配置，请使用Excel/CSV导入"}), 501
+        except Exception as e:
+            _safe_log(f"[AI识别] 异常: {e}")
+            return jsonify({"error": f"AI识别失败: {str(e)}"}), 500
+
+    except Exception as e:
+        return jsonify({"error": f"文件处理失败: {str(e)}"}), 500
+
+
 # ==================== 启动 ====================
 if __name__ == '__main__':
     print("""
     ╔═══════════════════════════════════════════════╗
-    ║  三防形势智能研判与指挥辅助系统               ║
+    ║  三防应急处置指挥决策辅助系统               ║
     ║  统一后端服务 v2.0 (小程序版)                 ║
     ╚═══════════════════════════════════════════════╝
     """)

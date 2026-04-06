@@ -1,0 +1,19 @@
+<view class="tab-bar">
+  <view
+    wx:for="{{list}}"
+    wx:key="index"
+    class="tab-item {{selected === index ? 'active' : ''}}"
+    data-path="{{item.pagePath}}"
+    data-index="{{index}}"
+    bindtap="switchTab"
+  >
+    <view class="tab-icon-wrap {{selected === index ? 'tab-icon-active' : ''}}">
+      <view class="tab-icon-bg"
+        wx:if="{{selected === index}}"
+        style="background: linear-gradient(135deg, {{item.gradientFrom}}, {{item.gradientTo}});">
+      </view>
+      <text class="tab-icon">{{item.icon}}</text>
+    </view>
+    <text class="tab-text" style="color: {{selected === index ? item.color : '#90a4ae'}}">{{item.text}}</text>
+  </view>
+</view>

@@ -1,0 +1,51 @@
+<view class="container">
+  <view class="section-title">添加风险点</view>
+  <view class="card">
+    <view class="form-group">
+      <text class="label">名称</text>
+      <input value="{{name}}" bindinput="onInput" data-f="name" placeholder="如: XX隧道" />
+    </view>
+    <view class="form-row">
+      <view class="form-group half">
+        <text class="label">类型</text>
+        <picker range="{{typeList}}" value="{{typeIdx}}" bindchange="onTypeChange">
+          <view class="picker-box">{{typeList[typeIdx]}} <text class="arrow">▼</text></view>
+        </picker>
+      </view>
+      <view class="form-group half">
+        <text class="label">风险等级</text>
+        <picker range="{{levelList}}" value="{{levelIdx}}" bindchange="onLevelChange">
+          <view class="picker-box">{{levelList[levelIdx]}} <text class="arrow">▼</text></view>
+        </picker>
+      </view>
+    </view>
+    <view class="form-row">
+      <view class="form-group half">
+        <text class="label">纬度</text>
+        <input type="digit" value="{{lat}}" bindinput="onInput" data-f="lat" placeholder="如: 22.5431" />
+      </view>
+      <view class="form-group half">
+        <text class="label">经度</text>
+        <input type="digit" value="{{lng}}" bindinput="onInput" data-f="lng" placeholder="如: 113.9512" />
+      </view>
+    </view>
+    <button class="btn-loc" bindtap="pickLocation">从地图选点</button>
+    <view class="form-group">
+      <text class="label">备注</text>
+      <input value="{{note}}" bindinput="onInput" data-f="note" placeholder="可选备注" />
+    </view>
+    <button class="btn-primary" bindtap="saveHazard">保存风险点</button>
+  </view>
+
+  <view class="section-title" style="margin-top: 32rpx">已添加的风险点</view>
+  <view class="empty" wx:if="{{!hazards.length}}">暂无自定义风险点</view>
+  <view class="hz-item" wx:for="{{hazards}}" wx:key="id">
+    <view class="hz-top">
+      <text class="hz-name">{{item.name}}</text>
+      <text class="hz-badge">{{item.type}}</text>
+      <text class="hz-level level-{{item.levelCls}}">{{item.level}}</text>
+    </view>
+    <view class="hz-coord">{{item.lat}}, {{item.lng}} <text wx:if="{{item.note}}"> · {{item.note}}</text></view>
+    <view class="btn-del" bindtap="deleteHazard" data-id="{{item.id}}">删除</view>
+  </view>
+</view>

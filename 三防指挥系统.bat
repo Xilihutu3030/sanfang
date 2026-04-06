@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0"
-title 三防指挥系统
+title 智慧三防指挥调度
 
 :: 检查是否已在运行
 netstat -ano | findstr "0.0.0.0:5000" >nul 2>&1
@@ -13,7 +13,7 @@ if %errorlevel% equ 0 (
 )
 
 echo.
-echo   三防形势智能研判与指挥辅助系统 v2.0
+echo   三防应急处置指挥决策辅助系统 v2.0
 echo   ──────────────────────────────────
 echo   正在启动，请稍候...
 echo.

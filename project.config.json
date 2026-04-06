@@ -1,5 +1,5 @@
 {
-  "description": "三防形势智能研判与指挥辅助系统",
+  "description": "三防应急处置指挥决策辅助系统",
   "miniprogramRoot": "miniprogram/",
   "setting": {
     "urlCheck": false,
@@ -36,7 +36,7 @@
     "include": []
   },
   "condition": {},
-  "appid": "wx34db48aaa43b736f",
+  "appid": "wx830acebec00dd2d8",
   "editorSetting": {},
   "libVersion": "3.14.3"
 }

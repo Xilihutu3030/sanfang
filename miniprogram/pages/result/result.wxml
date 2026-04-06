@@ -82,4 +82,29 @@
   </view>
   <button class="btn btn-chat" bindtap="goChat">AI智能对话 - 追问研判详情</button>
   <button class="btn btn-outline" open-type="share">分享给同事</button>
+
+  <!-- 应急响应总结报告 -->
+  <view class="response-report-section">
+    <view class="session-count-info">本次会话已研判 {{sessionCount}} 次</view>
+    <button class="btn btn-response-report" bindtap="generateResponseReport" disabled="{{generatingReport}}">
+      {{generatingReport ? '生成中...' : '结束响应 & 生成总结报告'}}
+    </button>
+  </view>
+
+  <!-- 总结报告弹窗 -->
+  <view class="report-modal-overlay" wx:if="{{showResponseReport}}" bindtap="closeResponseReport">
+    <view class="report-modal-box" catchtap="">
+      <view class="report-modal-header">
+        <text class="report-modal-title">应急响应总结报告</text>
+        <text class="report-modal-close" bindtap="closeResponseReport">×</text>
+      </view>
+      <scroll-view class="report-modal-body" scroll-y>
+        <text class="report-text">{{responseReport}}</text>
+      </scroll-view>
+      <view class="report-modal-actions">
+        <button class="btn btn-success" style="flex:1;" bindtap="copyResponseReport">复制报告</button>
+        <button class="btn btn-primary" style="flex:1;" bindtap="confirmEndResponse">确认结束响应</button>
+      </view>
+    </view>
+  </view>
 </view>

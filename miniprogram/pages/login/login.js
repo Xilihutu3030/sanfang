@@ -25,7 +25,7 @@ Page({
       const list = await api.auth.tenants()
       this.setData({ tenants: list })
     } catch (e) {
-      this.setData({ tenants: [{ id: 'demo', name: '演示租户' }] })
+      this.setData({ tenants: [{ id: 'demo', name: '演示单位' }] })
     }
   },
 

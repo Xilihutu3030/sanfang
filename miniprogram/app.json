@@ -11,19 +11,29 @@
     "pages/history/history",
     "pages/history-detail/history-detail",
     "pages/profile/profile",
-    "pages/chat/chat"
+    "pages/chat/chat",
+    "pages/simulation/simulation",
+    "pages/tasks/tasks",
+    "pages/water-monitor/water-monitor",
+    "pages/alert-settings/alert-settings",
+    "pages/hazard-editor/hazard-editor",
+    "pages/history-compare/history-compare",
+    "pages/cameras/cameras",
+    "pages/disaster-report/disaster-report",
+    "pages/qrcode-gen/qrcode-gen"
   ],
   "window": {
-    "navigationBarBackgroundColor": "#0f172a",
-    "navigationBarTitleText": "三防智能研判",
-    "navigationBarTextStyle": "white",
-    "backgroundColor": "#f0f2f5",
+    "navigationBarBackgroundColor": "#e0f7fa",
+    "navigationBarTitleText": "智慧三防指挥调度",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#e0f7fa",
     "backgroundTextStyle": "dark"
   },
   "tabBar": {
-    "color": "#94a3b8",
-    "selectedColor": "#2563eb",
-    "backgroundColor": "#ffffff",
+    "custom": true,
+    "color": "#78909c",
+    "selectedColor": "#00bcd4",
+    "backgroundColor": "#e0f7fa",
     "borderStyle": "white",
     "list": [
       {

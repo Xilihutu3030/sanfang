@@ -1,0 +1,124 @@
+<view class="container">
+  <view class="section-title">视频监控</view>
+
+  <!-- 统计信息 -->
+  <view class="stats-row">
+    <text class="stats-text">共 {{filteredCameras.length}} 个监控点</text>
+  </view>
+
+  <!-- 筛选栏 -->
+  <view class="filter-row">
+    <picker mode="selector" range="{{cities}}" range-key="label" value="{{cityIndex}}" bindchange="onCityChange">
+      <view class="filter-btn">{{cities[cityIndex].label || '全部城市'}} ▼</view>
+    </picker>
+    <picker mode="selector" range="{{types}}" range-key="label" value="{{typeIndex}}" bindchange="onTypeChange">
+      <view class="filter-btn">{{types[typeIndex].label}} ▼</view>
+    </picker>
+  </view>
+
+  <!-- 视频播放浮层 -->
+  <view class="video-overlay" wx:if="{{playingCam}}" bindtap="stopPlay">
+    <view class="video-box" catchtap="">
+      <view class="video-header">
+        <text class="video-title">{{playingCam.name}}</text>
+        <text class="video-close" bindtap="stopPlay">✕</text>
+      </view>
+      <video
+        src="{{playingCam.stream_url}}"
+        autoplay
+        muted
+        controls
+        show-center-play-btn="{{true}}"
+        object-fit="contain"
+        style="width: 100%; height: 420rpx;"
+        binderror="videoError"
+      ></video>
+      <view class="video-info">
+        <view class="video-info-row">
+          <view class="status-dot" style="background: {{playingCam.statusColor}}"></view>
+          <text class="video-source">{{playingCam.source || '公共监控'}}</text>
+        </view>
+        <text class="video-meta">{{playingCam.city || ''}} · {{playingCam.typeLabel}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 摄像头列表 -->
+  <view class="empty" wx:if="{{!loading && !filteredCameras.length}}">暂无监控数据</view>
+
+  <view class="cam-card" wx:for="{{filteredCameras}}" wx:key="id">
+    <view class="cam-top">
+      <view class="cam-name-row">
+        <view class="status-dot" style="background: {{item.statusColor}}"></view>
+        <text class="cam-name">{{item.name}}</text>
+      </view>
+      <text class="cam-badge badge-{{item.type}}">{{item.typeLabel}}</text>
+    </view>
+    <view class="cam-meta">
+      <text>{{item.city || '未知城市'}} · {{item.source || '未知来源'}}</text>
+      <text class="cam-status">{{item.statusText}}</text>
+    </view>
+    <view class="cam-actions">
+      <view class="cam-btn cam-btn-play" bindtap="playCam" data-cam="{{item}}">播放</view>
+      <view class="cam-btn cam-btn-loc" bindtap="locateCam" data-cam="{{item}}">定位</view>
+      <view class="cam-btn cam-btn-del" bindtap="deleteCam" data-cam="{{item}}">删除</view>
+    </view>
+  </view>
+
+  <!-- 添加摄像头 -->
+  <view class="add-section">
+    <view class="add-toggle" bindtap="toggleAdd">
+      <text>{{showAdd ? '收起' : '添加摄像头'}}</text>
+    </view>
+    <view class="add-form" wx:if="{{showAdd}}">
+      <view class="form-row">
+        <view class="form-group">
+          <text class="form-label">名称 *</text>
+          <input class="form-input" placeholder="如：XX路口监控" value="{{form.name}}" bindinput="onFormInput" data-field="name" />
+        </view>
+        <view class="form-group">
+          <text class="form-label">城市</text>
+          <input class="form-input" placeholder="如：广州" value="{{form.city}}" bindinput="onFormInput" data-field="city" />
+        </view>
+      </view>
+      <view class="form-row">
+        <view class="form-group">
+          <text class="form-label">类型</text>
+          <picker mode="selector" range="{{['景区','水利','交通','内涝','社会公益']}}" bindchange="onFormTypePick">
+            <view class="form-input picker-display">{{typeLabels[form.type] || '交通'}} ▼</view>
+          </picker>
+        </view>
+        <view class="form-group">
+          <text class="form-label">协议</text>
+          <picker mode="selector" range="{{['HLS','MP4','FLV']}}" bindchange="onFormProtocolPick">
+            <view class="form-input picker-display">{{form.protocol == 'hls' ? 'HLS' : form.protocol == 'mp4' ? 'MP4' : 'FLV'}} ▼</view>
+          </picker>
+        </view>
+      </view>
+      <view class="form-row">
+        <view class="form-group">
+          <text class="form-label">纬度 *</text>
+          <input class="form-input" type="digit" placeholder="23.1291" value="{{form.lat}}" bindinput="onFormInput" data-field="lat" />
+        </view>
+        <view class="form-group">
+          <text class="form-label">经度 *</text>
+          <input class="form-input" type="digit" placeholder="113.2644" value="{{form.lng}}" bindinput="onFormInput" data-field="lng" />
+        </view>
+      </view>
+      <view class="form-full">
+        <text class="form-label">视频流地址 *</text>
+        <input class="form-input" placeholder="https://...m3u8" value="{{form.stream_url}}" bindinput="onFormInput" data-field="stream_url" />
+      </view>
+      <view class="form-full">
+        <text class="form-label">来源部门</text>
+        <input class="form-input" placeholder="选填" value="{{form.source}}" bindinput="onFormInput" data-field="source" />
+      </view>
+      <view class="form-btns">
+        <button class="btn-save" bindtap="saveCamera">保存</button>
+        <button class="btn-pick" bindtap="chooseLocation">地图选点</button>
+      </view>
+    </view>
+  </view>
+
+  <button class="btn-refresh" bindtap="loadCameras" loading="{{loading}}">刷新数据</button>
+</view>

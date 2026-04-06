@@ -1,25 +1,26 @@
-/* ==================== 全局样式 ==================== */
+/* ==================== 江海安澜 - 智慧三防指挥调度主题（鲜亮版） ==================== */
+/* 色板：亮海蓝 #0288d1 | 亮青 #00bcd4 | 水面 #4dd0e1 | 亮黄 #ffeb3b | 亮橙 #ff9800 | 亮红 #f44336 */
+
 page {
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  background-color: #f0f2f5;
-  color: #1e293b;
+  background: linear-gradient(180deg, #e0f7fa 0%, #e3f2fd 50%, #e0f2f1 100%);
+  color: #263238;
   font-size: 28rpx;
   line-height: 1.5;
 }
 
-/* ==================== 色彩变量 ==================== */
-/* 主题色 */
-.text-primary { color: #2563eb; }
+/* ==================== 色彩 ==================== */
+.text-primary { color: #0288d1; }
 .text-white { color: #ffffff; }
-.text-gray { color: #64748b; }
-.text-red { color: #dc2626; }
-.text-orange { color: #ea580c; }
-.text-yellow { color: #d97706; }
-.text-green { color: #059669; }
-.text-blue { color: #2563eb; }
+.text-gray { color: #78909c; }
+.text-red { color: #f44336; }
+.text-orange { color: #ff9800; }
+.text-yellow { color: #ffeb3b; }
+.text-green { color: #4caf50; }
+.text-blue { color: #2196f3; }
 
-.bg-primary { background-color: #2563eb; }
-.bg-dark { background-color: #0f172a; }
+.bg-primary { background-color: #00bcd4; }
+.bg-dark { background: linear-gradient(180deg, #e0f7fa, #e3f2fd); }
 .bg-white { background-color: #ffffff; }
 
 /* ==================== 通用组件 ==================== */
@@ -28,17 +29,20 @@ page {
 }
 
 .card {
-  background: #ffffff;
-  border-radius: 16rpx;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20rpx;
   padding: 28rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4rpx 24rpx rgba(0, 131, 143, 0.08);
+  border: none;
+  border-left: 6rpx solid #00bcd4;
+  backdrop-filter: blur(8px);
 }
 
 .card-title {
   font-size: 30rpx;
-  font-weight: 600;
-  color: #1e293b;
+  font-weight: 700;
+  color: #0288d1;
   margin-bottom: 20rpx;
   display: flex;
   align-items: center;
@@ -54,51 +58,57 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 88rpx;
-  border-radius: 12rpx;
+  height: 92rpx;
+  border-radius: 46rpx;
   font-size: 30rpx;
-  font-weight: 600;
+  font-weight: 700;
   border: none;
   margin-top: 16rpx;
+  letter-spacing: 2rpx;
 }
 
 .btn::after { border: none; }
 
 .btn-primary {
-  background: linear-gradient(135deg, #2563eb, #1e40af);
+  background: linear-gradient(135deg, #0288d1, #1565c0);
   color: #ffffff;
+  box-shadow: 0 6rpx 20rpx rgba(13, 71, 161, 0.3);
 }
 
 .btn-success {
-  background: linear-gradient(135deg, #059669, #10b981);
+  background: linear-gradient(135deg, #4caf50, #66bb6a);
   color: #ffffff;
+  box-shadow: 0 6rpx 20rpx rgba(0, 105, 92, 0.3);
 }
 
 .btn-warning {
-  background: linear-gradient(135deg, #d97706, #f59e0b);
+  background: linear-gradient(135deg, #ff9800, #ff6d00);
   color: #ffffff;
+  box-shadow: 0 6rpx 20rpx rgba(230, 81, 0, 0.3);
 }
 
 .btn-danger {
-  background: linear-gradient(135deg, #dc2626, #ef4444);
+  background: linear-gradient(135deg, #f44336, #e53935);
   color: #ffffff;
+  box-shadow: 0 6rpx 20rpx rgba(198, 40, 40, 0.3);
 }
 
 .btn-outline {
-  background: #ffffff;
-  color: #2563eb;
-  border: 2rpx solid #2563eb;
+  background: rgba(255, 255, 255, 0.8);
+  color: #00bcd4;
+  border: 2rpx solid #00bcd4;
 }
 
 .btn-ai {
-  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  background: linear-gradient(135deg, #4a148c, #7b1fa2);
   color: #ffffff;
+  box-shadow: 0 6rpx 20rpx rgba(74, 20, 140, 0.3);
 }
 
 .btn-large {
-  height: 100rpx;
-  font-size: 34rpx;
-  border-radius: 16rpx;
+  height: 104rpx;
+  font-size: 36rpx;
+  border-radius: 52rpx;
   white-space: nowrap;
 }
 
@@ -108,27 +118,31 @@ page {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 32rpx;
-  border-radius: 16rpx;
+  padding: 36rpx;
+  border-radius: 20rpx;
   color: #ffffff;
   font-weight: 700;
   margin-bottom: 24rpx;
 }
 
 .risk-extreme {
-  background: linear-gradient(135deg, #dc2626, #f87171);
+  background: linear-gradient(135deg, #b71c1c, #e53935);
+  box-shadow: 0 8rpx 24rpx rgba(183, 28, 28, 0.3);
 }
 
 .risk-high {
-  background: linear-gradient(135deg, #ea580c, #fb923c);
+  background: linear-gradient(135deg, #ff9800, #ff6d00);
+  box-shadow: 0 8rpx 24rpx rgba(230, 81, 0, 0.3);
 }
 
 .risk-mid {
-  background: linear-gradient(135deg, #d97706, #fbbf24);
+  background: linear-gradient(135deg, #f57f17, #fdd835);
+  box-shadow: 0 8rpx 24rpx rgba(245, 127, 23, 0.3);
 }
 
 .risk-low {
-  background: linear-gradient(135deg, #2563eb, #60a5fa);
+  background: linear-gradient(135deg, #00bcd4, #4dd0e1);
+  box-shadow: 0 8rpx 24rpx rgba(0, 131, 143, 0.3);
 }
 
 .risk-level-text {
@@ -146,7 +160,7 @@ page {
   display: flex;
   align-items: center;
   padding: 24rpx 0;
-  border-bottom: 1rpx solid #f1f5f9;
+  border-bottom: 1rpx solid #b2ebf2;
 }
 
 .list-item:last-child {
@@ -160,59 +174,59 @@ page {
 .list-item-title {
   font-size: 30rpx;
   font-weight: 500;
-  color: #1e293b;
+  color: #263238;
 }
 
 .list-item-desc {
   font-size: 24rpx;
-  color: #94a3b8;
+  color: #78909c;
   margin-top: 4rpx;
 }
 
 .list-item-arrow {
-  color: #cbd5e1;
+  color: #80deea;
   font-size: 28rpx;
 }
 
 /* ==================== 标签 ==================== */
 .tag {
   display: inline-block;
-  padding: 4rpx 16rpx;
-  border-radius: 8rpx;
+  padding: 6rpx 18rpx;
+  border-radius: 20rpx;
   font-size: 22rpx;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .tag-red {
-  background: #fef2f2;
-  color: #dc2626;
+  background: #ffebee;
+  color: #f44336;
 }
 
 .tag-orange {
-  background: #fff7ed;
-  color: #ea580c;
+  background: #fff3e0;
+  color: #ff9800;
 }
 
 .tag-green {
-  background: #f0fdf4;
-  color: #059669;
+  background: #e0f2f1;
+  color: #4caf50;
 }
 
 .tag-blue {
-  background: #eff6ff;
-  color: #2563eb;
+  background: #e0f7fa;
+  color: #00bcd4;
 }
 
 .tag-gray {
-  background: #f1f5f9;
-  color: #64748b;
+  background: #eceff1;
+  color: #546e7a;
 }
 
 /* ==================== Tab 切换 ==================== */
 .tabs {
   display: flex;
-  background: #ffffff;
-  border-radius: 12rpx;
+  background: rgba(178, 223, 219, 0.4);
+  border-radius: 24rpx;
   padding: 6rpx;
   margin-bottom: 24rpx;
 }
@@ -224,14 +238,15 @@ page {
   align-items: center;
   justify-content: center;
   font-size: 26rpx;
-  color: #64748b;
-  border-radius: 8rpx;
+  color: #546e7a;
+  border-radius: 20rpx;
 }
 
 .tab-item.active {
-  background: #2563eb;
+  background: linear-gradient(135deg, #00bcd4, #4dd0e1);
   color: #ffffff;
   font-weight: 600;
+  box-shadow: 0 4rpx 12rpx rgba(0, 131, 143, 0.3);
 }
 
 /* ==================== 表单 ==================== */
@@ -241,22 +256,22 @@ page {
 
 .form-label {
   font-size: 26rpx;
-  color: #475569;
+  color: #37474f;
   margin-bottom: 10rpx;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .form-label .required {
-  color: #dc2626;
+  color: #f44336;
   margin-left: 4rpx;
 }
 
 .form-input {
   width: 100%;
-  height: 80rpx;
-  background: #f8fafc;
-  border: 2rpx solid #e2e8f0;
-  border-radius: 10rpx;
+  height: 84rpx;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2rpx solid #b2ebf2;
+  border-radius: 14rpx;
   padding: 0 24rpx;
   font-size: 28rpx;
   box-sizing: border-box;
@@ -264,8 +279,9 @@ page {
 
 .form-input:focus,
 .form-input-focus {
-  border-color: #2563eb;
+  border-color: #00bcd4;
   background: #ffffff;
+  box-shadow: 0 0 0 4rpx rgba(0, 131, 143, 0.1);
 }
 
 .form-picker {
@@ -273,10 +289,10 @@ page {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  height: 80rpx;
-  background: #f8fafc;
-  border: 2rpx solid #e2e8f0;
-  border-radius: 10rpx;
+  height: 84rpx;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2rpx solid #b2ebf2;
+  border-radius: 14rpx;
   padding: 0 24rpx;
   font-size: 28rpx;
   box-sizing: border-box;
@@ -298,7 +314,7 @@ page {
 
 .empty-text {
   font-size: 28rpx;
-  color: #94a3b8;
+  color: #78909c;
 }
 
 /* ==================== 加载 ==================== */
@@ -308,7 +324,7 @@ page {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 77, 64, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -317,16 +333,17 @@ page {
 
 .loading-box {
   background: #ffffff;
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   padding: 48rpx 64rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
+  box-shadow: 0 8rpx 32rpx rgba(0, 77, 64, 0.15);
 }
 
 .loading-text {
   font-size: 28rpx;
-  color: #475569;
+  color: #37474f;
   margin-top: 20rpx;
 }
 
@@ -347,18 +364,18 @@ page {
 .stat-value {
   font-size: 44rpx;
   font-weight: 700;
-  color: #1e293b;
+  color: #00bcd4;
 }
 
 .stat-label {
   font-size: 22rpx;
-  color: #94a3b8;
+  color: #78909c;
   margin-top: 4rpx;
 }
 
 /* ==================== 分割线 ==================== */
 .divider {
   height: 1rpx;
-  background: #f1f5f9;
+  background: #b2ebf2;
   margin: 20rpx 0;
 }

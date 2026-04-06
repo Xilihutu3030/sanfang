@@ -15,7 +15,24 @@ import json
 import os
 import re
 import traceback
+import logging as _logging
 from typing import Dict, List, Optional
+
+_logger = _logging.getLogger('sanfang.qwen_client')
+
+
+def _safe_log(msg):
+    """Windows安全日志输出，避免中文/emoji字符导致OSError"""
+    text = str(msg)
+    try:
+        with open('server_log.txt', 'a', encoding='utf-8') as f:
+            f.write(text + '\n')
+    except Exception:
+        pass
+    try:
+        print(text)
+    except Exception:
+        pass
 
 # 需要走 OpenAI 兼容接口的模型前缀
 _OPENAI_COMPAT_PREFIXES = ("qwen3", "qwen3.5")
@@ -83,8 +100,8 @@ class QwenClient:
                 content = msg.reasoning_content or ""
             return content
         except Exception as e:
-            print(f"[QwenClient] OpenAI兼容接口异常: {e}")
-            traceback.print_exc()
+            _safe_log(f"[QwenClient] OpenAI兼容接口异常: {e}")
+            _safe_log(traceback.format_exc())
             return None
 
     def _call_dashscope_sdk(self, messages: List[Dict], temperature: float,
@@ -102,12 +119,12 @@ class QwenClient:
             if response.status_code == 200:
                 return response.output.choices[0].message.content
             else:
-                print(f"[QwenClient] DashScope调用失败: code={response.status_code}, "
+                _safe_log(f"[QwenClient] DashScope调用失败: code={response.status_code}, "
                       f"msg={response.message}")
                 return None
         except Exception as e:
-            print(f"[QwenClient] DashScope SDK异常: {e}")
-            traceback.print_exc()
+            _safe_log(f"[QwenClient] DashScope SDK异常: {e}")
+            _safe_log(traceback.format_exc())
             return None
 
     # ==================== 1. 纯大模型研判 ====================
@@ -208,7 +225,7 @@ class QwenClient:
 
         raw = self._call_api(messages, temperature=0.4, max_tokens=2000)
         if not raw:
-            print("[QwenClient] enhance 失败，保留规则引擎原始结果")
+            _safe_log("[QwenClient] enhance 失败，保留规则引擎原始结果")
             return rule_result
 
         try:
@@ -222,7 +239,7 @@ class QwenClient:
                 result["_llm_enhanced"] = True
                 return result
         except Exception as e:
-            print(f"[QwenClient] enhance 解析失败: {e}")
+            _safe_log(f"[QwenClient] enhance 解析失败: {e}")
 
         return rule_result
 
@@ -273,7 +290,7 @@ class QwenClient:
                          "4_淹没预判", "5_指挥建议", "6_领导汇报"]
         missing = [k for k in required_keys if k not in data]
         if missing:
-            print(f"[QwenClient] 研判结果缺少字段: {missing}")
+            _safe_log(f"[QwenClient] 研判结果缺少字段: {missing}")
             return None
 
         data["_source"] = "llm"
@@ -304,7 +321,7 @@ class QwenClient:
             except json.JSONDecodeError:
                 pass
 
-        print(f"[QwenClient] JSON 提取失败，原始文本前200字: {text[:200]}")
+        _safe_log(f"[QwenClient] JSON 提取失败，原始文本前200字: {text[:200]}")
         return None
 
     def test_connection(self) -> bool:
@@ -312,8 +329,8 @@ class QwenClient:
         messages = [{"role": "user", "content": "请回复'连接正常'四个字。"}]
         result = self._call_api(messages, max_tokens=100)
         if result:
-            print(f"[QwenClient] API 连接测试通过，模型: {self.model}，接口: "
+            _safe_log(f"[QwenClient] API 连接测试通过，模型: {self.model}，接口: "
                   f"{'OpenAI兼容' if self._use_openai else 'DashScope SDK'}")
             return True
-        print("[QwenClient] API 连接测试失败")
+        _safe_log("[QwenClient] API 连接测试失败")
         return False

@@ -1,0 +1,47 @@
+<view class="container">
+  <view class="card">
+    <view class="section-title">配置信息</view>
+    <view class="form-group">
+      <text class="label">区域名称 *</text>
+      <input placeholder="如：天河区、越秀区、广州市" value="{{region}}" bindinput="onInput" data-f="region" />
+    </view>
+    <view class="form-group">
+      <text class="label">单位名称（选填）</text>
+      <input placeholder="如：XX区应急管理局" value="{{org}}" bindinput="onInput" data-f="org" />
+    </view>
+    <button class="btn-primary" bindtap="generateQR">生成上报二维码海报</button>
+  </view>
+
+  <!-- 预览 -->
+  <view class="card" wx:if="{{generated}}">
+    <view class="section-title">海报预览</view>
+    <view class="canvas-wrap" bindtap="previewPoster">
+      <canvas canvas-id="qr-canvas" style="width:{{canvasWidth}}px;height:{{canvasHeight}}px;" class="qr-canvas"></canvas>
+    </view>
+
+    <view class="url-box">
+      <text class="url-label">上报链接：</text>
+      <text class="url-text" selectable="true">{{fullUrl}}</text>
+    </view>
+
+    <view class="action-btns">
+      <button class="btn-save" bindtap="savePoster" disabled="{{saving}}">
+        {{saving ? '保存中...' : '保存到相册'}}
+      </button>
+      <button class="btn-copy" bindtap="copyLink">复制链接</button>
+    </view>
+
+    <view class="tips">
+      <view class="tips-title">使用方法</view>
+      <view class="tip-item">1. 保存海报图片到相册</view>
+      <view class="tip-item">2. 将海报发布到公众号/公告栏/朋友圈</view>
+      <view class="tip-item">3. 市民微信扫码即可上报灾情</view>
+      <view class="tip-item">4. 上报数据实时同步到指挥系统</view>
+    </view>
+  </view>
+
+  <!-- 隐藏canvas用于离屏渲染 -->
+  <view wx:if="{{!generated}}" style="position:fixed;left:-9999px;">
+    <canvas canvas-id="qr-canvas" style="width:{{canvasWidth}}px;height:{{canvasHeight}}px;"></canvas>
+  </view>
+</view>

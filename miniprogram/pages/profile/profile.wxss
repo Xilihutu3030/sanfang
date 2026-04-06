@@ -1,25 +1,41 @@
+/* ===== 江海安澜 - 个人页 ===== */
 .profile-header {
-  background: linear-gradient(135deg, #0f172a, #1e40af);
+  background: linear-gradient(135deg, #0288d1, #00bcd4);
   color: #ffffff;
-  padding: 48rpx 32rpx;
-  border-radius: 16rpx;
-  margin-bottom: 24rpx;
+  padding: 52rpx 32rpx;
+  border-radius: 20rpx;
+  margin-bottom: 28rpx;
   text-align: center;
+  box-shadow: 0 8rpx 32rpx rgba(0, 131, 143, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-header::after {
+  content: '';
+  position: absolute;
+  bottom: -16rpx;
+  left: -10%;
+  width: 120%;
+  height: 50rpx;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.12) 0%, transparent 70%);
+  border-radius: 50%;
 }
 
 .profile-avatar {
-  width: 96rpx;
-  height: 96rpx;
+  width: 100rpx;
+  height: 100rpx;
   border-radius: 50%;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.2);
   color: #fff;
-  font-size: 40rpx;
+  font-size: 44rpx;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 16rpx;
-  border: 4rpx solid rgba(255,255,255,0.3);
+  border: 4rpx solid rgba(255,255,255,0.4);
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.12);
 }
 
 .profile-title {
@@ -34,10 +50,12 @@
 }
 
 .btn-danger {
-  background: #dc2626 !important;
+  background: linear-gradient(135deg, #f44336, #e53935) !important;
   color: #fff !important;
   border: none;
-  border-radius: 12rpx;
+  border-radius: 44rpx;
   font-size: 28rpx;
-  padding: 20rpx 0;
+  padding: 22rpx 0;
+  box-shadow: 0 4rpx 16rpx rgba(198, 40, 40, 0.3);
+  font-weight: 600;
 }

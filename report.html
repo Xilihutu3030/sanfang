@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>灾情上报</title>
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif;
+  background: #e0f7fa; color: #263238;
+  min-height: 100vh; padding-bottom: env(safe-area-inset-bottom);
+}
+.header {
+  background: linear-gradient(135deg, #0277bd, #00bcd4);
+  color: #fff; padding: 20px 16px 16px; text-align: center;
+}
+.header h1 { font-size: 20px; font-weight: 700; }
+.header .sub { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+.header .org { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+.main { padding: 12px 14px; max-width: 500px; margin: 0 auto; }
+.card { background: #fff; border-radius: 14px; padding: 18px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(2,136,209,0.08); }
+.card-title { font-size: 15px; font-weight: 700; color: #0277bd; margin-bottom: 14px; padding-left: 10px; border-left: 4px solid #00bcd4; }
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 13px; color: #546e7a; font-weight: 600; display: block; margin-bottom: 6px; }
+.form-label .req { color: #f44336; }
+.form-input { width: 100%; background: #f0fdfa; border: 1.5px solid #b2ebf2; border-radius: 10px; padding: 12px 14px; font-size: 15px; color: #263238; outline: none; transition: border 0.2s; }
+.form-input:focus { border-color: #00bcd4; }
+textarea.form-input { min-height: 80px; resize: vertical; font-family: inherit; }
+select.form-input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300bcd4' stroke-width='2' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+.form-row { display: flex; gap: 10px; }
+.form-row .form-group { flex: 1; }
+
+/* Location */
+.loc-btns { display: flex; gap: 10px; margin-bottom: 10px; }
+.btn-loc { flex: 1; padding: 12px; border-radius: 10px; border: 1.5px solid #b2ebf2; background: #f0fdfa; font-size: 14px; font-weight: 600; color: #0277bd; cursor: pointer; text-align: center; }
+.btn-loc:active { background: #e0f7fa; }
+.loc-result { background: #e8f5e9; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #2e7d32; display: none; }
+.loc-result.show { display: block; }
+.loc-empty { text-align: center; color: #90a4ae; font-size: 13px; padding: 8px; }
+
+/* Media */
+.media-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.media-item { width: 80px; height: 80px; border-radius: 10px; overflow: hidden; position: relative; }
+.media-item img, .media-item video { width: 100%; height: 100%; object-fit: cover; }
+.media-del { position: absolute; top: 2px; right: 2px; width: 22px; height: 22px; background: rgba(244,67,54,0.85); color: #fff; border-radius: 50%; text-align: center; line-height: 22px; font-size: 13px; cursor: pointer; border: none; }
+.media-badge { position: absolute; bottom: 2px; left: 2px; background: rgba(0,0,0,0.6); color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 4px; }
+.media-add { width: 80px; height: 80px; border: 2px dashed #b2ebf2; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; background: #f0fdfa; }
+.media-add:active { background: #e0f7fa; }
+.media-add .icon { font-size: 26px; color: #00bcd4; }
+.media-add .txt { font-size: 11px; color: #78909c; }
+.media-add.video { border-color: #ffcc80; background: #fffbeb; }
+.media-add.video .icon { color: #ff9800; }
+.media-tip { font-size: 11px; color: #90a4ae; margin-top: 8px; }
+
+/* Severity pills */
+.sev-pills { display: flex; gap: 8px; }
+.sev-pill { flex: 1; padding: 10px 0; text-align: center; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: 2px solid #e0e0e0; background: #fafafa; color: #78909c; transition: all 0.2s; }
+.sev-pill:active { transform: scale(0.97); }
+.sev-pill.active-low { border-color: #3b82f6; background: #dbeafe; color: #1e40af; }
+.sev-pill.active-medium { border-color: #f59e0b; background: #fef3c7; color: #92400e; }
+.sev-pill.active-high { border-color: #ef4444; background: #fee2e2; color: #991b1b; }
+.sev-pill.active-critical { border-color: #dc2626; background: #fecaca; color: #7f1d1d; }
+
+/* Submit */
+.btn-submit { width: 100%; padding: 15px; border-radius: 44px; border: none; font-size: 17px; font-weight: 700; color: #fff; cursor: pointer; margin-top: 6px; transition: all 0.2s; }
+.btn-submit.ready { background: linear-gradient(135deg, #f44336, #ff5722); }
+.btn-submit.ready:active { transform: scale(0.98); filter: brightness(0.95); }
+.btn-submit.disabled { background: #b0bec5; pointer-events: none; }
+
+/* Success overlay */
+.success-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; display: none; }
+.success-overlay.show { display: flex; }
+.success-card { background: #fff; border-radius: 20px; padding: 36px 28px; text-align: center; max-width: 300px; width: 85%; }
+.success-icon { font-size: 56px; }
+.success-title { font-size: 20px; font-weight: 700; color: #2e7d32; margin: 12px 0 6px; }
+.success-msg { font-size: 14px; color: #546e7a; line-height: 1.5; }
+.success-id { font-size: 12px; color: #90a4ae; margin-top: 8px; font-family: monospace; }
+.btn-again { margin-top: 16px; padding: 10px 32px; border-radius: 22px; border: none; background: #00bcd4; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+
+/* Loading */
+.loading { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.85); z-index: 9998; align-items: center; justify-content: center; flex-direction: column; }
+.loading.show { display: flex; }
+.loading .spinner { width: 36px; height: 36px; border: 4px solid #b2ebf2; border-top-color: #00bcd4; border-radius: 50%; animation: spin 0.8s linear infinite; }
+.loading .text { margin-top: 12px; font-size: 14px; color: #0277bd; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.footer { text-align: center; padding: 20px 16px 30px; font-size: 11px; color: #90a4ae; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1 id="hdr-title">灾情上报</h1>
+  <div class="sub">拍照定位 · 快速上报 · 助力应急</div>
+  <div class="org" id="hdr-org"></div>
+</div>
+
+<div class="main">
+  <!-- 灾情类型 -->
+  <div class="card">
+    <div class="card-title">灾情信息</div>
+    <div class="form-group">
+      <label class="form-label">灾情标题 <span class="req">*</span></label>
+      <input class="form-input" id="f-title" placeholder="如：XX路段严重积水约30cm" maxlength="60">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">灾情类型</label>
+        <select class="form-input" id="f-type">
+          <option value="flood">积水内涝</option>
+          <option value="landslide">山体滑坡</option>
+          <option value="wind">大风倒树</option>
+          <option value="road">道路损毁</option>
+          <option value="rescue">人员被困</option>
+          <option value="other">其他</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">严重程度</label>
+      <div class="sev-pills">
+        <div class="sev-pill active-low" data-sev="low" onclick="pickSev(this)">轻微</div>
+        <div class="sev-pill" data-sev="medium" onclick="pickSev(this)">中等</div>
+        <div class="sev-pill" data-sev="high" onclick="pickSev(this)">严重</div>
+        <div class="sev-pill" data-sev="critical" onclick="pickSev(this)">危急</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">详细描述</label>
+      <textarea class="form-input" id="f-desc" placeholder="请描述现场情况，如积水深度、受影响范围、是否有人员被困等" maxlength="500"></textarea>
+    </div>
+  </div>
+
+  <!-- 位置 -->
+  <div class="card">
+    <div class="card-title">位置信息</div>
+    <div class="loc-btns">
+      <div class="btn-loc" onclick="autoLocate()">自动定位</div>
+      <div class="btn-loc" onclick="manualAddr()">手动输入</div>
+    </div>
+    <div id="loc-map-wrap" style="display:none;margin:10px 0;border-radius:10px;overflow:hidden;border:1.5px solid #b2ebf2;height:200px;position:relative">
+      <div id="loc-map" style="width:100%;height:100%"></div>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-100%);font-size:28px;pointer-events:none;z-index:400;text-shadow:0 2px 4px rgba(0,0,0,0.3)">📍</div>
+    </div>
+    <div class="loc-result" id="loc-result">
+      <div id="loc-text"></div>
+    </div>
+    <div class="loc-empty" id="loc-empty">请点击"自动定位"获取当前位置</div>
+    <div class="form-group" style="margin-top:10px">
+      <label class="form-label">详细地址（选填）</label>
+      <input class="form-input" id="f-addr" placeholder="如：XX区XX路XX号附近">
+    </div>
+  </div>
+
+  <!-- 照片/视频 -->
+  <div class="card">
+    <div class="card-title">现场照片/视频</div>
+    <div class="media-grid" id="media-grid">
+      <div class="media-add" onclick="addPhoto()">
+        <span class="icon">+</span><span class="txt">拍照/选图</span>
+      </div>
+      <div class="media-add video" onclick="addVideo()">
+        <span class="icon">+</span><span class="txt">拍视频</span>
+      </div>
+    </div>
+    <div class="media-tip">支持最多9张图片 + 1个视频（30秒内），拍照会自动携带定位</div>
+    <input type="file" id="file-photo" accept="image/*" capture="environment" multiple style="display:none" onchange="onPhotoSelect(this)">
+    <input type="file" id="file-video" accept="video/*" capture="environment" style="display:none" onchange="onVideoSelect(this)">
+  </div>
+
+  <!-- 联系方式 -->
+  <div class="card">
+    <div class="card-title">联系信息（选填）</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">姓名</label>
+        <input class="form-input" id="f-name" placeholder="匿名">
+      </div>
+      <div class="form-group">
+        <label class="form-label">手机号</label>
+        <input class="form-input" id="f-phone" placeholder="方便回访" type="tel">
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-submit ready" id="btn-submit" onclick="submitReport()">提交灾情上报</button>
+</div>
+
+<div class="footer">
+  信息仅用于应急管理，我们将保护您的个人隐私<br>
+  如遇紧急险情请立即拨打 <b>119</b> 或 <b>110</b>
+</div>
+
+<!-- Loading -->
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <div class="text" id="loading-text">提交中...</div>
+</div>
+
+<!-- Success -->
+<div class="success-overlay" id="success-overlay">
+  <div class="success-card">
+    <div class="success-icon">&#10004;&#65039;</div>
+    <div class="success-title">上报成功</div>
+    <div class="success-msg">感谢您的上报！应急部门将尽快核实处理。</div>
+    <div class="success-id" id="success-id"></div>
+    <button class="btn-again" onclick="resetForm()">继续上报</button>
+  </div>
+</div>
+
+<script>
+// ===== 配置 =====
+var API_BASE = location.origin;
+var _severity = 'low';
+var _lat = null, _lng = null;
+var _mediaFiles = []; // {file, type, previewUrl}
+var _channel = ''; // 来源渠道标识（URL参数）
+var _region = ''; // 区域标识
+
+// 解析URL参数
+(function() {
+  var params = new URLSearchParams(location.search);
+  _channel = params.get('ch') || '';
+  _region = params.get('r') || '';
+  var org = params.get('org') || '';
+  if (org) document.getElementById('hdr-org').textContent = org;
+  if (_region) document.getElementById('hdr-title').textContent = _region + ' 灾情上报';
+})();
+
+// ===== 严重度选择 =====
+function pickSev(el) {
+  document.querySelectorAll('.sev-pill').forEach(function(p) {
+    p.className = 'sev-pill';
+  });
+  _severity = el.dataset.sev;
+  el.classList.add('active-' + _severity);
+}
+
+// ===== GPS定位 + 地图 =====
+var _locMap = null;
+
+function _showLocMap(lat, lng) {
+  var wrap = document.getElementById('loc-map-wrap');
+  wrap.style.display = 'block';
+  if (!_locMap) {
+    _locMap = L.map('loc-map', { zoomControl: false, attributionControl: false }).setView([lat, lng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(_locMap);
+    // 拖动地图时更新坐标（中心点定位模式）
+    _locMap.on('moveend', function() {
+      var c = _locMap.getCenter();
+      _lat = c.lat; _lng = c.lng;
+      document.getElementById('loc-text').innerHTML =
+        '<div style="font-size:12px;color:#0277bd">拖动地图可微调位置</div>' +
+        '<div style="font-size:11px;color:#66bb6a;margin-top:2px">' + _lat.toFixed(6) + ', ' + _lng.toFixed(6) + '</div>';
+    });
+    setTimeout(function() { _locMap.invalidateSize(); }, 200);
+  } else {
+    _locMap.setView([lat, lng], 15);
+  }
+}
+
+function autoLocate() {
+  if (!navigator.geolocation) { alert('您的浏览器不支持定位'); return; }
+  document.getElementById('loc-empty').textContent = '正在定位...';
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    _lat = pos.coords.latitude;
+    _lng = pos.coords.longitude;
+    document.getElementById('loc-text').textContent = '纬度 ' + _lat.toFixed(6) + '  经度 ' + _lng.toFixed(6);
+    document.getElementById('loc-result').classList.add('show');
+    document.getElementById('loc-empty').style.display = 'none';
+    _showLocMap(_lat, _lng);
+    reverseGeocode(_lat, _lng);
+  }, function(err) {
+    var msg = '定位失败：';
+    if (err.code === 1) msg += '请允许位置权限';
+    else if (err.code === 2) msg += '无法获取位置';
+    else msg += '定位超时，请手动输入地址';
+    document.getElementById('loc-empty').textContent = msg;
+  }, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+function reverseGeocode(lat, lng) {
+  fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=16&accept-language=zh')
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.display_name) {
+      var addr = data.display_name;
+      document.getElementById('loc-text').innerHTML =
+        '<div>' + addr + '</div>' +
+        '<div style="font-size:11px;color:#66bb6a;margin-top:2px">' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '</div>' +
+        '<div style="font-size:11px;color:#0277bd;margin-top:2px">拖动地图可微调位置</div>';
+      if (!document.getElementById('f-addr').value) {
+        document.getElementById('f-addr').value = addr;
+      }
+    }
+  }).catch(function() {});
+}
+
+function manualAddr() {
+  document.getElementById('f-addr').focus();
+  if (!_lat) {
+    document.getElementById('loc-empty').textContent = '请在下方输入详细地址';
+  }
+}
+
+// ===== 媒体文件 =====
+function addPhoto() { document.getElementById('file-photo').click(); }
+function addVideo() {
+  if (_mediaFiles.filter(function(m) { return m.type === 'video'; }).length >= 1) {
+    alert('最多上传1个视频'); return;
+  }
+  document.getElementById('file-video').click();
+}
+
+function onPhotoSelect(input) {
+  var files = input.files;
+  for (var i = 0; i < files.length && _mediaFiles.length < 10; i++) {
+    if (_mediaFiles.filter(function(m) { return m.type === 'image'; }).length >= 9) break;
+    var f = files[i];
+    _mediaFiles.push({ file: f, type: 'image', previewUrl: URL.createObjectURL(f) });
+  }
+  input.value = '';
+  renderMedia();
+}
+
+function onVideoSelect(input) {
+  var f = input.files[0];
+  if (!f) return;
+  _mediaFiles.push({ file: f, type: 'video', previewUrl: URL.createObjectURL(f) });
+  input.value = '';
+  renderMedia();
+}
+
+function removeMedia(idx) {
+  URL.revokeObjectURL(_mediaFiles[idx].previewUrl);
+  _mediaFiles.splice(idx, 1);
+  renderMedia();
+}
+
+function renderMedia() {
+  var grid = document.getElementById('media-grid');
+  var html = '';
+  for (var i = 0; i < _mediaFiles.length; i++) {
+    var m = _mediaFiles[i];
+    html += '<div class="media-item">';
+    if (m.type === 'video') {
+      html += '<video src="' + m.previewUrl + '"></video>';
+      html += '<div class="media-badge">视频</div>';
+    } else {
+      html += '<img src="' + m.previewUrl + '">';
+    }
+    html += '<button class="media-del" onclick="removeMedia(' + i + ')">x</button>';
+    html += '</div>';
+  }
+  var imgCount = _mediaFiles.filter(function(m) { return m.type === 'image'; }).length;
+  var vidCount = _mediaFiles.filter(function(m) { return m.type === 'video'; }).length;
+  if (imgCount < 9) {
+    html += '<div class="media-add" onclick="addPhoto()"><span class="icon">+</span><span class="txt">拍照</span></div>';
+  }
+  if (vidCount < 1) {
+    html += '<div class="media-add video" onclick="addVideo()"><span class="icon">+</span><span class="txt">视频</span></div>';
+  }
+  grid.innerHTML = html;
+}
+
+// ===== 提交 =====
+function showLoading(text) {
+  document.getElementById('loading-text').textContent = text || '提交中...';
+  document.getElementById('loading').classList.add('show');
+}
+function hideLoading() { document.getElementById('loading').classList.remove('show'); }
+
+async function submitReport() {
+  var title = document.getElementById('f-title').value.trim();
+  if (!title) { alert('请填写灾情标题'); return; }
+
+  // 如果没有GPS也没有手动地址
+  var addr = document.getElementById('f-addr').value.trim();
+  if (!_lat && !addr) { alert('请先定位或输入地址'); return; }
+
+  var btn = document.getElementById('btn-submit');
+  btn.className = 'btn-submit disabled';
+  btn.textContent = '提交中...';
+
+  try {
+    // 1. 上传媒体文件
+    showLoading('上传文件...');
+    var uploadedMedia = [];
+    for (var i = 0; i < _mediaFiles.length; i++) {
+      showLoading('上传文件 ' + (i + 1) + '/' + _mediaFiles.length + '...');
+      var formData = new FormData();
+      formData.append('file', _mediaFiles[i].file);
+      var resp = await fetch(API_BASE + '/api/reports/upload', { method: 'POST', body: formData });
+      if (!resp.ok) throw new Error('文件上传失败');
+      var result = await resp.json();
+      uploadedMedia.push({ url: result.url, type: result.type || _mediaFiles[i].type });
+    }
+
+    // 2. 提交上报
+    showLoading('提交上报...');
+    var body = {
+      title: title,
+      type: document.getElementById('f-type').value,
+      severity: _severity,
+      description: document.getElementById('f-desc').value.trim(),
+      location: addr,
+      lat: _lat || 0,
+      lng: _lng || 0,
+      media: uploadedMedia,
+      user_name: document.getElementById('f-name').value.trim() || '匿名市民',
+      phone: document.getElementById('f-phone').value.trim(),
+      channel: _channel,
+      region: _region,
+    };
+
+    var resp2 = await fetch(API_BASE + '/api/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!resp2.ok) {
+      var err = await resp2.json().catch(function() { return {}; });
+      throw new Error(err.error || '提交失败');
+    }
+    var data = await resp2.json();
+
+    hideLoading();
+    document.getElementById('success-id').textContent = '编号: ' + (data.id || '');
+    document.getElementById('success-overlay').classList.add('show');
+  } catch (e) {
+    hideLoading();
+    alert('提交失败: ' + e.message);
+    btn.className = 'btn-submit ready';
+    btn.textContent = '提交灾情上报';
+  }
+}
+
+function resetForm() {
+  document.getElementById('success-overlay').classList.remove('show');
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-desc').value = '';
+  document.getElementById('f-addr').value = '';
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-phone').value = '';
+  _severity = 'low';
+  document.querySelectorAll('.sev-pill').forEach(function(p, i) {
+    p.className = i === 0 ? 'sev-pill active-low' : 'sev-pill';
+  });
+  _mediaFiles.forEach(function(m) { URL.revokeObjectURL(m.previewUrl); });
+  _mediaFiles = [];
+  renderMedia();
+  var btn = document.getElementById('btn-submit');
+  btn.className = 'btn-submit ready';
+  btn.textContent = '提交灾情上报';
+  window.scrollTo(0, 0);
+}
+
+// 初始化：默认第一个严重度
+document.querySelector('.sev-pill').classList.add('active-low');
+</script>
+</body>
+</html>

@@ -1,6 +1,7 @@
+/* ===== 江海安澜 - 登录页 ===== */
 .login-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+  background: linear-gradient(160deg, #0277bd 0%, #0288d1 30%, #00bcd4 60%, #2196f3 100%);
   padding: 0 32rpx;
   display: flex;
   flex-direction: column;
@@ -19,31 +20,34 @@
 }
 
 .logo-title {
-  font-size: 40rpx;
-  color: #e2e8f0;
-  font-weight: 700;
-  letter-spacing: 2rpx;
+  font-size: 42rpx;
+  color: #ffffff;
+  font-weight: 800;
+  letter-spacing: 4rpx;
 }
 
 .logo-sub {
   font-size: 24rpx;
-  color: #94a3b8;
+  color: rgba(255,255,255,0.65);
   margin-top: 8rpx;
+  letter-spacing: 2rpx;
 }
 
 .login-card {
   width: 100%;
   max-width: 640rpx;
-  background: rgba(30, 41, 59, 0.95);
-  border: 2rpx solid #334155;
-  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.92);
+  border: none;
+  border-radius: 28rpx;
   padding: 48rpx 36rpx;
+  box-shadow: 0 16rpx 48rpx rgba(2, 136, 209, 0.25);
+  backdrop-filter: blur(12px);
 }
 
 .error-bar {
-  background: #fef2f2;
-  border: 2rpx solid #fecaca;
-  color: #dc2626;
+  background: #ffebee;
+  border: 2rpx solid #ffcdd2;
+  color: #f44336;
   padding: 16rpx 20rpx;
   border-radius: 12rpx;
   font-size: 26rpx;
@@ -58,18 +62,18 @@
 .form-label {
   display: block;
   font-size: 24rpx;
-  color: #94a3b8;
+  color: #37474f;
   margin-bottom: 10rpx;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .form-input {
   width: 100%;
-  padding: 20rpx 24rpx;
-  background: #1e293b;
-  border: 2rpx solid #475569;
-  border-radius: 12rpx;
-  color: #e2e8f0;
+  padding: 22rpx 24rpx;
+  background: #e0f7fa;
+  border: 2rpx solid #b2ebf2;
+  border-radius: 14rpx;
+  color: #263238;
   font-size: 28rpx;
 }
 
@@ -77,29 +81,31 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20rpx 24rpx;
-  background: #1e293b;
-  border: 2rpx solid #475569;
-  border-radius: 12rpx;
-  color: #e2e8f0;
+  padding: 22rpx 24rpx;
+  background: #e0f7fa;
+  border: 2rpx solid #b2ebf2;
+  border-radius: 14rpx;
+  color: #263238;
   font-size: 28rpx;
 }
 
 .picker-arrow {
   font-size: 22rpx;
-  color: #94a3b8;
+  color: #00bcd4;
 }
 
 .login-btn {
   width: 100% !important;
-  margin-top: 16rpx;
-  padding: 22rpx 0;
-  background: linear-gradient(135deg, #2563eb, #1e40af) !important;
+  margin-top: 20rpx;
+  padding: 24rpx 0;
+  background: linear-gradient(135deg, #0288d1, #00bcd4) !important;
   color: #ffffff !important;
   border: none;
-  border-radius: 12rpx;
-  font-size: 30rpx;
-  font-weight: 600;
+  border-radius: 44rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  letter-spacing: 4rpx;
+  box-shadow: 0 8rpx 24rpx rgba(2, 136, 209, 0.35);
 }
 
 .login-btn[disabled] {
@@ -109,17 +115,17 @@
 .demo-section {
   margin-top: 36rpx;
   padding: 24rpx;
-  background: rgba(37, 99, 235, 0.1);
-  border: 2rpx solid rgba(37, 99, 235, 0.2);
-  border-radius: 12rpx;
+  background: #e0f7fa;
+  border: 2rpx solid #b2ebf2;
+  border-radius: 16rpx;
 }
 
 .demo-title {
   display: block;
   font-size: 24rpx;
-  color: #60a5fa;
+  color: #4caf50;
   margin-bottom: 16rpx;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .demo-list {
@@ -133,26 +139,26 @@
   align-items: center;
   gap: 16rpx;
   padding: 12rpx 16rpx;
-  background: rgba(37, 99, 235, 0.08);
-  border-radius: 8rpx;
+  background: rgba(255,255,255,0.7);
+  border-radius: 10rpx;
 }
 
 .demo-role {
   font-size: 22rpx;
-  color: #93c5fd;
-  font-weight: 500;
+  color: #00bcd4;
+  font-weight: 600;
   min-width: 80rpx;
 }
 
 .demo-acc {
   font-size: 22rpx;
-  color: #94a3b8;
+  color: #37474f;
   font-family: monospace;
 }
 
 .login-footer {
   margin-top: 36rpx;
   font-size: 22rpx;
-  color: #64748b;
+  color: rgba(255,255,255,0.45);
   text-align: center;
 }

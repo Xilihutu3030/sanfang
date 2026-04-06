@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Runtime data
+sanfang.db
+sanfang.db.bak*
+weather_data.json
+server_log.txt
+error_log.txt
+judge_history.json
+cache/
+uploads/
+
+# Build / deploy artifacts
+server-deploy.tar
+node_modules/
+sanfang/
+
+# Windows artifacts
+nul
+=1.0.0
+
+# IDE / project private config
+project.private.config.json
+.idea/
+.vscode/
+
+# Temp / test scripts
+_overpass_check.py
+_test_overpass2.py
+ssl_check.py
+deploy_check.py
+deploy_check.txt

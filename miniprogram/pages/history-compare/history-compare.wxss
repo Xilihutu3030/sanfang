@@ -1,0 +1,15 @@
+.container { padding: 24rpx; }
+.section-title { font-size: 34rpx; font-weight: 700; color: #0277bd; margin-bottom: 20rpx; padding-left: 12rpx; border-left: 8rpx solid #2196f3; }
+.card { background: rgba(255,255,255,0.9); border-radius: 16rpx; padding: 28rpx; margin-bottom: 24rpx; box-shadow: 0 2rpx 12rpx rgba(2,136,209,0.1); }
+.desc { font-size: 26rpx; color: #78909c; margin-bottom: 20rpx; line-height: 1.6; }
+.btn-primary { background: linear-gradient(135deg, #2196f3, #00bcd4); color: #fff; border: none; border-radius: 44rpx; padding: 20rpx 0; font-size: 30rpx; font-weight: 700; }
+.empty { text-align: center; padding: 60rpx 20rpx; color: #90a4ae; font-size: 28rpx; line-height: 1.6; }
+.result-area { margin-top: 16rpx; }
+.record-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.92); border-radius: 14rpx; padding: 24rpx; margin-bottom: 16rpx; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06); }
+.record-left { flex: 1; }
+.record-time { font-size: 28rpx; font-weight: 600; color: #263238; margin-bottom: 6rpx; }
+.record-rain { font-size: 24rpx; color: #546e7a; }
+.record-risk { font-size: 24rpx; color: #546e7a; }
+.record-right { text-align: center; min-width: 120rpx; }
+.sim-score { display: block; font-size: 48rpx; font-weight: 800; color: #2196f3; line-height: 1; }
+.sim-label { font-size: 22rpx; color: #78909c; }
