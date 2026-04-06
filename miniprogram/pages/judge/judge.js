@@ -103,8 +103,19 @@ Page({
       const rs = this.data.regionSelected || {}
       const regionName = (rs.district && rs.district.name) || (rs.city && rs.city.name !== '直辖市' && rs.city.name) || (rs.province && rs.province.name) || ''
       const center = this.data.regionCenter ? { latitude: this.data.regionCenter.lat, longitude: this.data.regionCenter.lng } : this.data.mapCenter
-      const data = await api.hazards.list(regionName, center.latitude, center.longitude)
-      const hazards = data.hazards || []
+      const bbox = this.data.regionBbox || null
+      const data = await api.hazards.list(regionName, center.latitude, center.longitude, bbox)
+      let hazards = data.hazards || []
+
+      // 前端硬性过滤：有区域边界时，只保留bbox范围内的点（安全兜底）
+      if (bbox && regionName) {
+        hazards = hazards.filter(function(h) {
+          return h.lat && h.lng &&
+            h.lat >= bbox.sw_lat && h.lat <= bbox.ne_lat &&
+            h.lng >= bbox.sw_lng && h.lng <= bbox.ne_lng
+        })
+      }
+
       const hazardMarkers = hazards
         .filter((h) => h.lat && h.lng)
         .map((h, i) => ({
@@ -168,7 +179,17 @@ Page({
         center_lng: center.longitude,
         radius_km: radiusKm,
       })
-      const hazards = data.hazards || []
+      let hazards = data.hazards || []
+
+      // 前端硬性过滤：有区域边界时，只保留bbox范围内的点
+      if (bbox) {
+        hazards = hazards.filter(function(h) {
+          return h.lat && h.lng &&
+            h.lat >= bbox.sw_lat && h.lat <= bbox.ne_lat &&
+            h.lng >= bbox.sw_lng && h.lng <= bbox.ne_lng
+        })
+      }
+
       const hazardMarkers = hazards
         .filter((h) => h.lat && h.lng)
         .map((h, i) => ({
@@ -746,6 +767,14 @@ Page({
         sw_lat: Math.min(...allLats), sw_lng: Math.min(...allLngs),
         ne_lat: Math.max(...allLats), ne_lng: Math.max(...allLngs),
       } : null
+
+      // 兜底：如果GeoJSON没有center属性，从bbox中心计算
+      if (!center && bbox) {
+        center = {
+          lat: (bbox.sw_lat + bbox.ne_lat) / 2,
+          lng: (bbox.sw_lng + bbox.ne_lng) / 2,
+        }
+      }
 
       this.setData({
         regionBorderPolygons: polys,

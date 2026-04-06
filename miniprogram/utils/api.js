@@ -120,11 +120,17 @@ const judge = {
 
 // ==================== 隐患点 ====================
 const hazards = {
-  list: (region, centerLat, centerLng) => {
+  list: (region, centerLat, centerLng, bbox) => {
     let params = []
     if (region) params.push('region=' + encodeURIComponent(region))
     if (centerLat) params.push('center_lat=' + centerLat)
     if (centerLng) params.push('center_lng=' + centerLng)
+    if (bbox) {
+      params.push('sw_lat=' + bbox.sw_lat)
+      params.push('sw_lng=' + bbox.sw_lng)
+      params.push('ne_lat=' + bbox.ne_lat)
+      params.push('ne_lng=' + bbox.ne_lng)
+    }
     return request('/api/hazards' + (params.length ? '?' + params.join('&') : ''))
   },
   aiAnalyze: (data) => request('/api/hazards/ai-analyze', 'POST', data, { timeout: 30000 }),
